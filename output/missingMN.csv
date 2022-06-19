@@ -1,0 +1,12 @@
+missing,variable,type,missing_percent
+143962,bld_yr_rem,double,0.99
+123571,lake_ha_max,double,0.85
+114735,rd_dist_drt,double,0.79
+94824,bld_yr_eff,double,0.65
+52770,rd_dist_hwy,double,0.36
+45586,bld_yr,double,0.31
+32463,val_b_za,double,0.22
+28185,val_l_za,double,0.19
+17181,n_bld_z,double,0.12
+15615,val_t_za,double,0.11
+7463,mv_b_za,double,0.05
