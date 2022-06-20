@@ -7,10 +7,15 @@
 #
 #====================
 
-setwd('data')
 
+# Set working directory
+setwd('/home/rstudio/users/gold1/fmv/data')
 
-## Drive Auth ####
+# load packages
+library(tidyverse)
+library(googledrive)
+
+# Drive Auth ####
 
 if (!drive_has_token()) {
   
@@ -23,22 +28,25 @@ if (!drive_has_token()) {
 
 drive_id_arc <- as_id("https://drive.google.com/drive/folders/1oHbTsYdQMY86T69nszp1wj47X9HfBDiT")
 
+## inspect drive contents
+drive_contents <- drive_ls(drive_id_arc) 
 
-## Retrieve Soil Codes ####
+# Retrieve Soil Codes ####
 
-## specify names of all states' soil code csv
+## specify names of all states' soil code csv ####
 soilcodes <- drive_ls(drive_id_arc) %>%
   filter(str_detect(name, "soilcodes.+csv$")) %>%
   .[[1]]
 
-## download from drive
+## download from drive ####
 walk(soilcodes,
     ~ drive_download(.x, path = file.path('ArcResults','soilcodes',.x),
                      overwrite = T))
 
-soilcode_csvs <- list.files('ArcResults/soilcodes')
+soilcode_csvs <- list.files('ArcResults/soilcodes') %>%
+  sort()
 
-## Find the maximum soil codes across all indiv states
+## Find the maximum soil codes across all indiv states ####
 max_n <- map(soilcode_csvs, 
      ~ nrow(read_csv(file.path('ArcResults/soilcodes', .x),
                      show_col_types = F))) %>%
@@ -46,10 +54,7 @@ max_n <- map(soilcode_csvs,
   max()
 
 
-
-
-## Load each state's soil codes 
-## and collate them into a single df
+## Collate state soil codes into single df ####
 soil_tbl <- tibble(rowid = seq_len(max_n))
 
 for (i in seq_len(length(soilcode_csvs))) {
@@ -61,7 +66,7 @@ for (i in seq_len(length(soilcode_csvs))) {
                   show_col_types = F) %>%
     arrange(farmlndcl) %>%
     rowid_to_column() %>%
-    select(rowid, farmlndcl) %>%
+    dplyr::select(rowid, farmlndcl) %>%
     rename({{ state }} := "farmlndcl")
   
   
@@ -70,28 +75,52 @@ for (i in seq_len(length(soilcode_csvs))) {
   
 }
 
+## Count soil types
+soil_counts <- soil_tbl %>% pivot_longer(
+  cols = !rowid,
+  names_to = "state",
+  values_to = 'farmlndcl') %>%
+  filter(!is.na(farmlndcl)) %>%
+  count(farmlndcl) %>%
+  arrange(desc(n))
+
+## List of states with each farmlndcl
+soil_states <- soil_tbl %>% 
+  pivot_longer(
+    cols = !rowid,
+    names_to = "state",
+    values_to = 'farmlndcl') %>%
+  
+  dplyr::filter(!is.na(farmlndcl)) %>%
+  arrange(farmlndcl, state) %>%
+  
+  group_by(farmlndcl) %>%
+  mutate(states = paste0(state, collapse = ", ")) %>%
+  
+  dplyr::filter(!duplicated(farmlndcl)) %>%
+  mutate(len = nchar(states)) %>%
+  
+  arrange(desc(len)) %>%
+  dplyr::select(farmlndcl,states)
+
+View(soil_states)
 
 
-## Load Parquet files ####
+# Load Parquet files ####
 
-## vector of all state pqt files
+## build vector of all state pqt files ####
 pcis_pqt <- drive_ls(drive_id_arc) %>%
   filter(str_detect(name, "pqt")) %>%
   pull(name) |>
   sort()
 
-## download and read parquet file by state
+## download all PCIS pqt state files ####
 setwd('/home/rstudio/users/gold1/fmv/data/ArcResults/parquet')
 
-# download from drive...
 walk(pcis_pqt,
-     ~ drive_download(file = .x, path = .x,
-               overwrite = T)
-)
+     ~ drive_download(file = .x, 
+                      path = .x,
+                      overwrite = T)
+     )
 
-# ...then read into env
-assign(str_remove(pcis_pqt[[2]], "\\.pqt"), 
-       read_parquet(pcis_pqt[[2]]))
-
-# reset wd to fmv
 setwd('/home/rstudio/users/gold1/fmv')

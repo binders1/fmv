@@ -11,7 +11,6 @@ library(tidyverse)
 library(MASS)
 library(broom)
 library(usmap)
-library(RColorBrewer)
 
 
 ####-------Model Selection and Comparison----------####

@@ -43,17 +43,6 @@ for (i in seq_len(length(all_sale))) {
 
 
 
-
-
-## Retrieve vars used in Nolte (2020) ####
-nolte2020vars <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
-                                           range = "B:B") |>
-  rename(name = 1) |>
-  filter(!is.na(name)) |>
-  filter(!str_detect(name, "\\+")) |>
-  pull()
-
-
 ## County Sale Density Maps ####
 
 setwd('data')

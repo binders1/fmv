@@ -26,13 +26,7 @@ source('import_ArcResults')
 #     a. First, create full grid template to join with actual data
 #     b. If <1000 obs, retrieve nec obs from neighboring counties
 
-county_adjacency <- read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
 
-
-neighbors <- county_adjacency %>%
-  filter(countyname != neighborname) %>%  
-  filter(fipscounty == "01001") %>%
-  pull(fipsneighbor)
 
 # 6. Select optimal model with AIC
 # 7. Run model

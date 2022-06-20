@@ -1,4 +1,9 @@
 
+# Load packages ####
+library(tidyverse)
+library(arrow)
+library(lubridate)
+
 # set wd to data folder
 setwd("/home/rstudio/users/gold1/fmv/data")
 
@@ -18,6 +23,16 @@ mergepid_obj <- paste0("merge", state)
 pcis_obj <- str_remove(pcis_pqt[[2]], "\\.pqt")
 
 df_final <- paste0(state, "_final")
+
+
+## Retrieve vars used in Nolte (2020) ####
+nolte2020vars <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
+                                           range = "B:B") |>
+  rename(name = 1) |>
+  filter(!is.na(name)) |>
+  filter(!str_detect(name, "\\+")) |>
+  pull()
+
 
 
 
@@ -71,7 +86,7 @@ AR_soilcode <- read_csv(file.path('ArcResults/soilcodes', soilcode_csvs[[2]])) %
   mutate(soil_type = paste0("VALUE_",Value))
 
 
-soil_test <- AR_final %>%
+soil_test <- get(df_final) %>%
   pivot_longer(
     cols = starts_with('VALUE'),
     names_to = 'soil_type',
@@ -101,10 +116,11 @@ soil_test %>%
              position = "jitter")+
   
   scale_colour_viridis_d()+
+  
   scale_x_continuous(labels = ~ as.integer(.x))+
 
   facet_wrap(~farmlndcl,
-             labeller = labeller(farmlndcl = label_wrap_gen(65)))+
+             labeller = labeller(farmlndcl = label_wrap_gen(45)))+
   
   labs(
     title = "Price by Soil Type: Arkansas",
@@ -114,7 +130,7 @@ soil_test %>%
   )+
   
   theme(axis.ticks = element_blank(), 
-        text = element_text(size = 20, family = "IBM Plex Sans"),
+        text = element_text(size = 16, family = "IBM Plex Sans"),
         legend.position = "none",
         panel.background = element_blank(),
         panel.grid = element_line(colour = "grey92"),
