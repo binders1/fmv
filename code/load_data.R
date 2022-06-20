@@ -140,7 +140,28 @@ soil_test %>%
   
 
 
+## Inflation Adjustment ####
 
+CPI <- read_csv('data/CPIAUCSL.csv') %>%
+  rename(CPI = "CPIAUCSL") %>%
+  mutate(year = lubridate::year(DATE)) %>%
+  group_by(year) %>%
+  summarise(CPI = mean(CPI, na.rm =TRUE)) %>%
+  filter(year >= 2000 & year <= 2020)
 
+assign(df_final,
+       get(df_final) %>%
+         left_join(CPI) %>%
+         relocate(CPI, .after = "price") %>%
+         mutate(price_adj = price*(CPI/100)) %>%
+         relocate(price_adj, .after = "CPI")
+       )
+       
 
+## Create logged $/ha
 
+assign(df_final,
+       get(df_final) %>%
+         mutate(log_priceadj_ha = log(price_adj/ha)) %>%
+         relocate(log_priceadj_ha, .after = 'price')
+       )

@@ -1,4 +1,4 @@
-#### FUNC: Irrigation Variable Filtering ####  
+# FUNC: Irrigation Variable Filtering ####  
 irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, na_value=0) {
   
   tmp <- data |>
@@ -44,3 +44,40 @@ irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, na_value=0) 
 
   }
 
+
+# FUNC: County Plot ####
+
+countyPlot <- function(data, var, include, 
+                       colours = terrain.colors(50), 
+                       title = "TITLE",
+                       family = "IBM Plex Sans",
+                       font_size = 17,
+                       stat_name = "STAT",
+                       ...) {
+  
+  font_add_google(family)
+  showtext_auto()
+  
+  plot <- usmap::plot_usmap(
+    data = data,
+    values = var,
+    include = include,
+    colour = "grey92",
+    size = 0.2)+
+    scale_fill_gradientn(
+      name = stat_name,
+      colours = colours,
+      na.value = "lightgrey",
+      ...)+
+    labs(
+      title = title
+    )+
+    theme(
+      legend.position = "left",
+      legend.background = element_blank(),
+      text = element_text(size = font_size, family = family)
+    )
+  
+  return(plot)
+  
+}

@@ -84,3 +84,40 @@ plot_usmap(data = nation_fips_log,
   )
 
 
+# Upload Times of PCIS Parquet Files ####
+
+times <- map(drive_contents$drive_resource, ~ .x$createdTime) %>% 
+  unlist()
+
+size <- map(drive_contents$drive_resource, ~ .x$size) %>%
+  unlist()
+
+names <- drive_contents$name
+
+tibble(names = names,
+       MB = round(as.numeric(size)/1000000,2),
+       times = times) %>%
+  filter(str_detect(names, "\\.pqt$")) %>%
+  arrange(desc(times)) %>%
+  mutate(time_lag = dplyr::lead(times)) %>%
+  mutate(times = as_datetime(times),
+         time_lag = as_datetime(time_lag)) %>%
+  mutate(period = times - time_lag) %>%
+  arrange(desc(period)) %>%
+  mutate(hours = as.numeric(period/60)) %>%
+  mutate(state = str_extract(names, "(?<=_).{2}(?=\\.pqt$)")) %>%
+  dplyr::select(state, MB, hours) %>%
+  filter(!is.element(state, c('CO', 'MT'))) %>%
+  
+  ggplot(aes(MB, hours))+
+  geom_smooth(method = "lm", se = FALSE, size = 0.3, colour = "deeppink",
+              linetype = "dashed", show.legend = T)+
+  geom_point(alpha = 0.6, size = 2)+
+  coord_fixed(ratio = 25)+
+  labs(
+    title = "Upload Time by File Size",
+    subtitle = "Upload times estimated by intervals between\ncreation in Google Drive",
+    y = "Upload Time (hrs)",
+    x = "Parquet File Size (mb)"
+  )+
+  theme_bw(base_family = "IBM Plex Sans", base_size = 20)

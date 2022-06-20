@@ -34,8 +34,8 @@ drive_contents <- drive_ls(drive_id_arc)
 # Retrieve Soil Codes ####
 
 ## specify names of all states' soil code csv ####
-soilcodes <- drive_ls(drive_id_arc) %>%
-  filter(str_detect(name, "soilcodes.+csv$")) %>%
+soilcodes <- drive_contents %>%
+  dplyr::filter(str_detect(name, "soilcodes.+csv$")) %>%
   .[[1]]
 
 ## download from drive ####
