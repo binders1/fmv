@@ -5,23 +5,42 @@ noltecolors <- c('#FBFDD0', '#40B5C4','#081D59')
 msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
 
 mse_plot_rf <- countyPlot(collect_stats_rf,
-                            var = "mse",
-                            title = "Random Forest: Prediction Error by County",
-                            include = "Arkansas",
-                            stat_name = "Mean Sq. Error",
-                            colours = msecolors)
+                          var = "mse",
+                          title = "Random Forest: Prediction Error by County",
+                          include = "Arkansas",
+                          stat_name = "Mean Sq. Error",
+                          colours = msecolors,
+                          limits = c(0,2.5))
 
 rsq_plot_rf <- countyPlot(collect_stats_rf,
-                            var = "rsq",
-                            title = "Random Forest: Predictive Power by County",
+                          var = "rsq",
+                          title = "Random Forest: Predictive Power by County",
+                          include = "Arkansas",
+                          stat_name = "R-squared",
+                          colours = noltecolors,
+                          limits = c(0,0.75))
+
+
+mse_plot_base <- countyPlot(collect_stats_base,
+                            var = "mse",
+                            title = "Regression: Prediction Error by County",
+                            include = "Arkansas",
+                            stat_name = "Mean Sq. Error",
+                            colours = msecolors,
+                            limits = c(0,2.5))
+
+rsq_plot_base <- countyPlot(collect_stats_base,
+                            var = "r.squared",
+                            title = "Regression: Predictive Power by County",
                             include = "Arkansas",
                             stat_name = "R-squared",
-                            colours = noltecolors)
+                            colours = noltecolors,
+                            limits = c(0,0.75))
 
 library(patchwork)
 
-(mse_plot_rf | rsq_plot_rf) /
-(mse_plot_base | rsq_plot_base) +
+(mse_plot_rf | mse_plot_base) /
+(rsq_plot_rf | rsq_plot_base) +
   plot_annotation(caption = "Predicting log($/ha) with full set of Nolte (2020) features") &
   theme(plot.caption = element_text(size = 20, face = "italic",
                                     family = "IBM Plex Sans"))

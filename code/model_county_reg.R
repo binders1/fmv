@@ -1,23 +1,21 @@
 library(MASS)
 library(broom)
 library(patchwork)
-
-# Load County Adjacency df ####
-county_adjacency <- 
-  read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
+library(tidyverse)
+library(magrittr)
 
 state_counties <- 
   get(df_final) %>%
-  pull(fips) %>%
+  dplyr::pull(fips) %>%
   unique()
 
 # Specify model stats df to be grown later ####
 collect_stats_base <- 
-  tibble(stat = c("r.squared", "adj.r.squared", "sigma",
+  tibble::tibble(stat = c("r.squared", "adj.r.squared", "sigma",
                   "statistic", "p.value", "df", "logLik",
                   "AIC", "BIC", "deviance", "df.residual",
                   "nobs", "rmse", "fips", "percent_neighbor")) %>% 
-  mutate(na = NA) %>%
+  dplyr::mutate(na = NA) %>%
   pivot_wider(
     names_from = stat,
     values_from = na) %>%
@@ -86,10 +84,11 @@ for (j in seq_len(length(state_counties))) {
       stepMod <- stepAIC(lm(log_priceadj_ha ~ ., 
                             data = model_df %>%
                               na.omit() %>%
-                              dplyr::select(!fips)
-      ), 
-      trace = FALSE, 
-      direction = "both")
+                              dplyr::select(!fips)), 
+                         trace = FALSE, 
+                         direction = "both")
+      
+      # aic_vars <- names(stepMod$model)
       
       mse_base <- c(crossprod(baseMod$residuals))/length(baseMod$residuals)
       
@@ -137,30 +136,7 @@ for (j in seq_len(length(state_counties))) {
         sep = "")
   
     }
+  
+}
 
-  }
-
-# Plot Predictive Power ####
-
-
-noltecolors <- c('#FBFDD0', '#40B5C4','#081D59')
-
-msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
-
-mse_plot_base <- countyPlot(collect_stats_base,
-           var = "mse",
-           title = "Regression: Prediction Error by County",
-           include = "Arkansas",
-           stat_name = "Mean Sq. Error",
-           colours = msecolors)
-
-rsq_plot_base <- countyPlot(collect_stats_base,
-                            var = "r.squared",
-                            title = "Regression: Predictive Power by County",
-                            include = "Arkansas",
-                            stat_name = "R-squared",
-                            colours = noltecolors)
-
-library(patchwork)
-mse_plot_base + rsq_plot_base
-
+collect_stats_all[[state]] <- collect_stats_base

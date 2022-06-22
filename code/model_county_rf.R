@@ -17,7 +17,7 @@ state_counties <-
   unique()
 
 # Specify model stats df to be grown later ####
-collect_stats_rf <- 
+# collect_stats_rf <- 
   tibble(stat = c("rmse", "rsq", "mse",
                   "fips", "nobs", "percent_neighbor")) %>% 
   mutate(na = NA) %>%
@@ -103,7 +103,9 @@ for (j in seq_len(length(state_counties))) {
     # specify modelling engine and mode; 
     # tune() is inserted as a placeholder for the hyperparameter tuning later
     ranger_spec <- 
-      parsnip::rand_forest(mtry = tune(), min_n = tune(), trees = 500) |> 
+      parsnip::rand_forest(mtry = tune(), 
+                           min_n = tune(), # maybe change min_n to 3 to be in line with Nolte (2020)
+                           trees = 500) |> 
       set_mode("regression") |> 
       set_engine("ranger")
     # do I need to specify importance method (e.g., impurity) here?

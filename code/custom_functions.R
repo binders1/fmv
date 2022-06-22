@@ -2,7 +2,7 @@
 irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, na_value=0) {
   
   tmp <- data |>
-    select(pid, year, starts_with("Irrigation")) |>
+    dplyr::select(pid, year, starts_with("Irrigation")) |>
     pivot_longer(
       cols = Irrigation1997:Irrigation2017,
       names_to = "irr_date",
@@ -19,13 +19,13 @@ irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, na_value=0) 
   tmp1 <- tmp |>
     mutate(irr_status = ifelse(diff>=0, irr_status, 0)) |>
     group_by(pid) |>
-    filter(irr_status == max(irr_status)) |>
+    filter(irr_status == max(irr_status, na.rm = T)) |>
     ungroup() |>
     filter(diff >= 0) |>
     filter(!duplicated(pid)) |>
     rename({{ varname }} := "irr_status") |>
     ungroup() |>
-    select(pid, year, {{ varname }})
+    dplyr::select(pid, year, {{ varname }})
   
   out <- data |>
           left_join(tmp1)
@@ -53,10 +53,11 @@ countyPlot <- function(data, var, include,
                        family = "IBM Plex Sans",
                        font_size = 17,
                        stat_name = "STAT",
+                       legend_position = "left",
                        ...) {
   
-  font_add_google(family)
-  showtext_auto()
+  sysfonts::font_add_google(family)
+  showtext::showtext_auto()
   
   plot <- usmap::plot_usmap(
     data = data,
@@ -64,18 +65,21 @@ countyPlot <- function(data, var, include,
     include = include,
     colour = "grey92",
     size = 0.2)+
-    scale_fill_gradientn(
+    
+    ggplot2::scale_fill_gradientn(
       name = stat_name,
       colours = colours,
       na.value = "lightgrey",
       ...)+
-    labs(
+    
+    ggplot2::labs(
       title = title
     )+
-    theme(
-      legend.position = "left",
-      legend.background = element_blank(),
-      text = element_text(size = font_size, family = family)
+    
+    ggplot2::theme(
+      legend.position = legend_position,
+      legend.background = ggplot2::element_blank(),
+      text = ggplot2::element_text(size = font_size, family = family)
     )
   
   return(plot)

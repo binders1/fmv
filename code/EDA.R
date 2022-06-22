@@ -121,3 +121,129 @@ tibble(names = names,
     x = "Parquet File Size (mb)"
   )+
   theme_bw(base_family = "IBM Plex Sans", base_size = 20)
+
+
+# Soil Code Viz ####
+
+AR_soilcode <- read_csv(file.path('ArcResults/soilcodes', soilcode_csvs[[2]])) %>%
+  mutate(soil_type = paste0("VALUE_",Value))
+
+
+soil_test <- get(df_final) %>%
+  pivot_longer(
+    cols = starts_with('VALUE'),
+    names_to = 'soil_type',
+    values_to = 'soil_sqm') %>%
+  
+  slice_sample(n = 50000) %>%
+  
+  left_join(AR_soilcode %>%
+              select(farmlndcl, soil_type)) %>%
+  
+  mutate(
+    soil_sqm_log = case_when(
+      soil_sqm > 0 ~ log(soil_sqm),
+      soil_sqm == 0 ~ 0),
+    price_log = case_when(
+      price > 0 ~ log(price),
+      price == 0 ~ 0
+    )
+  ) %>%
+  filter(soil_sqm > 0)
+
+soil_test %>%
+  
+  ggplot(aes(soil_sqm_log, price_log, color = soil_type))+
+  
+  geom_point(alpha = 0.6, 
+             position = "jitter")+
+  
+  scale_colour_viridis_d()+
+  
+  scale_x_continuous(labels = ~ as.integer(.x))+
+  
+  facet_wrap(~farmlndcl,
+             labeller = labeller(farmlndcl = label_wrap_gen(45)))+
+  
+  labs(
+    title = "Price by Soil Type: Arkansas",
+    subtitle = "Logged price (USD) against logged soil (sq. meters), N = 10,434 (sample)",
+    y = "Logged Price ($)",
+    x = "Logged Soil (sq. m)"
+  )+
+  
+  theme(axis.ticks = element_blank(), 
+        text = element_text(size = 16, family = "IBM Plex Sans"),
+        legend.position = "none",
+        panel.background = element_blank(),
+        panel.grid = element_line(colour = "grey92"),
+        panel.border = element_blank(), 
+        strip.background = element_blank(), 
+        plot.background = element_blank())
+
+# HPI 2005 and 2020 ####
+VAL_plot_2005 <- med_home_value %>%
+  mutate(VAL_log = log(VAL_2005)) %>%
+  usmap::plot_usmap(
+    data = .,
+    values = "VAL_log",
+    exclude = c('Alaska','Hawaii'),
+    regions = c('counties'),
+    colour = "grey",
+    size = 0.2
+  )+
+  scale_fill_gradientn(
+    colours = msecolors,  
+    na.value = "grey",
+    limits = c(10,14)
+  )+
+  labs(
+    title = "2005",
+    fill = "Med Value \n($ log)"
+  )+
+  theme(
+    legend.background = element_blank(),
+    legend.position = "right",
+    plot.title = element_text(size = 20, face = "bold"),
+    legend.text = element_text(size = 15),
+    legend.title = element_text(size = 17)
+  )
+
+VAL_plot_2020 <- med_home_value %>%
+  mutate(VAL_log = log(VAL_2020)) %>%
+  usmap::plot_usmap(
+    data = .,
+    values = "VAL_log",
+    exclude = c('Alaska','Hawaii'),
+    regions = c('counties'),
+    colour = "grey",
+    size = 0.2
+  )+
+  scale_fill_gradientn(
+    colours = msecolors,
+    na.value = "grey",
+    limits = c(10,14)
+    )+
+  labs(
+    title = "2020"
+  )+
+  theme(
+    legend.background = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(size = 20, face = "bold")
+  )
+
+
+
+
+library(patchwork)
+
+VAL_plot_2005 + VAL_plot_2020 +
+  plot_annotation(title = "Median Home Value by County\n",
+                  caption = "Source: All-Transactions House Price Index (FRED)\nMedian Home Value (Census)",
+                  theme = theme(text = element_text(family = "IBM Plex Sans", 
+                                                    size = 28),
+                                plot.title = element_text(hjust = 0.5),
+                                plot.caption = element_text(face = "italic")))
+
+

@@ -1,4 +1,5 @@
 
+
 # Load packages ####
 library(tidyverse)
 library(arrow)
@@ -59,40 +60,32 @@ df_final <- paste0(state, "_final")
 
 
 ## Read PCIS pqt read into env ####
-assign(pcis_obj, 
-       read_parquet(file.path('ArcResults/parquet',pcis_pqt[[i]])) %>%
-         dplyr::select(!`__index_level_0__`))
+pcis_obj <- read_parquet(file.path('ArcResults/parquet',pcis_pqt[[i]])) %>%
+         dplyr::select(!`__index_level_0__`)
 
 ## Read sales data ####
-assign(sale_obj,
-       read_parquet(file.path('Nolte', all_sale[[i]]))
-)
+sale_obj <-  read_parquet(file.path('Nolte', all_sale[[i]]))
 
 ## Read salepid crosswalk ####
-assign(salepid_obj,
-       read_parquet(file.path('Nolte', all_sale_pids[[i]]))
-)
+salepid_obj <- read_parquet(file.path('Nolte', all_sale_pids[[i]]))
 
 # Merge ####
 
 ## Merge sale and crosswalk ####
-assign(mergepid_obj,
-       get(sale_obj) %>%
+mergepid_obj <- sale_obj %>%
          mutate(year = year(date)) %>%
          dplyr::filter(year >= 2000 & year <= 2019) %>%
-         left_join(get(salepid_obj), by = "sid")
-)
+         left_join(salepid_obj, by = "sid")
 
 
 ## Merge Sales and PCIS ####
-assign(
-  df_final,
-  inner_join(get(mergepid_obj),
-             get(pcis_obj))
-)
+df_final <- inner_join(mergepid_obj,
+                       pcis_obj)
 
 
-rm(list = ls(pattern = "^.+_rm$"))
+
+
+rm(sale_obj, salepid_obj, mergepid_obj, pcis_obj)
 
 
 # Data Cleaning ####
@@ -130,3 +123,19 @@ assign(df_final,
          mutate(log_priceadj_ha = log(price_adj/ha)) %>%
          relocate(log_priceadj_ha, .after = 'price_adj')
 )
+
+setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
+
+arrow::write_parquet(df_final, )
+
+
+
+
+jobRunScript(
+  "code/model_county_reg.R",
+  name = paste0("test_",state),
+  importEnv = T,
+  exportEnv = "R_GlobalEnv"
+)
+
+  

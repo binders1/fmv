@@ -35,7 +35,8 @@ drive_contents <- drive_ls(drive_id_arc)
 
 ## specify names of all states' soil code csv ####
 soilcodes <- drive_contents %>%
-  dplyr::filter(str_detect(name, "soilcodes.+csv$")) %>%
+  dplyr::filter(str_detect(name, "soilcodes.+csv$")) %>% 
+  filter(!is.element(name, list.files('ArcResults/soilcodes'))) %>%
   .[[1]]
 
 ## download from drive ####
@@ -82,6 +83,7 @@ soil_counts <- soil_tbl %>% pivot_longer(
   values_to = 'farmlndcl') %>%
   filter(!is.na(farmlndcl)) %>%
   count(farmlndcl) %>%
+  mutate(prop = round(n/length(soilcode_csvs),2)) %>%
   arrange(desc(n))
 
 ## List of states with each farmlndcl
@@ -103,21 +105,24 @@ soil_states <- soil_tbl %>%
   arrange(desc(len)) %>%
   dplyr::select(farmlndcl,states)
 
-View(soil_states)
-
 
 # Load Parquet files ####
-
-## build vector of all state pqt files ####
-pcis_pqt <- drive_ls(drive_id_arc) %>%
-  filter(str_detect(name, "pqt")) %>%
-  pull(name) |>
-  sort()
 
 ## download all PCIS pqt state files ####
 setwd('/home/rstudio/users/gold1/fmv/data/ArcResults/parquet')
 
-walk(pcis_pqt,
+## build vector of all state pqt files ####
+pcis_pqt <- drive_contents %>%
+  filter(str_detect(name, "pqt")) %>%
+  pull(name) |>
+  sort()
+
+pcis_to_load <- pcis_pqt %>%
+  tibble(name = .) %>% 
+  filter(!is.element(name, list.files())) %>%
+  pull()
+
+walk(pcis_to_load,
      ~ drive_download(file = .x, 
                       path = .x,
                       overwrite = T)
