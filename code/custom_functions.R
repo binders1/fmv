@@ -1,5 +1,6 @@
 # FUNC: Irrigation Variable Filtering ####  
-irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, na_value=0) {
+irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, 
+                      na_value=0, drop_used = FALSE) {
   
   tmp <- data |>
     dplyr::select(pid, year, starts_with("Irrigation")) |>
@@ -39,6 +40,13 @@ irrFilter <- function(data, varname, years=NULL, replace_na = TRUE, na_value=0) 
   out[[varname]] <- ifelse(is.na(out$Irrigation1997),
                            NA,
                            out[[varname]])
+  
+  if(drop_used) {
+    
+    out <- out %>%
+      select(!starts_with('Irrigation'))
+    
+  }
   
   return(out)
 

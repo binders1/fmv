@@ -13,9 +13,6 @@
 library(tidyverse)
 library(googledrive)
 library(arrow)
-library(usmap)
-library(gridExtra)
-library(censusapi)
 
 
 ## Google Drive Connection: Nolte ####

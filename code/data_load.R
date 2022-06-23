@@ -1,5 +1,4 @@
 
-
 # Load packages ####
 library(tidyverse)
 library(arrow)
@@ -29,11 +28,6 @@ CPI <- read_csv('CPIAUCSL.csv') %>%
   dplyr::mutate(CPI = CPI/dplyr::pull(dplyr::filter(., year == 2020 & month == 1),
                                       CPI))
 
-# Load County Adjacency df ####
-county_adjacency <- 
-  readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
-
-
 # Read Data: PCIS and Nolte (sales and crosswalk) ####
 
 
@@ -60,32 +54,40 @@ df_final <- paste0(state, "_final")
 
 
 ## Read PCIS pqt read into env ####
-pcis_obj <- read_parquet(file.path('ArcResults/parquet',pcis_pqt[[i]])) %>%
-         dplyr::select(!`__index_level_0__`)
+assign(pcis_obj, 
+       read_parquet(file.path('ArcResults/parquet',pcis_pqt[[i]])) %>%
+         dplyr::select(!`__index_level_0__`))
 
 ## Read sales data ####
-sale_obj <-  read_parquet(file.path('Nolte', all_sale[[i]]))
+assign(sale_obj,
+       read_parquet(file.path('Nolte', all_sale[[i]]))
+)
 
 ## Read salepid crosswalk ####
-salepid_obj <- read_parquet(file.path('Nolte', all_sale_pids[[i]]))
+assign(salepid_obj,
+       read_parquet(file.path('Nolte', all_sale_pids[[i]]))
+)
 
 # Merge ####
 
 ## Merge sale and crosswalk ####
-mergepid_obj <- sale_obj %>%
+assign(mergepid_obj,
+       get(sale_obj) %>%
          mutate(year = year(date)) %>%
          dplyr::filter(year >= 2000 & year <= 2019) %>%
-         left_join(salepid_obj, by = "sid")
+         left_join(get(salepid_obj), by = "sid")
+)
 
 
 ## Merge Sales and PCIS ####
-df_final <- inner_join(mergepid_obj,
-                       pcis_obj)
+assign(
+  df_final,
+  inner_join(get(mergepid_obj),
+             get(pcis_obj))
+)
 
 
-
-
-rm(sale_obj, salepid_obj, mergepid_obj, pcis_obj)
+rm(list = ls(pattern = "^.+_rm$"))
 
 
 # Data Cleaning ####
@@ -123,19 +125,3 @@ assign(df_final,
          mutate(log_priceadj_ha = log(price_adj/ha)) %>%
          relocate(log_priceadj_ha, .after = 'price_adj')
 )
-
-setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
-
-arrow::write_parquet(df_final, )
-
-
-
-
-jobRunScript(
-  "code/model_county_reg.R",
-  name = paste0("test_",state),
-  importEnv = T,
-  exportEnv = "R_GlobalEnv"
-)
-
-  

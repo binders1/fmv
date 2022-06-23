@@ -34,13 +34,13 @@ drive_contents <- drive_ls(drive_id_arc)
 # Retrieve Soil Codes ####
 
 ## specify names of all states' soil code csv ####
-soilcodes <- drive_contents %>%
+soilcodes_to_load <- drive_contents %>%
   dplyr::filter(str_detect(name, "soilcodes.+csv$")) %>% 
   filter(!is.element(name, list.files('ArcResults/soilcodes'))) %>%
   .[[1]]
 
 ## download from drive ####
-walk(soilcodes,
+walk(soilcodes_to_load,
     ~ drive_download(.x, path = file.path('ArcResults','soilcodes',.x),
                      overwrite = T))
 
@@ -86,26 +86,6 @@ soil_counts <- soil_tbl %>% pivot_longer(
   mutate(prop = round(n/length(soilcode_csvs),2)) %>%
   arrange(desc(n))
 
-## List of states with each farmlndcl
-soil_states <- soil_tbl %>% 
-  pivot_longer(
-    cols = !rowid,
-    names_to = "state",
-    values_to = 'farmlndcl') %>%
-  
-  dplyr::filter(!is.na(farmlndcl)) %>%
-  arrange(farmlndcl, state) %>%
-  
-  group_by(farmlndcl) %>%
-  mutate(states = paste0(state, collapse = ", ")) %>%
-  
-  dplyr::filter(!duplicated(farmlndcl)) %>%
-  mutate(len = nchar(states)) %>%
-  
-  arrange(desc(len)) %>%
-  dplyr::select(farmlndcl,states)
-
-
 # Load Parquet files ####
 
 ## download all PCIS pqt state files ####
@@ -122,7 +102,7 @@ pcis_to_load <- pcis_pqt %>%
   filter(!is.element(name, list.files())) %>%
   pull()
 
-walk(pcis_to_load,
+walk(pcis_pqt,
      ~ drive_download(file = .x, 
                       path = .x,
                       overwrite = T)

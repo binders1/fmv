@@ -1,0 +1,218 @@
+
+# Load packages ####
+library(tidyverse)
+library(arrow)
+library(lubridate)
+
+setwd('/home/rstudio/users/gold1/fmv/code')
+source('custom_functions.R')
+
+
+## Retrieve vars used in Nolte (2020) ####
+nolte2020vars <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
+                                           range = "B:B") |>
+  dplyr::rename(name = 1) |>
+  dplyr::filter(!is.na(name)) |>
+  dplyr::filter(!str_detect(name, "\\+")) |>
+  dplyr::pull()
+
+### Specify variables for aggregation ####
+
+# vector of Nolte's variables to average 
+noltevars_to_mean <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
+                                               range = "B:C") |>
+  filter(`How to Aggregate`=="Mean") %>%
+  pull(`Matched to Ours`)
+
+# vector of Temp/Dew/precip vars to (weighted) average
+climate_to_mean <- df_final_soil %>% 
+  select(starts_with('Dew'),
+         starts_with('Temp'),
+         starts_with('Precip')) %>%
+  names()
+
+# vector of variables to sum
+noltevars_to_sum <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
+                                              range = "B:C") |>
+  filter(`How to Aggregate`=="Sum") %>%
+  pull(`Matched to Ours`)
+
+
+
+## Load CPI data ####
+CPI <- read_csv('CPIAUCSL.csv') %>%
+  dplyr::rename(CPI = "CPIAUCSL") %>%
+  dplyr::mutate(year = lubridate::year(DATE),
+                month = lubridate::month(DATE)) %>%
+  dplyr::filter(year >= 2000 & year <= 2020) %>%
+  
+  dplyr::mutate(CPI = CPI/dplyr::pull(dplyr::filter(., year == 2020 & month == 1),
+                                      CPI))
+
+# Load County Adjacency df ####
+county_adjacency <- 
+  readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
+
+# Load HPI Index ####
+HPI_county <- readr::read_csv('HPIcounty.csv', show_col_types = F) %>%
+  mutate(across(HPI_2000:HPI_2020, ~ .x/HPI_2020)) %>%
+  pivot_longer(
+    cols = HPI_2000:HPI_2020,
+    names_to = "year",
+    values_to = "HPI"
+  ) %>%
+    mutate(year = as.numeric(str_remove(year, "HPI_")))
+
+# Clean Data: State Loop
+for (i in seq_len(length(pcis_pqt))) {
+  
+  cat("\n\nTrying: ", pcis_pqt[[i]], "\n\n", sep = "")
+  
+  setwd("/home/rstudio/users/gold1/fmv/data")
+  
+  # Read Data: PCIS and Nolte (sales and crosswalk) ####
+  
+  state <- str_extract(pcis_pqt[[i]], "(?<=_).{2}(?=\\.pqt)")
+  
+  ## Read PCIS pqt into env ####
+  pcis_obj <- read_parquet(file.path('ArcResults/parquet',pcis_pqt[[i]])) %>%
+    dplyr::select(!`__index_level_0__`)
+  
+  ## Read sales data ####
+  sale_obj <-  read_parquet(file.path('Nolte', all_sale[[i]]))
+  
+  ## Read salepid crosswalk ####
+  salepid_obj <- read_parquet(file.path('Nolte', all_sale_pids[[i]]))
+  
+  # Merge ####
+  
+  ## Merge sale and crosswalk ####
+  mergepid_obj <- sale_obj %>%
+    mutate(year = lubridate::year(date)) %>%
+    dplyr::filter(year >= 2000 & year <= 2019) %>%
+    left_join(salepid_obj, by = "sid")
+  
+  
+  ## Merge Sales and PCIS ####
+  df_final <- inner_join(mergepid_obj,
+                         pcis_obj)
+  
+  
+  
+  
+  rm(sale_obj, salepid_obj, mergepid_obj, pcis_obj)
+  gc()
+  
+  # Data Cleaning ####
+  
+  ## Create irrigation indicator variables ####
+  df_final_irr <- df_final %>%
+    irrFilter('irrEver') %>%
+    irrFilter('irrRecent', years = 3,
+              drop_used = T) %>%
+    suppressWarnings()
+  
+  
+  
+  remove(df_final)
+  
+  ## Inflation Adjustment (Base = Jan 2020) ####
+  
+  df_final_inflate <- df_final_irr %>%
+    mutate(month = lubridate::month(date)) %>%
+    relocate(month, .after = "date") %>%
+    left_join(CPI, by = c('year','month')) %>%
+    relocate(CPI, .after = "price") %>%
+    mutate(price_adj = price*(CPI/100)) %>%
+    relocate(price_adj, .after = "CPI")
+  
+  ## Add HPI index ####
+  
+  df_final_HPI <- df_final_inflate %>%
+    left_join(HPI_county, by = c('fips','year')) %>%
+    relocate(HPI, .after = "CPI")
+  
+  
+  ## Create logged $/ha
+  
+  df_final_logprice <- df_final_HPI %>%
+    mutate(log_priceadj_ha = log(price_adj/ha)) %>%
+    relocate(log_priceadj_ha, .after = 'price_adj')
+  
+  ## Clean soil ####
+  
+  df_soil_tmp <- df_final_logprice %>%
+    
+    pivot_longer(
+      cols = starts_with("VALUE"),
+      names_to = "type",
+      values_to = "soil_area") %>%
+    group_by(sid) %>%
+    summarise(total_soil_area = sum(soil_area)) %>%
+    ungroup() %>%
+    select(sid, total_soil_area) 
+  
+  df_final_soil <- df_final_logprice %>%
+    left_join(df_soil_tmp) %>%
+    # convert sq meters to hectares
+    mutate(across(c(starts_with("VALUE"), total_soil_area), ~ .x * 1e-04))
+  
+  
+  ## Aggregate across parcels in single sale ####
+  
+  df_agg_soil <- df_final_soil %>%
+    group_by(sid) %>%
+    summarise(across(c(starts_with('VALUE'), total_soil_area), sum)) %>%
+    ungroup() %>%
+    mutate(across(starts_with('VALUE'), 
+                  ~ .x / total_soil_area, .names = "{.col}_prop")) %>%
+    select(sid, ends_with("prop"))
+  
+  
+  df_agg_mean <- df_final_soil %>%
+    group_by(sid) %>%
+    summarise(across(any_of(noltevars_to_mean), mean))
+  
+  
+  df_agg_sum <- df_final_soil %>%
+    group_by(sid) %>%
+    summarise(across(any_of(noltevars_to_sum), sum))
+  
+  
+  df_agg_climate <- df_final_soil %>%
+    group_by(sid) %>%
+    summarise(across(any_of(climate_to_mean), ~ weighted.mean(.x, ha)))
+  
+  df_agg_irr <- df_final_soil %>%
+    group_by(sid) %>%
+    summarise(across(starts_with('irr'), max))
+  
+  df_agg_none <- df_final_soil %>%
+    select(c(sid, fips, HPI, log_priceadj_ha, date, ha, x, y)) %>%
+    filter(!duplicated(sid))
+  
+  
+  df_agg_final <- df_agg_none %>%
+    left_join(df_agg_soil) %>%
+    left_join(df_agg_mean) %>%
+    left_join(df_agg_sum) %>%
+    left_join(df_agg_climate) %>%
+    left_join(df_agg_irr)
+  
+  setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
+  
+  clean_file <- paste0("clean_",state,".pqt")
+  
+  arrow::write_parquet(df_agg_final, 
+                       clean_file)
+  
+  remove(list = ls(pattern = "^df"))
+  gc()
+  
+  cat("Saved: ",clean_file," | Trying: ", pcis_pqt[[i+1]], "\n", sep = "")
+  
+  
+}
+
+
+  
