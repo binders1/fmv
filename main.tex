@@ -81,10 +81,27 @@ With this expanded dataset, we model the fair market value of parcels in three w
 
 As our outcome variable, we use logged per-hectare price, adjusted by monthly consumer price index values for all urban consumers with a base year of 2020, using 5 million unique sales nationwide. In the case of county-level modeling, counties with under 1000 observations are augmented with randomly sampled sales from neighboring counties until they reach 1000 observations. If the county and its neighbors combined fail to achieve 1000 observations, no model is specified.   
 
+\newpage
 
 \section{Results}
 
 RESULTS
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6in]{eda_images/countysales_log.png}
+    \caption{Sales By County}
+    \label{fig:sales_county}
+\end{figure}
+
+More text.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6in]{eda_images/rf_reg_compare.png}
+    \caption{Model Performance: Regression vs. Random Forest}
+    \label{fig:model_compare}
+\end{figure}
 
 \newpage
 
