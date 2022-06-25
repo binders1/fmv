@@ -9,6 +9,9 @@ library(arrow)
 
 setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
 
+all_clean <- list.files()
+
+
 state <- str_extract(all_clean[[i]], "[:upper:]{2}")
 
 df_import <- read_parquet(all_clean[[i]]) %>%
@@ -25,14 +28,10 @@ county_adjacency <-
 
 # Specify model stats df to be grown later ####
 collect_stats_base <- 
-  tibble::tibble(stat = c("r.squared", "adj.r.squared", "sigma",
-                  "statistic", "p.value", "df", "logLik",
-                  "AIC", "BIC", "deviance", "df.residual",
-                  "nobs", "rmse", "fips", "percent_neighbor")) %>% 
-  dplyr::mutate(na = NA) %>%
-  pivot_wider(
-    names_from = stat,
-    values_from = na) %>%
+  tibble::tibble(r.squared = NA, adj.r.squared = NA, sigma = NA,
+                  statistic = NA, p.value = NA, df = NA, logLik = NA,
+                  AIC = NA, BIC = NA, deviance = NA, df.residual = NA,
+                  nobs = NA, rmse = NA, fips = NA, percent_neighbor = NA) %>% 
   slice(0)
 
 collect_stats_aic <- collect_stats_base
@@ -44,6 +43,9 @@ aic_var_tbl <- tibble(rowid = seq_len(114))
 
 
 # Loop through all counties ####
+cl <- parallel::makeCluster(64)
+doParallel::registerDoParallel(cl)
+foreach::getDoParWorkers()
 
 for(j in seq_len(length(state_counties))) {
   
@@ -87,10 +89,7 @@ for(j in seq_len(length(state_counties))) {
                       dplyr::select(!c(sid, fips)) %>%
                       na.omit())
       
-      stepMod <- stepAIC(lm(log_priceadj_ha ~ ., 
-                            data = model_df %>%
-                              dplyr::select(!c(sid, fips)) %>%
-                              na.omit()), 
+     stepMod <- stepAIC(baseMod, 
                          trace = FALSE, 
                          direction = "backward")
       

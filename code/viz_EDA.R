@@ -233,9 +233,6 @@ VAL_plot_2020 <- med_home_value %>%
     plot.title = element_text(size = 20, face = "bold")
   )
 
-
-
-
 library(patchwork)
 
 VAL_plot_2005 + VAL_plot_2020 +
@@ -247,3 +244,48 @@ VAL_plot_2005 + VAL_plot_2020 +
                                 plot.caption = element_text(face = "italic")))
 
 
+
+# Regression Est and Std Error ####
+collect_import_reg %>%
+  
+  dplyr::select(!fips) %>%
+  mutate(across(everything(), mean)) %>%
+  
+  pivot_longer(
+    cols = everything(),
+    names_to = "stat",
+    values_to = "value"
+  ) %>%
+  
+  separate(col = stat,
+           into = c('stat','var'),
+           sep = "!!") %>%
+  
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  ) %>%
+  
+  filter(str_detect(var, "^TempMean")) %>%
+  
+  ggplot(aes(x=estimate, y=var))+ 
+  
+  geom_bar(stat="identity", fill = "lightblue")+
+  geom_errorbar(aes(xmin=estimate-std.error, xmax=estimate+std.error),
+                width=.5, colour = "darkgrey")+
+  
+  labs(
+    title = "Estimates and Std. Error",
+    x = "Coefficient Estimate (Std. Error)",
+    y = NULL
+  )+
+  
+  annotate("segment", x = 0, y = 0, xend = 0, yend=14,
+           lty = 2, colour = "grey20")+
+  
+  theme(
+    panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, colour = "black"),
+    text = element_text(size = 20, family = "Source Sans Pro")
+  )
+  

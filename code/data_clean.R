@@ -24,8 +24,10 @@ noltevars_to_mean <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqp
   filter(`How to Aggregate`=="Mean") %>%
   pull(`Matched to Ours`)
 
+setwd('/home/rstudio/users/gold1/fmv/data')
+
 # vector of Temp/Dew/precip vars to (weighted) average
-climate_to_mean <- df_final_soil %>% 
+climate_to_mean <- read_parquet('ArcResults/parquet/ParcelClimateIrrSoil_AL.pqt') %>% 
   select(starts_with('Dew'),
          starts_with('Temp'),
          starts_with('Precip')) %>%
@@ -62,6 +64,9 @@ HPI_county <- readr::read_csv('HPIcounty.csv', show_col_types = F) %>%
     values_to = "HPI"
   ) %>%
     mutate(year = as.numeric(str_remove(year, "HPI_")))
+
+
+pcis_pqt <- list.files('ArcResults/parquet')
 
 # Clean Data: State Loop
 for (i in seq_len(length(pcis_pqt))) {
@@ -182,6 +187,7 @@ for (i in seq_len(length(pcis_pqt))) {
   df_agg_climate <- df_final_soil %>%
     group_by(sid) %>%
     summarise(across(any_of(climate_to_mean), ~ weighted.mean(.x, ha)))
+  # aggregate over seasons
   
   df_agg_irr <- df_final_soil %>%
     group_by(sid) %>%

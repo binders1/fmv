@@ -93,3 +93,9 @@ countyPlot <- function(data, var, include,
   return(plot)
   
 }
+
+# FUNC: Unregister cores ####
+unregister <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
