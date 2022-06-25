@@ -40,14 +40,14 @@ for (i in seq_len(length(all_clean))) {
     .config = NA, fips = NA
   ) %>%
     slice(0)
-  
+
   ### Performance Stats ####
-  collect_stats_rf <- 
+  collect_stats_rf <-
     tibble(rmse = NA, rsq = NA, mse = NA,
-           fips = NA, nobs = NA, percent_neighbor = NA) %>% 
+           fips = NA, nobs = NA, percent_neighbor = NA) %>%
     slice(0)
-  
-  
+
+
   ### Variable Importance ####
   state_importance <- arrow::read_parquet(all_clean[[12]]) %>%
     names() %>%
@@ -65,7 +65,8 @@ for (i in seq_len(length(all_clean))) {
   
   ## Import current state df ####
   df_import <- arrow::read_parquet(all_clean[[i]]) %>%
-    dplyr::select(!HPI)
+    dplyr::select(!HPI) %>%
+    slice_sample(n=1000)
   
   
   ## Specify current state counties ####
@@ -138,9 +139,11 @@ for (i in seq_len(length(all_clean))) {
       # build resamples for cross-validation during tuning
       set.seed(194)
       
-      rf_folds <- rsample::vfold_cv(train, 
-                                    strata = log_priceadj_ha) # how many folds should we do?
-      
+      rf_folds <- rsample::vfold_cv(
+        train, 
+        strata = log_priceadj_ha) 
+        # how many folds should we do?
+
       
       ### Model Workflow ####
       
@@ -150,46 +153,39 @@ for (i in seq_len(length(all_clean))) {
                         data = train)
       
       #### Engine, Mode, Method ####
-      ranger_spec <- 
-        parsnip::rand_forest(mtry = tune(), 
-                             min_n = tune(), # set to 3 later
-                             trees = 500) %>% 
-        set_mode("regression") %>% 
-        set_engine("ranger", 
+      ranger_spec <-
+        parsnip::rand_forest(mtry = length(names(train))/3, 
+                             min_n = 3, # increase required sample leaf size to avoid overfitting
+                             trees = 500) %>% # try 250 trees
+        set_mode("regression") %>%
+        set_engine("ranger",
+                   splitrule = "extratrees",
                    importance = "permutation")
       
       #### Build Workflow ####
       ranger_workflow <- 
         workflow() %>% 
         add_recipe(ranger_recipe) %>% # the recipe in the formula
-        add_model(ranger_spec)  # the parameters, engine, importance methods, etc.
+        add_model(ranger_spec)  
+        # the parameters, engine, importance methods, etc.
       
       
       
       ### Hyperparameter Tuning ####
+    
+    
       
+      # -------NO TUNING----REMOVE-------
+      # ranger_tune <- tune_grid(ranger_workflow,
+      #                         resamples = rf_folds)
       
-      # Parallel Process
-      set.seed(15224)
-      if(getDoParWorkers()<64) {
-        
-        unregister()
-        registerDoParallel(64)
-        
-      }
-      
-      # Tune
-      ranger_tune <- tune_grid(ranger_workflow,
-                               resamples = rf_folds)
-      
-      # Select Best
-      final_rf <- ranger_workflow %>%
-        finalize_workflow(select_best(ranger_tune, 
-                                      metric = "rmse"))
+      # 
+      # final_rf <- ranger_workflow %>%
+      # finalize_workflow(ranger_workflow)
       
       
       ### Model Fitting ####
-      rf_fit <- last_fit(final_rf, rf_split)
+      rf_fit <- last_fit(ranger_workflow, rf_split)
       
       
       ### Collect Performance Stats ####
