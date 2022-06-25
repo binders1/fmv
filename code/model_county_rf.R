@@ -8,21 +8,21 @@ library(usemodels)
 library(vip)
 library(doParallel)
 library(showtext)
+library(sysfonts)
 library(magrittr)
-
+library(readr)
+library(arrow)
 tidymodels_prefer()
 
 source('/home/rstudio/users/gold1/fmv/code/custom_functions.R')
-
+source("Y://code/custom_functions.R")
 
 ## Load County Adjacency df ####
-county_adjacency <- 
-  readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
-
-
+county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
 
 ## Set working directory ####
 setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
+setwd("Y://data/cleaned")
 
 ## Vector of all state pqt files ####
 all_clean <- list.files()
@@ -49,7 +49,7 @@ for (i in seq_len(length(all_clean))) {
   
   
   ### Variable Importance ####
-  state_importance <- read_parquet(all_clean[[12]]) %>%
+  state_importance <- arrow::read_parquet(all_clean[[12]]) %>%
     names() %>%
     tibble(Variable = .,
            na = NA) %>%
@@ -61,10 +61,10 @@ for (i in seq_len(length(all_clean))) {
   
   
   ## Current state ####
-  state <- str_extract(all_clean[[i]], "[:upper:]{2}")
+  state <- stringr::str_extract(all_clean[[i]], "[:upper:]{2}")
   
   ## Import current state df ####
-  df_import <- read_parquet(all_clean[[i]]) %>%
+  df_import <- arrow::read_parquet(all_clean[[i]]) %>%
     dplyr::select(!HPI)
   
   
