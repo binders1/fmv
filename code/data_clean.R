@@ -1,8 +1,11 @@
+library(doParallel)
+doParallel::registerDoParallel()
 
 # Load packages ####
 library(tidyverse)
 library(arrow)
 library(lubridate)
+setwd("Y:/code")
 
 setwd('/home/rstudio/users/gold1/fmv/code')
 source('custom_functions.R')
@@ -13,7 +16,7 @@ nolte2020vars <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZE
                                            range = "B:B") |>
   dplyr::rename(name = 1) |>
   dplyr::filter(!is.na(name)) |>
-  dplyr::filter(!str_detect(name, "\\+")) |>
+  dplyr::filter(!stringr::str_detect(name, "\\+")) |>
   dplyr::pull()
 
 ### Specify variables for aggregation ####
@@ -21,16 +24,16 @@ nolte2020vars <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZE
 # vector of Nolte's variables to average 
 noltevars_to_mean <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
                                                range = "B:C") |>
-  filter(`How to Aggregate`=="Mean") %>%
-  pull(`Matched to Ours`)
+  dplyr::filter(`How to Aggregate`=="Mean") |>
+  dplyr::pull(`Matched to Ours`)
 
 setwd('/home/rstudio/users/gold1/fmv/data')
-
+setwd("Y:/data")
 # vector of Temp/Dew/precip vars to (weighted) average
-climate_to_mean <- read_parquet('ArcResults/parquet/ParcelClimateIrrSoil_AL.pqt') %>% 
-  select(starts_with('Dew'),
+climate_to_mean <- read_parquet('ArcResults/parquet/ParcelClimateIrrSoil_AL.pqt') |>
+  dplyr::select(starts_with('Dew'),
          starts_with('Temp'),
-         starts_with('Precip')) %>%
+         starts_with('Precip')) |>
   names()
 
 # vector of variables to sum
@@ -146,8 +149,15 @@ for (i in seq_len(length(pcis_pqt))) {
   
   ## Clean soil ####
   
+  setwd('ArcResults/soilcodes')
+  soil_to_drop <- readr::read_csv(list.files()[1]) %>%
+    dplyr::mutate(Value = paste0("VALUE_", Value)) %>%
+    dplyr::filter(stringr::str_detect(farmlndcl,
+                  stringr::regex("(not prime|missing)", ignore_case = T))) %>%
+    dplyr::pull(Value)                
+
   df_soil_tmp <- df_final_logprice %>%
-    
+    dplyr::select(!dplyr::vars(soil_to_drop)) %>%
     pivot_longer(
       cols = starts_with("VALUE"),
       names_to = "type",
@@ -158,11 +168,12 @@ for (i in seq_len(length(pcis_pqt))) {
     select(sid, total_soil_area) 
   
   df_final_soil <- df_final_logprice %>%
+  dplyr::select(!dplyr::vars(soil_to_drop)) %>%
     left_join(df_soil_tmp) %>%
     # convert sq meters to hectares
     mutate(across(c(starts_with("VALUE"), total_soil_area), ~ .x * 1e-04))
   
-  
+  setwd("Y:/data")
   ## Aggregate across parcels in single sale ####
   
   df_agg_soil <- df_final_soil %>%
@@ -188,6 +199,10 @@ for (i in seq_len(length(pcis_pqt))) {
     group_by(sid) %>%
     summarise(across(any_of(climate_to_mean), ~ weighted.mean(.x, ha)))
   # aggregate over seasons
+  # Spring = 03, 04, 05
+  # Summer = 06, 07, 08
+  # Fall = 09, 10, 11
+  # Winter = 12, 01, 02
   
   df_agg_irr <- df_final_soil %>%
     group_by(sid) %>%
