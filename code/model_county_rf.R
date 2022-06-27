@@ -138,12 +138,13 @@ for (i in seq_len(length(all_clean))) {
       
       # build resamples for cross-validation during tuning
       set.seed(194)
-      
-      rf_folds <- rsample::vfold_cv(
-        train, 
-        strata = log_priceadj_ha) 
-        # how many folds should we do?
 
+    # ------ REMOVE REMOVE REMOVE ------ # 
+    #  rf_folds <- rsample::vfold_cv(
+    #    train, 
+    #    strata = log_priceadj_ha) 
+    #    # how many folds should we do?
+    # ------ REMOVE REMOVE REMOVE ------ #
       
       ### Model Workflow ####
       
@@ -166,8 +167,7 @@ for (i in seq_len(length(all_clean))) {
       ranger_workflow <- 
         workflow() %>% 
         add_recipe(ranger_recipe) %>% # the recipe in the formula
-        add_model(ranger_spec)  
-        # the parameters, engine, importance methods, etc.
+        add_model(ranger_spec) # the parameters, engine, importance methods, etc.
       
       
       
