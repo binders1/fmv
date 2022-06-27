@@ -1,5 +1,11 @@
-library(doParallel)
-doParallel::registerDoParallel()
+#=========================
+#
+#   Load, clean, and prep
+#    state-level dfs for
+#        modeling
+#
+#=========================
+
 
 # Load packages ####
 library(tidyverse)
@@ -53,10 +59,6 @@ CPI <- read_csv('CPIAUCSL.csv') %>%
   
   dplyr::mutate(CPI = CPI/dplyr::pull(dplyr::filter(., year == 2020 & month == 1),
                                       CPI))
-
-# Load County Adjacency df ####
-county_adjacency <- 
-  readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
 
 # Load HPI Index ####
 HPI_county <- readr::read_csv('HPIcounty.csv', show_col_types = F) %>%
@@ -129,15 +131,15 @@ for (i in seq_len(length(pcis_pqt))) {
   df_final_inflate <- df_final_irr %>%
     mutate(month = lubridate::month(date)) %>%
     relocate(month, .after = "date") %>%
-    left_join(CPI, by = c('year','month')) %>%
+    left_join(CPI, by = c("year", "month")) %>%
     relocate(CPI, .after = "price") %>%
-    mutate(price_adj = price*(CPI/100)) %>%
+    mutate(price_adj = price * (CPI / 100)) %>%
     relocate(price_adj, .after = "CPI")
   
   ## Add HPI index ####
   
   df_final_HPI <- df_final_inflate %>%
-    left_join(HPI_county, by = c('fips','year')) %>%
+    left_join(HPI_county, by = c("fips","year")) %>%
     relocate(HPI, .after = "CPI")
   
   

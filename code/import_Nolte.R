@@ -56,17 +56,15 @@ walk(nolte_files, ~ unzip(file.path('zipped', .x),
                          exdir = 'Nolte'))
 
 ## File Names ####
-## subset to only parquet files
-all_pqt <- list.files('Nolte') |>
-  tibble() |>
-  rename(name = 1) |> 
-  filter(str_detect(name, "\\.pqt$"))
 
-## subset to only sale pqt files
-all_sale <- all_pqt |>
+### subset to only sale pqt files ####
+all_sale <- list.files('Nolte') |>
+  tibble() |>
+  rename(name = 1) |>
   filter(str_detect(name, "_sale\\.pqt$")) |>
   pull()
 
+### subset to only sale_pids crosswalk files ####
 all_sale_pids <- list.files('Nolte') |>
   tibble() |>
   rename(name = 1) |>
