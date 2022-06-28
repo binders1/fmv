@@ -11,61 +11,64 @@
 library(tidyverse)
 library(arrow)
 library(lubridate)
-# setwd("Y:/code")
 
-setwd('/home/rstudio/users/gold1/fmv/code')
+
+setwd('~/fmv/code')
 source('custom_functions.R')
 
 
 
 ## Nolte File Names ####
-setwd("/home/rstudio/users/gold1/fmv/data")
+setwd("~/fmv/data")
 
 ### subset to only sales data ####
-all_sale <- list.files('Nolte') |>
-  tibble() |>
-  rename(name = 1) |>
-  filter(str_detect(name, "_sale\\.pqt$")) |>
+all_sale <- list.files('Nolte') %>%
+  tibble(name = .) %>%
+  filter(str_detect(name, "_sale\\.pqt$")) %>%
   pull()
 
 ### subset to only sale_pids crosswalk files ####
-all_sale_pids <- list.files('Nolte') |>
-  tibble() |>
-  rename(name = 1) |>
-  filter(str_detect(name, "sale_pids")) |>
+all_sale_pids <- list.files('Nolte') %>%
+  tibble(name = .) %>%
+  filter(str_detect(name, "sale_pids")) %>%
   pull()
 
-setwd("/home/rstudio/users/gold1/fmv")
+setwd("~/fmv")
 
+
+## Retrieve New Soil farmlncl <-> new-category crosswalk ####
+
+soil_crosswalk <- googlesheets4::range_read(ss = "1AJlJgiMgMQXB9kNKMRuVP6_f5D60-bPmnBMGVYpVPYs",
+                          sheet = "New Categories")
 
 ## Retrieve vars used in Nolte (2020) ####
 nolte2020vars <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
-                                           range = "B:B") |>
-  dplyr::rename(name = 1) |>
-  dplyr::filter(!is.na(name)) |>
-  dplyr::filter(!stringr::str_detect(name, "\\+")) |>
+                                           range = "B:B") %>%
+  dplyr::rename(name = 1) %>%
+  dplyr::filter(!is.na(name)) %>%
+  dplyr::filter(!stringr::str_detect(name, "\\+")) %>%
   dplyr::pull()
 
 ### Specify variables for aggregation ####
 
 # vector of Nolte's variables to average 
 noltevars_to_mean <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
-                                               range = "B:C") |>
-  dplyr::filter(`How to Aggregate`=="Mean") |>
+                                               range = "B:C") %>%
+  dplyr::filter(`How to Aggregate`=="Mean") %>%
   dplyr::pull(`Matched to Ours`)
 
 setwd('/home/rstudio/users/gold1/fmv/data')
 # setwd("Y:/data")
 # vector of Temp/Dew/precip vars to (weighted) average
-climate_to_mean <- read_parquet('ArcResults/parquet/ParcelClimateIrrSoil_AL.pqt') |>
+climate_to_mean <- read_parquet('ArcResults/parquet/ParcelClimateIrrSoil_AL.pqt') %>%
   dplyr::select(starts_with('Dew'),
          starts_with('Temp'),
-         starts_with('Precip')) |>
+         starts_with('Precip')) %>%
   names()
 
 # vector of variables to sum
 noltevars_to_sum <- googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU",
-                                              range = "B:C") |>
+                                              range = "B:C") %>%
   filter(`How to Aggregate`=="Sum") %>%
   pull(`Matched to Ours`)
 
@@ -96,12 +99,14 @@ HPI_county <- readr::read_csv('HPIcounty.csv',
 
 pcis_pqt <- list.files('ArcResults/parquet')
 
-# Clean Data: State Loop
+# Clean Data: State Loop ####
 for (i in seq_len(length(pcis_pqt))) {
+  
+  start <- Sys.time()
   
   cat("\n\nTrying: ", pcis_pqt[[i]], "\n\n", sep = "")
   
-  setwd("/home/rstudio/users/gold1/fmv/data")
+  setwd("~/fmv/data")
   
   # Read Data: PCIS and Nolte (sales and crosswalk) ####
   
@@ -130,7 +135,7 @@ for (i in seq_len(length(pcis_pqt))) {
   df_final <- inner_join(mergepid_obj,
                          pcis_obj)
   
-  cat('\n\nMerge complete')
+  cat('\n\n Merge complete \n')
   
   
   rm(sale_obj, salepid_obj, mergepid_obj, pcis_obj)
@@ -174,17 +179,31 @@ for (i in seq_len(length(pcis_pqt))) {
   
   ## Clean soil ####
   
-  setwd("/home/rstudio/users/gold1/fmv/data/ArcResults/soilcodes")
-  soil_to_drop <- readr::read_csv(list.files()[i],
+  setwd("~/fmv/data/ArcResults/soilcodes")
+  soilcodes <- readr::read_csv(list.files()[i],
                                   show_col_types = F) %>%
-    dplyr::mutate(Value = paste0("VALUE_", Value)) %>%
+    left_join(soil_crosswalk) %>%
+    dplyr::mutate(Value = paste0("VALUE_", Value))
+  
+  soil_to_drop <- soilcodes %>%
     dplyr::filter(stringr::str_detect(farmlndcl,
-                  stringr::regex("(not prime|missing)", 
-                                 ignore_case = T))) %>%
-    dplyr::pull(Value)                
-
+                                      stringr::regex("(not prime|missing)", 
+                                                     ignore_case = T))) %>%
+    dplyr::pull(Value) %>%
+    str_c(., "_prop")
+  
+  
+  
+  soil_ref_tbl <- soilcodes %>%
+    dplyr::filter(!stringr::str_detect(farmlndcl,
+                                      stringr::regex("(not prime|missing)", 
+                                                     ignore_case = T))) %>%
+    group_by(Value) %>%
+    summarise(category = paste0(category, collapse = "; ")) %>%
+    mutate(Value = paste0(Value, "_prop"))
+  
+  
   df_soil_tmp <- df_final_logprice %>%
-    dplyr::select(!any_of(soil_to_drop)) %>%
     pivot_longer(
       cols = starts_with("VALUE"),
       names_to = "type",
@@ -201,7 +220,7 @@ for (i in seq_len(length(pcis_pqt))) {
     mutate(across(c(starts_with("VALUE"), total_soil_area), 
                   ~ .x * 1e-04))
   
-  setwd("/home/rstudio/users/gold1/fmv/data/")
+  setwd("~/fmv/data/")
   ## Aggregate across parcels in single sale ####
   
   cat('\n\n Starting aggregation \n')
@@ -213,9 +232,24 @@ for (i in seq_len(length(pcis_pqt))) {
     mutate(across(starts_with('VALUE'), 
                   ~ .x / total_soil_area, .names = "{.col}_prop")) %>%
     select(sid, ends_with("prop")) %>%
-    mutate(across(starts_with("VALUE"), ~ replace_na(.x, 0)))
+    mutate(across(starts_with("VALUE"), ~ replace_na(.x, 0))) %>%   
+    dplyr::select(!any_of(soil_to_drop)) %>%
+    pivot_longer(
+      cols = starts_with("VALUE"),
+      names_to = "Value",
+      values_to = "prop"
+    ) %>% 
+    left_join(soil_ref_tbl) %>%
+    dplyr::select(!Value) %>%
+    separate_rows(category, sep = "; ") %>%
+    group_by(sid, category) %>%
+    summarise(prop = sum(prop)) %>%
+    pivot_wider(
+      names_from = category,
+      values_from = prop
+    )
   
-  cat('\n Finished: soil \n')
+  cat('\n Finished: soil \n\n')
   
   df_agg_mean <- df_final_soil %>%
     group_by(sid) %>%
@@ -285,7 +319,7 @@ for (i in seq_len(length(pcis_pqt))) {
   
   cat('\nFinished: merge')
   
-  setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
+  setwd("~/fmv/data/cleaned")
   
   clean_file <- paste0("clean_",state,".pqt")
   
@@ -295,8 +329,11 @@ for (i in seq_len(length(pcis_pqt))) {
   remove(list = ls(pattern = "^df"))
   gc()
   
+  ptime <- int_length(interval(start, Sys.time())) %>% round(2)
+  
   cat("Saved: ",clean_file," | Trying: ", pcis_pqt[[i+1]], "\n", sep = "")
   
+  cat("\n Process time:", ptime, "secs \n\n")
   
 }
 
