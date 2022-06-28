@@ -15,21 +15,25 @@ library(arrow)
 tidymodels_prefer()
 
 source('/home/rstudio/users/gold1/fmv/code/custom_functions.R')
-source("Y://code/custom_functions.R")
+# source("Y://code/custom_functions.R")
 
 ## Load County Adjacency df ####
-county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv")
+county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv",
+                                    show_col_types = F)
 
 ## Set working directory ####
 setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
-setwd("Y://data/cleaned")
+# setwd("Y://data/cleaned")
 
 ## Vector of all state pqt files ####
 all_clean <- list.files()
 
-start <- Sys.time()
+
 # Loop through States ####
 for (i in seq_len(length(all_clean))) {
+  
+  # (re)set working directory to clean data folder
+  setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
   
   ## Build empty stats dataframes ####
   
@@ -64,9 +68,7 @@ for (i in seq_len(length(all_clean))) {
   state <- stringr::str_extract(all_clean[[i]], "[:upper:]{2}")
   
   ## Import current state df ####
-  df_import <- arrow::read_parquet(all_clean[[i]]) %>%
-    dplyr::select(!HPI) %>%
-    slice_sample(n=1000)
+  df_import <- arrow::read_parquet(all_clean[[i]])
   
   
   ## Specify current state counties ####
@@ -79,16 +81,30 @@ for (i in seq_len(length(all_clean))) {
   
   for (j in seq_len(length(state_counties))) {
     
-    ### Subset to current county ####
-    county_df <- df_import %>%
-      dplyr::filter(fips==state_counties[[j]]) 
+    
+    HPI_na <- sum(is.na(df_import$HPI))
+    
+    nrow_county <- sum(df_import$fips==state_counties[[j]])
+    
+    if(HPI_na==nrow_county) {
+      ### Subset to current county ####
+      
+      county_df <- df_import %>%
+        dplyr::filter(fips==state_counties[[j]]) %>%
+        dplyr::select(!HPI)
+    
+      } else {
+     
+      county_df <- df_import %>%
+        dplyr::filter(fips==state_counties[[j]])
+       
+    }
     
     ### Vector of neighbors ####
     neighbors <- county_adjacency %>%
       dplyr::filter(countyname != neighborname) %>%  
       dplyr::filter(fipscounty == state_counties[[j]]) %>%
       dplyr::pull(fipsneighbor)
-    
     
     
     ### Specify df for modeling
@@ -175,14 +191,20 @@ for (i in seq_len(length(all_clean))) {
     
     
       
-      # -------NO TUNING----REMOVE-------
+      # -------NO TUNING----REMOVE------- #
       # ranger_tune <- tune_grid(ranger_workflow,
       #                         resamples = rf_folds)
       
       # 
       # final_rf <- ranger_workflow %>%
       # finalize_workflow(ranger_workflow)
+      # --------- REMOVE ----------------- #
       
+      if(getDoParWorkers()<64) {
+
+        registerDoParallel(64)
+        
+      }
       
       ### Model Fitting ####
       rf_fit <- last_fit(ranger_workflow, rf_split)
@@ -222,7 +244,7 @@ for (i in seq_len(length(all_clean))) {
       
       ### Variable Importance ####
       
-      county_importance <- final_rf %>%
+      county_importance <- ranger_workflow %>%
         fit(test) %>%
         extract_fit_parsnip() %>%
         vip::vi() %>%
@@ -253,7 +275,7 @@ for (i in seq_len(length(all_clean))) {
     
   }
  
-  
+  setwd("/home/rstudio/users/gold1/fmv/data/model/rf")
   ## Write state-level model stats to file ####
 
     write_parquet(state_predictions, 

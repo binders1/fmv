@@ -1,62 +1,14 @@
-# Load Packages ####
-library(tidyverse)
-library(googlesheets4)
+library(tidymodels)
 
-
-# Load df of observations in FRR i ####
-
-## State abbr-to-number ref table ####
-state_ref_tbl <-read_csv('https://gist.githubusercontent.com/dantonnoriega/bf1acd2290e15b91e6710b6fd3be0a53/raw/11d15233327c8080c9646c7e1f23052659db251d/us-state-ansi-fips.csv',
-                         show_col_types = F)
-
-## Build FRR-county reference table ####
-ss <- as_sheets_id("https://docs.google.com/spreadsheets/d/1rUfzSfVXLjYnI6hlO-WWR588hKI3NCMiPYHHc1JR2zs/edit#gid=1580896317")
-
-ag_regions <-read_sheet(ss = ss, skip = 2)
-
-ag_regions_key <- ag_regions %>%
-  dplyr::select(7) %>%
-  slice(1:9) %>%
-  separate(col = 1,
-           into = c('id','name'),
-           sep = "=") %>%
-  mutate(id = as.double(id))
-
-
-ag_regions_ref <- ag_regions %>%
-  dplyr::select(1:2) %>%
-  rename(fips = "Fips", id = 2) %>%
-  mutate(fips = ifelse(nchar(fips)==4, 
-                       paste0("0",fips),
-                       fips),
-         state = str_sub(fips, 1, 2)) %>%
-  left_join(ag_regions_key) %>%
-  left_join(state_ref_tbl, by = c('state' = 'st'))
-
-## Specify states to load in ####
-states_to_load <- ag_regions_ref %>%
-  filter(id == k) %>%
-  pull(stusps) %>%
-  unique()
-
-counties_to_include <- ag_regions_ref %>%
-  filter(id == k) %>%
-  pull(fips) %>%
-  sort()
-
-clean_to_load <- paste0("clean_", states_to_load, ".pqt") %>%
-  sort()
-  
-
-## Import current FRR dataframe ####
 setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
 
-df_import <- map_dfr(clean_to_load[1], ~ read_parquet(.x)) %>% 
-  filter(fips %in% counties_to_include)
+df_nation <- map_dfr(list.files(),
+        read_parquet) %>%
+  slice_sample(n = 200000)
 
-
-model_df <- df_import %>%
-  select(!c(sid, fips, HPI)) %>%
+model_df <- df_nation %>%
+  dplyr::select(!c(sid, fips, HPI, cst_2500, cst_50)) %>%
+  mutate(across(starts_with("VALUE"), ~ replace_na(.x, 0))) %>%
   stats::na.omit()
 
 
@@ -98,9 +50,9 @@ ranger_workflow <- workflow() %>%
 
 ## Model Fitting ####
 
-if(getDoParWorkers()<64) {
+if(foreach::getDoParWorkers()<64) {
   
-  registerDoParallel(64)
+  doParallel::registerDoParallel(64)
   
 }
 
@@ -108,7 +60,7 @@ system.time(
   
   rf_fit <- last_fit(ranger_workflow, rf_split)
   
-  )
+)
 
 ## Collect Stats ####
 
@@ -147,7 +99,3 @@ importance <- ranger_workflow %>%
   relocate(frr)
 
 ## Write stats ####
-
-
-
-

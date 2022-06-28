@@ -59,7 +59,7 @@ predictions <- map_dfr(three_states,
 
 
 predictions %>% 
-  slice_sample(n = 50000) %>%
+  #slice_sample(n = 50000) %>%
   ggplot(aes(.pred, log_priceadj_ha)) +
   
   geom_point(alpha = 0.2, color = "#327ba8", size =0.5) +
@@ -67,8 +67,8 @@ predictions %>%
               colour = "red")+
   geom_abline(lty = 1, size = 0.4, color = "gray50")+
   
- # scale_x_continuous(limits = c(-2,15))+
-#  scale_y_continuous(limits = c(-2,15))+
+  scale_x_continuous(limits = c(-2,15))+
+  scale_y_continuous(limits = c(-2,15))+
   
   
   labs(title = "Random Forest Prediction Accuracy",

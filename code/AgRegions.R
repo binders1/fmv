@@ -20,10 +20,7 @@ ag_regions_ref <- ag_regions %>%
                        paste0("0",fips),
                        fips),
          state = str_sub(fips, 1, 2)) %>%
-  left_join(ag_regions_key) %>%
-  mutate(state_and_region = paste0(state, name)) %>%
-  filter(!duplicated(state_and_region)) %>%
-  dplyr::select(!c(fips, state_and_region))
+  left_join(ag_regions_key)
 
 state_reference <- HPI_county %>% 
   dplyr::select(fips, state) %>%

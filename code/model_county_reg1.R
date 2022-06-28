@@ -79,9 +79,23 @@ for (i in seq_len(length(all_clean))) {
   
   for (j in seq_len(length(state_counties))) {
     
-    ### Subset to current county ####
-    county_df <- df_import %>%
-      dplyr::filter(fips==state_counties[[j]]) 
+    HPI_na <- sum(is.na(county_df$HPI))
+    
+    nrow_county <- sum(df_import$fips==state_counties[[j]])
+    
+    if(HPI_na==nrow_county) {
+      ### Subset to current county ####
+      
+      county_df <- df_import %>%
+        dplyr::filter(fips==state_counties[[j]]) %>%
+        dplyr::select(!HPI)
+      
+    } else {
+      
+      county_df <- df_import %>%
+        dplyr::filter(fips==state_counties[[j]])
+      
+    }
     
     ### Vector of neighbors ####
     neighbors <- county_adjacency %>%
