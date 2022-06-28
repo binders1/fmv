@@ -331,7 +331,7 @@ for (i in seq_len(length(pcis_pqt))) {
   
   ptime <- int_length(interval(start, Sys.time())) %>% round(2)
   
-  cat("Saved: ",clean_file," | Trying: ", pcis_pqt[[i+1]], "\n", sep = "")
+  cat("Saved: ",clean_file, sep = "")
   
   cat("\n Process time:", ptime, "secs \n\n")
   
