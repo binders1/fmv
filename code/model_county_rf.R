@@ -1,9 +1,5 @@
-
-# Set-up ####
-
-## Load Packages ####
-# install.packages(c('tidymodels','usemodels','vip','ranger'))
 library(tidymodels)
+library(tidyverse)
 library(usemodels)
 library(vip)
 library(doParallel)
@@ -14,62 +10,154 @@ library(readr)
 library(arrow)
 tidymodels_prefer()
 
-source('/home/rstudio/users/gold1/fmv/code/custom_functions.R')
-# source("Y://code/custom_functions.R")
+
+source('~/fmv/code/custom_functions.R')
 
 ## Load County Adjacency df ####
 county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv",
                                     show_col_types = F)
 
 ## Set working directory ####
-setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
-# setwd("Y://data/cleaned")
+setwd("~/fmv/data/cleaned")
 
 ## Vector of all state pqt files ####
 all_clean <- list.files()
 
-
-# Loop through States ####
-for (i in seq_len(length(all_clean))) {
+if(foreach::getDoParWorkers()<64) {
   
+  doParallel::registerDoParallel(64)
+  
+}
+
+fitRF <- function(j) {
+  HPI_na <- sum(is.na(df_import$HPI))
+  
+  nrow_county <- sum(df_import$fips==state_counties[[j]])
+  
+  if (HPI_na >= nrow_county) {
+    
+    ### Subset to current county ####
+    
+    county_df <- df_import %>%
+      dplyr::filter(fips==state_counties[[j]]) %>%
+      dplyr::select(!HPI)
+    
+  } else {
+    
+    county_df <- df_import %>%
+      dplyr::filter(fips==state_counties[[j]])
+    
+  }
+  
+  ### Vector of neighbors ####
+  neighbor_vec <- county_adjacency %>%
+    dplyr::filter(countyname != neighborname) %>%  
+    dplyr::filter(fipscounty == state_counties[[j]]) %>%
+    dplyr::pull(fipsneighbor)
+  
+  
+  ### Specify df for modeling
+  
+  
+  if (nrow(county_df) < 1000) {
+    
+    rows_needed <- 1000 - nrow(county_df)
+    
+    neighbor_df <- df_import %>%
+      dplyr::filter(fips %in% neighbor_vec)
+    
+    if(rows_needed <= nrow(neighbor_df)) {
+      
+      model_df <- dplyr::bind_rows(county_df,
+                                   neighbor_df %>% 
+                                     slice_sample(n = rows_needed))
+      
+    } else {
+      
+      model_df <- county_df
+      
+    } 
+    
+  } else {
+    model_df <- county_df
+  }
+  
+  
+  
+  if(nrow(model_df)>=1000) {
+    
+    ## Modeling ####
+    
+    rf_data <- model_df %>%
+      dplyr::select(!c(sid, fips)) %>%
+      stats::na.omit()
+    
+    
+    ### Construct Model ####
+    
+    # split data
+    set.seed(319)
+    rf_split <- rsample::initial_split(rf_data, 
+                                       strata = log_priceadj_ha)
+    train <- rsample::training(rf_split)
+    test <- rsample::testing(rf_split)
+    
+    ### Model Workflow ####
+    
+    #### Formula and Preprocessing ####
+    ranger_recipe <- 
+      recipes::recipe(formula = log_priceadj_ha ~ ., 
+                      data = train)
+    
+    #### Engine, Mode, Method ####
+    ranger_spec <-
+      parsnip::rand_forest(mtry = length(names(train))/3, 
+                           min_n = 3, # increase required sample leaf size to avoid overfitting
+                           trees = 500) %>% # try 250 trees
+      parsnip::set_mode("regression") %>%
+      parsnip::set_engine("ranger",
+                          splitrule = "extratrees",
+                          importance = "permutation")
+    
+    #### Build Workflow ####
+    ranger_workflow <- 
+      workflows::workflow() %>% 
+      workflows::add_recipe(ranger_recipe) %>% # the recipe in the formula
+      workflows::add_model(ranger_spec) # the parameters, engine, importance methods, etc.
+    
+    ### Model Fitting ####
+    rf_fit <- tune::last_fit(ranger_workflow, rf_split) %>%
+      dplyr::mutate(fips = county_df$fips[[1]],
+                    n_obs = nrow(model_df),
+                    n_county = nrow(county_df),
+                    n_neighbor = nrow(neighbor_df))
+    
+    return(rf_fit)
+    
+    
+  }
+  
+}
+
+for (i in 1:49) {
   # (re)set working directory to clean data folder
-  setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
-  
-  ## Build empty stats dataframes ####
-  
-  ### Predictions ####
-  state_predictions <- tibble(
-    id = NA, .pred = NA,
-    .row = NA, logpriceadj_ha = NA,
-    .config = NA, fips = NA
-  ) %>%
-    slice(0)
-
-  ### Performance Stats ####
-  collect_stats_rf <-
-    tibble(rmse = NA, rsq = NA, mse = NA,
-           fips = NA, nobs = NA, percent_neighbor = NA) %>%
-    slice(0)
-
-
-  ### Variable Importance ####
-  state_importance <- arrow::read_parquet(all_clean[[12]]) %>%
-    names() %>%
-    tibble(Variable = .,
-           na = NA) %>%
-    pivot_wider(
-      names_from = Variable,
-      values_from = na
-    ) %>%
-    slice(0)
-  
+  setwd("~/fmv/data/cleaned")
   
   ## Current state ####
   state <- stringr::str_extract(all_clean[[i]], "[:upper:]{2}")
   
-  ## Import current state df ####
-  df_import <- arrow::read_parquet(all_clean[[i]])
   
+  cat('\n Trying:',state, '\n')
+  
+  tryCatch(
+    
+    ## Import current state df ####
+    df_import <- arrow::read_parquet(all_clean[[i]]),
+    
+    error = function(e)
+      cat('\n\n Error occured in', state)
+    
+  )
   
   ## Specify current state counties ####
   state_counties <- df_import %>%
@@ -77,223 +165,73 @@ for (i in seq_len(length(all_clean))) {
     unique()
   
   
-  ## Loop through all counties ####
+  ## County Models ####
   
-  for (j in seq_len(length(state_counties))) {
+  state_rf_fit <- foreach::foreach(j=seq_len(length(state_counties))) %dopar% {
     
+    tryCatch(
+      
+      fitRF(j),
+      
+      error = function(e)
+        cat('\n\n Error occured in county', 
+            state_counties[[j]])
+      
+    )
     
-    HPI_na <- sum(is.na(df_import$HPI))
-    
-    nrow_county <- sum(df_import$fips==state_counties[[j]])
-    
-    if(HPI_na==nrow_county) {
-      ### Subset to current county ####
-      
-      county_df <- df_import %>%
-        dplyr::filter(fips==state_counties[[j]]) %>%
-        dplyr::select(!HPI)
-    
-      } else {
-     
-      county_df <- df_import %>%
-        dplyr::filter(fips==state_counties[[j]])
-       
-    }
-    
-    ### Vector of neighbors ####
-    neighbors <- county_adjacency %>%
-      dplyr::filter(countyname != neighborname) %>%  
-      dplyr::filter(fipscounty == state_counties[[j]]) %>%
-      dplyr::pull(fipsneighbor)
-    
-    
-    ### Specify df for modeling
-    
-    
-    if (nrow(county_df) < 1000) {
-      
-      rows_needed <- 1000 - nrow(county_df)
-      
-      neighbor_df <- df_import %>%
-        dplyr::filter(fips %in% neighbors)
-      
-      if(rows_needed <= nrow(neighbor_df)) {
-        
-        model_df <- dplyr::bind_rows(county_df,
-                                     neighbor_df %>% 
-                                       slice_sample(n = rows_needed))
-        
-      } else {
-        
-        model_df <- county_df
-        
-      } 
-    } else {
-      model_df <- county_df
-    }
-    
-    
-    
-    if(nrow(model_df)>=1000) {
-      
-      ## Modeling ####
-      
-      rf_data <- model_df %>%
-        select(!c(sid, fips)) %>%
-        stats::na.omit()
-      
-      
-      ### Construct Model ####
-      
-      # split data
-      set.seed(319)
-      rf_split <- rsample::initial_split(rf_data, strata = log_priceadj_ha)
-      train <- rsample::training(rf_split)
-      test <- rsample::testing(rf_split)
-      
-      
-      # build resamples for cross-validation during tuning
-      set.seed(194)
-
-    # ------ REMOVE REMOVE REMOVE ------ # 
-    #  rf_folds <- rsample::vfold_cv(
-    #    train, 
-    #    strata = log_priceadj_ha) 
-    #    # how many folds should we do?
-    # ------ REMOVE REMOVE REMOVE ------ #
-      
-      ### Model Workflow ####
-      
-      #### Formula and Preprocessing ####
-      ranger_recipe <- 
-        recipes::recipe(formula = log_priceadj_ha ~ ., 
-                        data = train)
-      
-      #### Engine, Mode, Method ####
-      ranger_spec <-
-        parsnip::rand_forest(mtry = length(names(train))/3, 
-                             min_n = 3, # increase required sample leaf size to avoid overfitting
-                             trees = 500) %>% # try 250 trees
-        set_mode("regression") %>%
-        set_engine("ranger",
-                   splitrule = "extratrees",
-                   importance = "permutation")
-      
-      #### Build Workflow ####
-      ranger_workflow <- 
-        workflow() %>% 
-        add_recipe(ranger_recipe) %>% # the recipe in the formula
-        add_model(ranger_spec) # the parameters, engine, importance methods, etc.
-      
-      
-      
-      ### Hyperparameter Tuning ####
-    
-    
-      
-      # -------NO TUNING----REMOVE------- #
-      # ranger_tune <- tune_grid(ranger_workflow,
-      #                         resamples = rf_folds)
-      
-      # 
-      # final_rf <- ranger_workflow %>%
-      # finalize_workflow(ranger_workflow)
-      # --------- REMOVE ----------------- #
-      
-      if(getDoParWorkers()<64) {
-
-        registerDoParallel(64)
-        
-      }
-      
-      ### Model Fitting ####
-      rf_fit <- last_fit(ranger_workflow, rf_split)
-      
-      
-      ### Collect Performance Stats ####
-      
-      n_obs <- nrow(model_df)
-      
-      n_neighbors_rf <- model_df %>%
-        dplyr::filter(fips != state_counties[[j]]) %>%
-        nrow()
-      
-      county_stats_rf <- collect_metrics(rf_fit) %>%
-        select(.metric, .estimate) %>%
-        spread(.metric, .estimate) %>%
-        mutate(
-          mse = rmse^2,
-          fips = state_counties[[j]],
-          nobs = n_obs,
-          percent_neighbor = n_neighbors_rf/nobs) 
-      
-      
-      collect_stats_rf <- collect_stats_rf %>%
-        rbind(county_stats_rf)
-      
-      
-      ### Collect Predictions ####
-      
-      county_predictions <- collect_predictions(rf_fit) %>%
-        mutate(fips = state_counties[[j]])
-      
-      state_predictions <- rbind(state_predictions,
-                                 county_predictions)
-      
-      
-      
-      ### Variable Importance ####
-      
-      county_importance <- ranger_workflow %>%
-        fit(test) %>%
-        extract_fit_parsnip() %>%
-        vip::vi() %>%
-        add_row(Variable = "fips",
-                Importance = as.double(state_counties[[j]])) %>%
-        pivot_wider(
-          names_from = Variable,
-          values_from = Importance
-        ) %>%
-        relocate(fips)
-      
-      state_importance <- rbind(state_importance, county_importance)
-      
-      cat("Complete: ", state_counties[[j]], 
-          " |.....| Modeled: YES, n.obs: ", nrow(model_df), 
-          " |.....| % Neighbors: ", 
-          county_stats_rf$percent_neighbor, "\n",
-          sep = "")
-      
-    } else {
-      
-      cat("Complete: ", state_counties[[j]], 
-          " |.....| Modeled:  NO, n.obs: ", 
-          nrow(model_df)+nrow(neighbor_df), "\n",
-          sep = "")
-      
-    }
-    
-  }
- 
-  setwd("/home/rstudio/users/gold1/fmv/data/model/rf")
+  } %>%
+    bind_rows()
+  
+  
+  
+  ## Collect Pred/Stats/Import ####
+  
+  state_predictions <- map(.x = seq_len(nrow(state_rf_fit)),
+                           .f = ~ state_rf_fit$.predictions[[.x]] %>%
+                             dplyr::mutate(fips = state_rf_fit$fips[[.x]])) %>% bind_rows()
+  
+  state_stats <- map(.x = seq_len(nrow(state_rf_fit)),
+                     .f = ~ state_rf_fit$.metrics[[.x]] %>%
+                       dplyr::select(.metric, .estimate) %>%
+                       dplyr::mutate(fips = state_rf_fit$fips[[.x]]) %>%
+                       pivot_wider(
+                         names_from = .metric,
+                         values_from = .estimate
+                       ) %>%
+                       mutate(mse = rmse^2,
+                              n_train = state_rf_fit$.workflow[[.x]] %>% 
+                                extract_fit_engine() %>%
+                                .$num.samples,
+                              n_obs = state_rf_fit$n_obs[[.x]],
+                              n_test = n_obs - n_train)) %>% bind_rows()
+  
+  state_importance <- map(.x = seq_len(nrow(state_rf_fit)), 
+                          .f = 
+                            ~ state_rf_fit$.workflow[[.x]] %>%
+                            extract_fit_parsnip() %>%
+                            vip::vi() %>%
+                            pivot_wider(
+                              names_from = Variable,
+                              values_from = Importance) %>%
+                            mutate(fips = state_rf_fit$fips[[.x]])) %>% bind_rows()
+  
+  
+  
+  
   ## Write state-level model stats to file ####
-
-    write_parquet(state_predictions, 
-                  paste0("predictions/pred_",state, ".pqt"))
-    
-    write_parquet(collect_stats_rf, 
-                  paste0('performance/stats_', state, ".pqt"))
-    
-    write_parquet(state_importance, 
-                  paste0('importance/import_', state, ".pqt"))
-    
-    cat("\n\nFinished: ", state, "\n\n", sep = "")
-    
-    end <- Sys.time()
-    
-  }
+  setwd("~/fmv/data/model/county/rf")
+  write_parquet(state_predictions, 
+                paste0("predictions/pred_",state, ".pqt"))
   
-
+  write_parquet(state_stats, 
+                paste0('performance/stats_', state, ".pqt"))
+  
+  write_parquet(state_importance, 
+                paste0('importance/import_', state, ".pqt"))
+  
+  cat('\n\n Finished:',state, "\n\n")
+  
+}
 
 
 
