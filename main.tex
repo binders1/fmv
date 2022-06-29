@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
 
@@ -74,8 +73,25 @@ Beginning in the 1990s, environmental and land economics has developed a rich li
 \section{Data and Methods}
 We base our analysis on data first published by Nolte (2020), a comprehensive high-resolution dataset of parcel characteristics and sales across the contiguous United States (140.9 million properties across 3,055 counties), including variables on building presence, development, accessibility, local demographics, local nature preservation, terrain, water, flood risk, land cover type, location, and date of sale. To these base data, we add several more variables aimed at improving the predictive accuracy of the fair market value models.
 
+To focus our analysis on agricultural land value, we filter the base data to only include parcels that meet the following criteria:
 
-Soil classifications, indicating a map unit's suitability for agricultural use, were compiled from the Natural Resources Conservation Service’s high-resolution SSURGO soil survey database (\cite{SoilSurveyStaffSoilStates}). Soil classifications are operationalized as the percent of each parcel containing a given classification (e.g., “Prime Farmland” or “Farmland of Statewide Importance”). Aggregation is applied to overlapping classifications containing multiple conditions. For instance, "Prime if drained or protected from flooding" gets assigned to "Prime if drained" and Prime if protected from flooding." Climate normals of minimum, mean, and maximum monthly precipitation, temperature, and dew temperature were collected from \textbf{SOURCE} and aggregated by meterological season. Irrigation, soil, and climate variable coverage extends across the conterminous United States.  \textbf{LANID DESCRIPTION} \cite{Xie2021LANID-US:States}. Two new binary irrigation variables are created to record 1) whether the parcel had ever been irrigated prior to sale, and 2) whether it was irrigated at any point in the 3 years immediately preceding the sale. In the case of multi-parcel sales, we aggregate features across parcels (see Appendix).
+\begin{enumerate}
+    \item Meets ``undeveloped" criteria established by Nolte (2020), \textbf{or}
+    \item Over half its area was classified as either grassland/herbaceous or planeted/cultivated in the 2011 National Land Cover Database (NLCD), \textbf{or}
+    \item Over half its area was classified as agricultural in the 2000 Land Change Monitoring, Assessment, and Projection (LCMAP), \textbf{or}
+    \item Had any of the following ZTRAX land use codes:
+    \begin{enumerate}
+        \item Agricultural (``AG");
+        \item Homestead (``MS113");
+        \item Vacant open space/conservation/forest land (``VL104");
+        \item Vacant agricultural/unimproved (``VL108")
+    \end{enumerate}
+\end{enumerate}
+
+
+Soil classifications, indicating a map unit's suitability for agricultural use, were compiled from the Natural Resources Conservation Service’s high-resolution SSURGO soil survey database (\cite{SoilSurveyStaffSoilStates}). Soil classifications are operationalized as the percent of each parcel containing a given classification (e.g., “Prime Farmland” or “Farmland of Statewide Importance”). Aggregation is applied to overlapping classifications containing multiple conditions. For instance, "Prime if drained or protected from flooding" gets assigned to "Prime if drained" and Prime if protected from flooding." 30-year climate normals of minimum, mean, and maximum monthly precipitation, temperature, and dew temperature were collected from PRISM Climate Group (\cite{PRISMClimate2021}) and aggregated by meterological season. Parcel irrigation status is based on annual 1997-2017 estimates at a resolution of 30 sq. meters, produced by the Landsat-based Irrigation Dataset, or LANID-US (\cite{Xie2021MappingStates}). We create two binary irrigation variables to record 1) whether the parcel had ever been irrigated prior to sale, and 2) whether it was irrigated at any point in the 3 years immediately preceding the sale. Irrigation, soil, and climate variable coverage extends across the conterminous United States. In the case of multi-parcel sales, we aggregate features across parcels (see Appendix).
+
+To incorporate information on local real estate markets, we add yearly all-transaction house price index values at the county level (\cite{FederalHousing2022}).
 
 With this expanded dataset, we model the fair market value of parcels in two ways: linear regression and extremely randomized trees, a decision tree-based bagging algorithm. Observed sale price is used as the conservation cost proxy in both modeling scenarios, which compare based on predictive accuracy, explanatory power, and variable importance or significance. Following Nolte (2020), the analysis is parallelized at the county level. We specify further models at the farm resource region level. Each linear regression exists in two forms: a baseline model including all 27 variables in Nolte (2020)’s analysis, as well as our added climate, soil, and irrigation variables; and a parsimonious model selected using Akaike information criterion. Extremely randomized trees are built with 500 base learners (trees), $\frac{p}{3}$ random features tried at each split, where $p$ is the total set of predictive features, and a required minimum leaf size of 3.
 
@@ -293,6 +309,3 @@ CONCLUSION
 \printbibliography
 
 \end{document}
-
-
->>>>>>> 25317643a1efad6251c72b2791cbf1ace0ae5c1c
