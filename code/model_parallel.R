@@ -129,7 +129,8 @@ fitRF <- function(j) {
     rf_fit <- tune::last_fit(ranger_workflow, rf_split) %>%
       dplyr::mutate(fips = county_df$fips[[1]],
                     n_obs = nrow(model_df),
-                    n_county = nrow(county_df))
+                    n_county = nrow(county_df),
+                    n_neighbor = nrow(neighbor_df))
     
     return(rf_fit)
   
@@ -202,7 +203,7 @@ for (i in 1:49) {
                  extract_fit_engine() %>%
                  .$num.samples,
                n_obs = state_rf_fit$n_obs[[.x]],
-               n_test = n_obs - n_train)) %>% bind_rows
+               n_test = n_obs - n_train)) %>% bind_rows()
     
     state_importance <- map(.x = seq_len(nrow(state_rf_fit)), 
                             .f = 

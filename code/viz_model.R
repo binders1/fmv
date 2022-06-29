@@ -50,16 +50,19 @@ library(patchwork)
 
 # Predicted-Actual Visualization ####
 
-setwd("/home/rstudio/users/gold1/fmv/data/model/rf")
+states <- list.files("~/fmv/data/cleaned") %>%
+  str_extract("[:upper:]{2}") %>%
+  sort()
 
-three_states <- c('AL','AR','AZ')
+setwd("~/fmv/data/model/county/rf")
 
-predictions <- map_dfr(three_states, 
-                       ~ read_parquet(paste0("predictions/pred_" ,.x, ".pqt")))
+predictions <- map_dfr(states, 
+                       ~ read_parquet(paste0("predictions/pred_" ,
+                                             .x, ".pqt")))
 
 
 predictions %>% 
-  #slice_sample(n = 50000) %>%
+  slice_sample(n = 50000) %>%
   ggplot(aes(.pred, log_priceadj_ha)) +
   
   geom_point(alpha = 0.2, color = "#327ba8", size =0.5) +
@@ -95,48 +98,52 @@ predictions %>%
 
 
 ### Clean Importance data ####
-state_importance <- 
-  map_dfr(three_states,
-          ~ read_parquet(
-            paste0("importance/import_" ,
-                   .x, ".pqt"))) %>%
+
+googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU")
+
+
+importance_df <- map_dfr(states, 
+                         ~ read_parquet(paste0('importance/import_', .x, ".pqt"))) 
+
+importance_clean <- importance_df %>%
   
   mutate(fips = ifelse(nchar(fips)==4, paste0("0",fips),
                        fips)) %>%
   
   mutate(state = str_sub(fips, 1, 2)) %>%
-  mutate(state = case_when(
-    state == "01" ~ "Alabama",
-    state == "04" ~ "Arizona",
-    state == "05" ~ "Arkansas")) %>%
   
   pivot_longer(
     cols = !c(fips,state),
     names_to = "Variable",
     values_to = "Importance") %>%
   
-  group_by(state, Variable) %>%
-  summarise(Importance = mean(Importance)) %>%
+  group_by(Variable) %>%
+  summarise(imp_mean = mean(Importance, na.rm = T),
+            imp_sd = sd(Importance, na.rm = T)) %>%
 
   mutate(group = case_when(
     str_detect(Variable, "^Dew") ~ "DewTemp",
     str_detect(Variable, "(?<!Dew)Temp") ~ "Temp",
-    str_detect(Variable, "^VALUE") ~ "Soil",
     str_detect(Variable, "Precip") ~ "Precip",
     str_detect(Variable, "frontage$") ~ "Water Frontage",
     TRUE ~ as.character(Variable)
   )) %>%
-  filter(group %in% c('DewTemp', 'Temp', 'Precip'))
-  group_by(state, group) %>%
-  summarise(Importance = mean(Importance)) %>%
-  filter(!is.na(Importance))
-  
+  filter(Variable != 'ha')
+
 ### Plot ####
-state_importance %>%
-ggplot(aes(Importance, Variable))+
-  geom_bar(stat = 'identity', fill = "#327ba8")+
+importance_clean %>%
+  group_by(group) %>%
+  summarise(across(imp_mean:imp_sd, mean)) %>%
   
-  facet_wrap(~ state)+
+  ggplot(aes(imp_mean, reorder(group, imp_mean)))+
+  #geom_bar(stat = 'identity', fill = "#46abdb")+
+  
+  geom_errorbar(aes(xmin=imp_mean-imp_sd, xmax=imp_mean+imp_sd),
+                width=.5, colour = "grey30")+
+  
+  geom_point(colour = "#2fb1bd")+
+  
+ # facet_wrap(~ state)+
   
 #  scale_x_continuous(limits = c(-0.005,2), 
 #                     expand = c(0,0))+
@@ -144,15 +151,16 @@ ggplot(aes(Importance, Variable))+
   annotate("segment", 
            x = 0, 
            xend = 0, 
-           y = "cst_2500", 
-           yend = "y", 
+           y = 1, 
+           yend = 45, 
            colour = "grey3",
            lty = 5)+
   
   labs(
-    title = "Feature Importance (Permutation)",
-    y = NULL
-  )+
+    title = "Feature Importance by County",
+    subtitle = "Mean permutation feature importance. Errors bars represent one std. dev.",
+    x = "Feature Importance",
+    y = NULL)+
   
   theme(
     panel.background = element_blank(),
@@ -166,19 +174,27 @@ ggplot(aes(Importance, Variable))+
 
 
 
+perform_df <- map_dfr(
+  states,
+  ~ read_parquet(paste0("performance/stats_", .x, ".pqt")))
 
+perform_df %>% 
+  mutate(log_obs = log(n_obs)) %>%
+  dplyr::select(!c(rmse,n_train,n_test)) %>%
+  usmap::plot_usmap(data = .,
+                    regions = c('counties'),
+                    exclude = c('AK','HI'),
+                    values = "log_obs",
+                    colour = "grey",
+                    size = 0.3)+
+  ggplot2::scale_fill_gradientn(
+    colours = noltecolors,
+    na.value = "lightgrey")+
+  
+  labs(
+    title = "Observations by County"
+  )
 
-
-
-perform_data <- map_dfr(three_states,
-        ~ read_parquet(
-          paste0("performance/stats_" ,
-                 .x, ".pqt"))) %>%
-  mutate(state = str_sub(fips, 1,2)) %>%
-  mutate(state = case_when(
-    state == "01" ~ "Alabama",
-    state == "04" ~ "Arizona",
-    state == "05" ~ "Arkansas"))
 
 
 AZ_mse <- perform_data %>%
