@@ -22,7 +22,8 @@ ag_regions_ref <- ag_regions %>%
          state = str_sub(fips, 1, 2)) %>%
   left_join(ag_regions_key)
 
-state_reference <- HPI_county %>% 
+state_reference <- HPI_county %>%
+  
   dplyr::select(fips, state) %>%
   rename(state_name = "state") %>%
   mutate(state = str_sub(fips, 1, 2)) %>%

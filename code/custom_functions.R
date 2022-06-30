@@ -53,46 +53,23 @@ irrFilter <- function(data, varname, years=NULL, replace_na = TRUE,
   }
 
 
-# FUNC: County Plot ####
+# FUNC: Register Google font ####
 
-countyPlot <- function(data, var, include, 
-                       colours = terrain.colors(50), 
-                       title = "TITLE",
-                       family = "IBM Plex Sans",
-                       font_size = 17,
-                       stat_name = "STAT",
-                       legend_position = "left",
-                       ...) {
+
+loadFont <- function(family) {
   
-  sysfonts::font_add_google(family)
+  tryCatch(
+    
+    sysfonts::font_add_google(family),
+    
+    error = function(e)
+      warning(family, "not found")
+    
+  )
+  
   showtext::showtext_auto()
-  
-  plot <- usmap::plot_usmap(
-    data = data,
-    values = var,
-    include = include,
-    colour = "grey92",
-    size = 0.2)+
-    
-    ggplot2::scale_fill_gradientn(
-      name = stat_name,
-      colours = colours,
-      na.value = "lightgrey",
-      ...)+
-    
-    ggplot2::labs(
-      title = title
-    )+
-    
-    ggplot2::theme(
-      legend.position = legend_position,
-      legend.background = ggplot2::element_blank(),
-      text = ggplot2::element_text(size = font_size, family = family)
-    )
-  
-  return(plot)
-  
 }
+
 
 # FUNC: Unregister cores ####
 unregister <- function() {

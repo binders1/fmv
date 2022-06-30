@@ -4,14 +4,14 @@ states <- list.files("~/fmv/data/cleaned") %>%
   str_extract("[:upper:]{2}") %>%
   sort()
 
-setwd("~/fmv/data/model/county/rf")
+setwd("~/fmv/data/model/county")
 
-predictions <- map_dfr(states, 
-                       ~ read_parquet(paste0("predictions/pred_" ,
+nolte_predictions <- map_dfr(states, 
+                       ~ read_parquet(paste0("nolte/predictions/pred_" ,
                                              .x, ".pqt")))
 
 
-predictions %>% 
+nolte_predictions %>% 
   slice_sample(n = 50000) %>%
   ggplot(aes(.pred, log_priceadj_ha)) +
   
@@ -24,7 +24,7 @@ predictions %>%
   scale_y_continuous(limits = c(-2,15))+
   
   
-  labs(title = "Prediction Accuracy",
+  labs(title = "Prediction Accuracy: Nolte",
        subtitle = "Extremely Randomized Trees. Cost units in logged 2020 $/ha",
        x = "Estimated Cost",
        y = "Actual Cost")+
@@ -177,6 +177,8 @@ dewtemp_imp <- importance_clean %>%
 
 
 ## Training/Testing Density ####
+setwd("~/fmv/data/model/county/nolte")
+# setwd("~/fmv/data/model/county/rf")
 
 perform_df <- map_dfr(
   states,
@@ -253,7 +255,7 @@ noltecolors <- c('#FBFDD0', '#40B5C4','#081D59')
 msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
 
 ### Map ####
-rsq_map <- perform_df %>%
+rsq_map_nolte <- perform_df %>%
   usmap::plot_usmap(data = .,
                     regions = c('counties'),
                     exclude = c('AK','HI'),
@@ -263,11 +265,12 @@ rsq_map <- perform_df %>%
   
   scale_fill_gradientn(
     colours = noltecolors,
-    na.value = "grey90"
+    na.value = "grey90",
+    limits = c(0.2,1)
   )+
   
   labs(
-    title = "Predictive Power (County)",
+    title = "Predictive Power (Nolte Features)",
     subtitle = glue::glue("Extremely randomized trees. N = {comma(sum(perform_df$n_test))}"),
     fill = "R-Sq"
   )+
@@ -313,7 +316,7 @@ mse_map_filter <- perform_df %>%
   scale_fill_gradientn(
     colours = msecolors,
     na.value = "grey90",
-    limits = c(0.5, 1.5)
+    limits = c(0.3, 3)
   )+
   
   labs(
@@ -329,7 +332,7 @@ mse_map_filter <- perform_df %>%
 
 
 mse_map + mse_map_filter +
-  plot_annotation(title = "Prediction Error (County)",
+  plot_annotation(title = "Prediction Error (Nolte Features)",
                   subtitle = glue::glue("Extremely randomized trees. N = {comma(sum(perform_df$n_test))}"),
                   caption = '\n(A) All observations \n(B) 10th to 90th percentile, outliers removed',
                   tag_levels = 'A') &
@@ -362,7 +365,7 @@ perform_df %>%
   facet_wrap(~stat, scales = "free")+
   
   labs(
-    title = "Model Performance (County)",
+    title = "Model Performance (Nolte)",
     subtitle = glue::glue("Extremely Randomized Trees. N = {comma(sum(perform_df$n_test))}"),
     y = "Count",
     x = NULL)+
@@ -378,7 +381,227 @@ perform_df %>%
     strip.background = element_blank()
   )
  
+## FRR Map ####
+
+ag_regions_ref %>%
+  mutate(id = as.character(id)) 
+
+frr_colors <- c(`Southern Seaboard` = "#C3AB1B", 
+                `Eastern Uplands` = "#71C276", 
+                `Basin and Range` = "#EEAB56", 
+                `Fruitful Rim` = "#AC842B", 
+                `Mississippi Portal` = "#A8D3F2", 
+                `Prairie Gateway` = "#A5A5A5", 
+                `Northern Great Plains` = "#F3A193", 
+                `Northern Crescent` = "#F1EC00", 
+                `Heartland` = "#CAC7A1")
 
 
- 
+usmap::plot_usmap(
+  data = ag_regions_ref,
+  values = "name",
+  regions = c('counties'),
+  exclude = c('AK', 'HI'),
+  colour = "white",
+  size= 0)+
+  
+  scale_fill_manual(
+    values = frr_colors,
+    na.value = "#F3A193")+
+  
+  labs(
+    title = "USDA Farm Resource Regions",
+    fill = "Farm Resource Region"
+  )+
+  theme(text = element_text(size = 30, colour = "grey30", family = "Source Sans Pro"),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        legend.position = "right")
+
+
+
+# Nolte Comparison ####
+
+## MSE and R-Sq ####
+
+setwd('~/fmv/data/model/county')
+nolte_perform <- map_dfr(
+  states,
+  ~ read_parquet(paste0("nolte/performance/stats_", .x, ".pqt"))) %>%
+  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}"))
+
+full_perform <- map_dfr(
+  states,
+  ~ read_parquet(paste0("rf/performance/stats_", .x, ".pqt"))) %>%
+  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}"))
+
+tibble(source = c('Nolte','Full'),
+       rsq_mean = c(mean(nolte_perform$rsq),
+                    mean(full_perform$rsq)),
+       rsq_sd = c(sd(nolte_perform$rsq),
+                  sd(full_perform$rsq)))
+
+statsCompare <- function(data, source_name) {
+  
+  out <- data %>%
+    summarise(across(c(rsq, mse), 
+                     .fns = list("mean" = mean, "sd" = sd))) %>%
+    mutate(source = source_name) %>%
+    pivot_longer(
+      cols = !source,
+      names_to = "stat",
+      values_to = "value"
+    ) %>%
+    separate(col = "stat",
+             sep = "_",
+             into = c('stat','measure')) %>%
+    pivot_wider(
+      names_from = measure,
+      values_from = value
+    )
+  
+  return(out)
+  
+}
+
+statsCompare(data = nolte_perform, source_name= "Nolte") %>%
+  bind_rows(
+    statsCompare(data = full_perform, source_name = "Full")
+  ) %>%
+  mutate(stat = case_when(
+    stat == "rsq" ~ "R-Squared",
+    stat == "mse" ~ "Mean Sq. Error"
+  )) %>%
+  
+  ggplot(aes(mean, source))+
+  
+  geom_errorbar(aes(xmin=mean-sd, xmax=mean+sd),
+                width=.1, size = 0.5, colour = "grey30")+
+  geom_point(size = 3, colour = "#2fb1bd")+
+  
+  facet_wrap(~stat, scales = "free_x")+
+  
+  labs(
+    title = "Model Comparison: Nolte vs. Full",
+    subtitle = "Average county-level performance. Error bars represent 1 std. deviation.",
+    caption = glue::glue("\n\n N = {comma(sum(nolte_perform$n_test))} (Nolte); N = {comma(sum(full_perform$n_test))} (Full)"),
+    x = NULL,
+    y = NULL
+  )+
+  
+  theme(
+    text = element_text(size = 25, family = "Source Sans Pro", colour = "grey30"),
+    plot.title = element_text(face = "bold"),
+    plot.caption = element_text(face = "italic"),
+    panel.background = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(size= 0.2, colour = "grey40"),
+    panel.grid.minor.x = element_line(size = 0.1, colour = "grey"),
+    panel.border = element_rect(colour = "grey20", fill = NA, size = 1),
+    axis.ticks.x = element_blank(),
+    strip.background = element_blank(),
+    strip.text.x = element_text(face= "italic")
+  )
+   
+
+## MSE and R-Sq map ####
+
+ratio_compare_df <- nolte_perform %>%
+  rename_with(.fn = ~ paste0(.x, "!!nolte"), .cols = !fips) %>%
+  left_join(
+    full_perform %>%
+      rename_with(.fn = ~ paste0(.x, "!!full"), .cols = !fips)
+  ) %>%
+  pivot_longer(
+    cols = !fips,
+    names_to = "stat",
+    values_to = "value"
+  ) %>%
+  separate(col = stat,
+           into = c('stat','source'),
+           sep = "!!") %>%
+  pivot_wider(
+    names_from = source,
+    values_from = value
+  ) %>%
+  dplyr::filter(stat %in% c('mse', 'rsq'))
+
+
+mse_ratio_compare <- ratio_compare_df %>%
+  dplyr::filter(stat == "mse") %>%
+  dplyr::mutate(mse_ratio = nolte/full) %>%
+  filter(!is.na(mse_ratio)) %>%
+  mutate(full_better = ifelse(mse_ratio<1, "Worse","Better"))
+
+mse_compare_map <- usmap::plot_usmap(data = mse_ratio_compare,
+                    regions = c('counties'),
+                    exclude = c('AK','HI'),
+                    values = "full_better",
+                    colour = "lightgrey",
+                    size = 0.2)+
+  scale_fill_manual(
+    values = c(
+      `Better` = "#5fb38b",
+      `Worse` = "#de844b"),
+    na.value = "grey95")+
+  
+  labs(
+    subtitle = "Mean Sq. Error",
+    fill = "Full Better than Nolte?"
+  )+
+  theme(
+    legend.position = c(0.68,-0.1),
+    legend.direction = "horizontal",
+    text = element_text(size = 25, colour = "grey30", family = "Source Sans Pro"),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic")
+  )
+
+
+rsq_ratio_compare <- ratio_compare_df %>%
+  dplyr::filter(stat == "rsq") %>%
+  dplyr::mutate(rsq_ratio = nolte/full) %>%
+  filter(!is.na(rsq_ratio)) %>%
+  mutate(full_better = ifelse(rsq_ratio<1, "Better","Worse"))
+
+rsq_compare_map <- usmap::plot_usmap(data = rsq_ratio_compare,
+                                     regions = c('counties'),
+                                     exclude = c('AK','HI'),
+                                     values = "full_better",
+                                     colour = "lightgrey",
+                                     size = 0.2)+
+  scale_fill_manual(
+    values = c(
+      `Better` = "#5fb38b",
+      `Worse` = "#de844b"),
+    na.value = "grey95")+
+  
+  labs(
+    subtitle = "R-Squared",
+    fill = "Full Better than Nolte?"
+  )+
+  theme(
+    legend.position = "none",
+    text = element_text(size = 25, colour = "grey30", family = "Source Sans Pro"),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic")
+  )
+
+library(patchwork)
+
+mse_compare_map + rsq_compare_map + 
+  plot_annotation(title = "Model Comparison by County") &
+  theme(plot.title = element_text(size =30, hjust = 0.5, family = "Source Sans Pro",
+                                  face = "bold", colour = "grey30"))
+
+
+## Plot comparison ####
+rsq_ratio_compare %>%
+  ggplot(aes(rsq_ratio, after_stat(count)))+
+  geom_density()
+
+ratio_compare_df %>%
+  mutate(ratio = )
+
+
+
+
+
   
