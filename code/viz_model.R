@@ -1,54 +1,4 @@
-# Maps ####
-
-noltecolors <- c('#FBFDD0', '#40B5C4','#081D59')
-
-msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
-
-mse_plot_rf <- countyPlot(collect_stats_rf,
-                          var = "mse",
-                          title = "Random Forest: Prediction Error by County",
-                          include = "Arkansas",
-                          stat_name = "Mean Sq. Error",
-                          colours = msecolors,
-                          limits = c(0,2.5))
-
-rsq_plot_rf <- countyPlot(collect_stats_rf,
-                          var = "rsq",
-                          title = "Random Forest: Predictive Power by County",
-                          include = "Arkansas",
-                          stat_name = "R-squared",
-                          colours = noltecolors,
-                          limits = c(0,0.75))
-
-
-mse_plot_base <- countyPlot(collect_stats_base,
-                            var = "mse",
-                            title = "Regression: Prediction Error by County",
-                            include = "Arkansas",
-                            stat_name = "Mean Sq. Error",
-                            colours = msecolors,
-                            limits = c(0,2.5))
-
-rsq_plot_base <- countyPlot(collect_stats_base,
-                            var = "r.squared",
-                            title = "Regression: Predictive Power by County",
-                            include = "Arkansas",
-                            stat_name = "R-squared",
-                            colours = noltecolors,
-                            limits = c(0,0.75))
-
-library(patchwork)
-
-(mse_plot_rf | mse_plot_base) /
-(rsq_plot_rf | rsq_plot_base) +
-  plot_annotation(caption = "Predicting log($/ha) with full set of Nolte (2020) features") &
-  theme(plot.caption = element_text(size = 20, face = "italic",
-                                    family = "IBM Plex Sans"))
-
-
-
-
-# Predicted-Actual Visualization ####
+## Predicted-Actual Visualization ####
 
 states <- list.files("~/fmv/data/cleaned") %>%
   str_extract("[:upper:]{2}") %>%
@@ -94,7 +44,7 @@ predictions %>%
         plot.background = element_blank())
 
 
-# Variable Importance ####
+## Variable Importance ####
 
 
 ### Clean Importance data ####
@@ -292,3 +242,143 @@ library(patchwork)
 
 train_density + test_density
 
+
+
+
+## MSE and R-Squared ####
+
+
+noltecolors <- c('#FBFDD0', '#40B5C4','#081D59')
+
+msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
+
+### Map ####
+rsq_map <- perform_df %>%
+  usmap::plot_usmap(data = .,
+                    regions = c('counties'),
+                    exclude = c('AK','HI'),
+                    values = "rsq",
+                    colour = "grey",
+                    size = 0.2)+
+  
+  scale_fill_gradientn(
+    colours = noltecolors,
+    na.value = "grey90"
+  )+
+  
+  labs(
+    title = "Predictive Power (County)",
+    subtitle = glue::glue("Extremely randomized trees. N = {comma(sum(perform_df$n_test))}"),
+    fill = "R-Sq"
+  )+
+  
+  theme(
+    text = element_text(size = 30, family = "Source Sans Pro", colour = "grey30"),
+    plot.title = element_text(face = "bold"),
+    legend.background = element_blank()
+  )
+
+mse_map <- perform_df %>%
+  usmap::plot_usmap(data = .,
+                    regions = c('counties'),
+                    exclude = c('AK','HI'),
+                    values = "mse",
+                    colour = "grey",
+                    size = 0.2)+
+  
+  scale_fill_gradientn(
+    colours = msecolors,
+    na.value = "grey90",
+    limits = c(0,5.5))+
+  
+  labs(
+    fill = "MSE"
+  )+
+  
+  theme(
+    legend.position = "right",
+    text = element_text(size = 30, family = "Source Sans Pro", colour = "grey30"),
+    legend.background = element_blank()
+  )
+
+mse_map_filter <- perform_df %>%
+  filter(mse <= 1.4 & mse >= 0.5) %>%
+  usmap::plot_usmap(data = .,
+                    regions = c('counties'),
+                    exclude = c('AK','HI'),
+                    values = "mse",
+                    colour = "grey",
+                    size = 0.2)+
+  
+  scale_fill_gradientn(
+    colours = msecolors,
+    na.value = "grey90",
+    limits = c(0.5, 1.5)
+  )+
+  
+  labs(
+    fill = "MSE"
+  )+
+  
+  theme(
+    legend.position = "right",
+    text = element_text(size = 30, family = "Source Sans Pro", colour = "grey30"),
+    plot.subtitle = element_text(face = "italic"),
+    legend.background = element_blank()
+  )
+
+
+mse_map + mse_map_filter +
+  plot_annotation(title = "Prediction Error (County)",
+                  subtitle = glue::glue("Extremely randomized trees. N = {comma(sum(perform_df$n_test))}"),
+                  caption = '\n(A) All observations \n(B) 10th to 90th percentile, outliers removed',
+                  tag_levels = 'A') &
+  theme(plot.title = element_text(size = 33, family = "Source Sans Pro",
+                            face = "bold", hjust = 0.5,
+                            colour = "grey30"),
+        plot.subtitle = element_text(size = 27, family = "Source Sans Pro",
+                                     hjust = 0.5, colour = "grey30"),
+        plot.caption = element_text(size = 27, family = "Source Sans Pro", 
+                                    hjust = 0.5),
+        plot.tag = element_text(size = 25))
+
+
+
+### Plot ####
+
+perform_df %>%
+  dplyr::select(fips, mse, rsq) %>%
+  pivot_longer(
+    cols = !fips,
+    names_to = "stat",
+    values_to = "value"
+  ) %>%
+  
+  mutate(stat = ifelse(stat=="mse","Mean Sq. Error", "R-Squared")) %>%
+  
+  ggplot(aes(value, after_stat(count)))+
+  
+  geom_density(fill = "grey", colour = "grey25")+
+  facet_wrap(~stat, scales = "free")+
+  
+  labs(
+    title = "Model Performance (County)",
+    subtitle = glue::glue("Extremely Randomized Trees. N = {comma(sum(perform_df$n_test))}"),
+    y = "Count",
+    x = NULL)+
+  
+  theme(
+    panel.background= element_blank(),
+    panel.border = element_rect(fill = NA, colour = "black", size = 1),
+    panel.grid = element_line(colour = "grey"),
+    axis.ticks = element_blank(),
+    text = element_text(size = 30, family = "Source Sans Pro", colour = "grey25"),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    strip.background = element_blank()
+  )
+ 
+
+
+ 
+  
