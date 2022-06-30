@@ -2,6 +2,10 @@
 library(tidyverse)
 library(googlesheets4)
 
+# Load custom functions ####
+
+source("~/fmv/code/custom_functions.R")
+
 
 # Load df of observations in FRR i ####
 
@@ -49,7 +53,7 @@ clean_to_load <- paste0("clean_", states_to_load, ".pqt") %>%
   
 
 ## Import current FRR dataframe ####
-setwd("/home/rstudio/users/gold1/fmv/data/cleaned")
+setwd("~/fmv/data/cleaned")
 
 df_import <- map_dfr(clean_to_load[1], ~ read_parquet(.x)) %>% 
   filter(fips %in% counties_to_include)
@@ -97,6 +101,8 @@ ranger_workflow <- workflow() %>%
 
 
 ## Model Fitting ####
+
+unregister()
 
 if(getDoParWorkers()<64) {
   
