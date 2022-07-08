@@ -20,7 +20,11 @@ ag_regions_ref <- ag_regions %>%
                        paste0("0",fips),
                        fips),
          state = str_sub(fips, 1, 2)) %>%
-  left_join(ag_regions_key)
+  left_join(ag_regions_key) %>%
+  mutate(fips = case_when(
+    fips == "46113" ~ "46102",
+    TRUE ~ as.character(fips)
+  ))
 
 state_reference <- HPI_county %>%
   

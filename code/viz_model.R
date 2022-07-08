@@ -10,6 +10,10 @@ nolte_predictions <- map_dfr(states,
                        ~ read_parquet(paste0("nolte/predictions/pred_" ,
                                              .x, ".pqt")))
 
+nolte_predictions <- map_dfr(states, 
+                             ~ read_parquet(paste0("nolte/predictions/pred_" ,
+                                                   .x, ".pqt")))
+
 
 nolte_predictions %>% 
   slice_sample(n = 50000) %>%
@@ -53,7 +57,7 @@ googlesheets4::range_read(ss = "1AejaWn1ZaNJBTWG2kFnhfq_rqpDKZETdrfUq41opSVU")
 
 
 importance_df <- map_dfr(states, 
-                         ~ read_parquet(paste0('importance/import_', .x, ".pqt"))) 
+                         ~ read_parquet(paste0('rf/importance/import_', .x, ".pqt"))) 
 
 importance_clean <- importance_df %>%
   
@@ -66,10 +70,6 @@ importance_clean <- importance_df %>%
     cols = !c(fips,state),
     names_to = "Variable",
     values_to = "Importance") %>%
-  
-  group_by(Variable) %>%
-  summarise(imp_mean = mean(Importance, na.rm = T),
-            imp_sd = sd(Importance, na.rm = T)) %>%
 
   mutate(group = case_when(
     str_detect(Variable, "^Dew") ~ "DewTemp",
@@ -77,38 +77,46 @@ importance_clean <- importance_df %>%
     str_detect(Variable, "Precip") ~ "Precip",
     str_detect(Variable, "frontage$") ~ "Water Frontage",
     TRUE ~ as.character(Variable)
-  )) %>%
-  filter(Variable != 'ha')
+  ))
 
 ### Plot ####
+
 importance_clean %>%
+  
+  group_by(group, fips) %>%
+  summarise(Importance = mean(Importance, na.rm = T)) %>%
+  
+  filter(!is.nan(Importance)) %>%
+  
+  arrange(group,fips) %>%
+  
+  
   group_by(group) %>%
-  summarise(across(imp_mean:imp_sd, mean)) %>%
+  mutate(imp_med = median(Importance)) %>%
   
-  ggplot(aes(imp_mean, reorder(group, imp_mean)))+
-  #geom_bar(stat = 'identity', fill = "#46abdb")+
+  filter(imp_med > 0.01, group != "ha") %>%
   
-  geom_errorbar(aes(xmin=imp_mean-imp_sd, xmax=imp_mean+imp_sd),
-                width=.5, colour = "grey30")+
+  ggplot(aes(Importance, 
+             reorder(group, imp_med))) +
   
-  geom_point(colour = "#2fb1bd")+
+  geom_jitter(width = 0.1, alpha = 0.3, 
+              colour = "lightblue", size = 0.75)+
   
- # facet_wrap(~ state)+
-  
-#  scale_x_continuous(limits = c(-0.005,2), 
-#                     expand = c(0,0))+
+  geom_boxplot(outlier.shape = NA) +
   
   annotate("segment", 
            x = 0, 
            xend = 0, 
            y = 1, 
-           yend = 45, 
-           colour = "grey3",
-           lty = 5)+
-  
+           yend = 27, 
+           colour = "#d63a3a",
+           lty = 5) +
+
+  scale_x_continuous(expand = c(0,0)) +
+    
   labs(
     title = "Feature Importance by County",
-    subtitle = "Mean permutation feature importance. Errors bars represent one std. dev.",
+    subtitle = "Permutation feature importance. Omitting median < 0.01 and hectare.",
     x = "Feature Importance",
     y = NULL)+
   
@@ -119,35 +127,84 @@ importance_clean %>%
     axis.ticks.y = element_line(size = 0.5),
     text = element_text(family = "IBM Plex Sans", size = 18),
     axis.title.x = element_text(face = "bold"),
-    plot.title = element_text(face= "bold")
+    plot.title = element_text(face= "bold"),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 10)
+  )
+
+
+### Ridgeline plot by Ag Region ####
+
+importance_clean %>%
+  
+  group_by(group, fips) %>%
+  summarise(Importance = mean(Importance, na.rm = T)) %>%
+  
+  filter(!is.nan(Importance)) %>%
+  
+  arrange(group,fips) %>%
+  
+  
+  group_by(group) %>%
+  mutate(imp_med = median(Importance)) %>%
+  ungroup() %>%
+  
+  filter(imp_med > 0.01, group != "ha") %>%
+  
+  left_join(ag_regions_ref) %>%
+  
+  mutate(ag_region = name, .keep = "unused") %>% 
+  filter(!is.na(ag_region)) %>% 
+  
+  ggplot(aes(Importance, reorder(group, imp_med))) +
+  
+  ggridges::geom_density_ridges() +
+  
+  facet_wrap(~ag_region) +
+  
+  scale_x_continuous(expand = c(0,0)) +
+  
+  labs(
+    title = "Feature Importance by Farm Resource Region",
+    subtitle = "Permutation feature importance. Omitting median < 0.01 and hectare.",
+    x = "Feature Importance",
+    y = NULL)+
+  
+  theme(
+    text = element_text(family = "IBM Plex Sans", size = 18),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, colour = "black"),
+    strip.background = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.title.x = element_text(face = "bold"),
+    plot.title = element_text(face= "bold"),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 10)
   )
 
 
 
 ## Climate Importance Plots ####
-dewtemp_imp <- importance_clean %>%
-  dplyr::filter(str_detect(Variable, "^DewTemp")) %>%
+importance_clean %>%
   
-  ggplot(aes(imp_mean, Variable))+
+  filter(str_detect(group, "(Temp|Precip)"),
+         !is.nan(Importance)) %>%
+  mutate(Variable = str_remove_all(Variable,"(Precip_|DewTempMean_|^Temp)"),
+         Variable = str_to_title(Variable)) %>%
   
-  geom_errorbar(aes(xmin=imp_mean-imp_sd, xmax=imp_mean+imp_sd),
-                width=.5, colour = "grey30")+
+    
+    ggplot(aes(Importance, Variable))+
+    
+    geom_jitter(width = 0.1, size = 0.75, alpha = 0.2, 
+              colour = "lightblue")+
+    geom_boxplot(outlier.shape = NA)+
+    
+    scale_x_continuous(limits = c(-0.1,0.2))+
   
-  geom_point(colour = "#2fb1bd")+
-  
-  scale_x_continuous(limits = c(0,0.15))+
-  
-  facet_wrap(~group)+
-  
-  annotate("segment", 
-           x = 0, 
-           xend = 0, 
-           y = 0.2, 
-           yend = 6, 
-           colour = "grey3",
-           lty = 5)+
-  
+  facet_wrap(~group, scales = "free")+
+
   labs(
+    title = 'Feature Importance: Climate',
+    subtitle = 'Mean permutation feature importance. 1.5 x IQR boxplots, extreme outliers removed for clarity.',
     x = "Feature Importance",
     y = NULL)+
   
@@ -156,21 +213,14 @@ dewtemp_imp <- importance_clean %>%
     panel.border = element_rect(fill = NA, colour = "black"),
     strip.background = element_blank(),
     axis.ticks.y = element_line(size = 0.5),
-    text = element_text(family = "Source Sans Pro", size = 18),
+    text = element_text(family = "IBM Plex Sans", size = 18),
     axis.title.x = element_text(face = "bold"),
     plot.title = element_text(face = "bold"),
-    strip.text = element_text(face = "bold", size = 20)
+    strip.text = element_text(face = "italic", size = 20),
+    panel.grid.major.x = element_line(colour = "darkgrey"),
+    plot.margin = margin(t = 10, r = 10, 
+                         b = 10, l = 10)
   )
-
-
-(dewtemp_imp | precip_imp | temp_imp) +
-  plot_annotation(
-    title = 'Feature Importance: Climate',
-    subtitle = 'Mean permutation feature importance. Errors bars represent one std. dev.') &
-  theme(plot.title = element_text(size = 30, face = "bold", family = "Source Sans Pro",
-                                  hjust = 0.5),
-        plot.subtitle = element_text(size = 20, family = "Source Sans Pro",
-                                     hjust= 0.5))
 
 
 
