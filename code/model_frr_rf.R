@@ -16,6 +16,8 @@ state_ref_tbl <-read_csv('https://gist.githubusercontent.com/dantonnoriega/bf1ac
 ## Build FRR-county reference table ####
 ss <- as_sheets_id("https://docs.google.com/spreadsheets/d/1rUfzSfVXLjYnI6hlO-WWR588hKI3NCMiPYHHc1JR2zs/edit#gid=1580896317")
 
+gs4_auth("gold1@stolaf.edu")
+
 ag_regions <-read_sheet(ss = ss, skip = 2)
 
 ag_regions_key <- ag_regions %>%
@@ -36,6 +38,10 @@ ag_regions_ref <- ag_regions %>%
          state = str_sub(fips, 1, 2)) %>%
   left_join(ag_regions_key) %>%
   left_join(state_ref_tbl, by = c('state' = 'st'))
+
+
+### Toy FRR id ####
+k <- 1
 
 ## Specify states to load in ####
 states_to_load <- ag_regions_ref %>%

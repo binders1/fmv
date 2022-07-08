@@ -1,3 +1,5 @@
+
+# Load pkgs ####
 library(tidymodels)
 library(tidyverse)
 library(usemodels)
@@ -112,7 +114,8 @@ fitRF <- function(j) {
     #### Engine, Mode, Method ####
     ranger_spec <-
       parsnip::rand_forest(mtry = length(names(train))/3, 
-                           min_n = 3, # increase required sample leaf size to avoid overfitting
+                           min_n = 3, # increase required sample leaf size 
+                                      # to avoid overfitting
                            trees = 500) %>% # try 250 trees
       parsnip::set_mode("regression") %>%
       parsnip::set_engine("ranger",
