@@ -6,8 +6,8 @@ states <- list.files("~/fmv/data/cleaned") %>%
 
 setwd("~/fmv/data/model/county")
 
-nolte_predictions <- map_dfr(states, 
-                       ~ read_parquet(paste0("nolte/predictions/pred_" ,
+full_predictions <- map_dfr(states, 
+                       ~ read_parquet(paste0("rf/predictions/pred_" ,
                                              .x, ".pqt")))
 
 nolte_predictions <- map_dfr(states, 
@@ -227,13 +227,16 @@ importance_clean %>%
 
 
 ## Training/Testing Density ####
-setwd("~/fmv/data/model/county/nolte")
-# setwd("~/fmv/data/model/county/rf")
+setwd("~/fmv/data/model/county")
 
 perform_df <- map_dfr(
   states,
-  ~ read_parquet(paste0("performance/stats_", .x, ".pqt"))) %>%
+  ~ read_parquet(paste0("rf/performance/stats_", .x, ".pqt"))) %>%
   mutate(across(n_train:n_test, .fns = log, .names = "log_{col}"))
+
+comma(sum(perform_df$n_train)) %>% cat()
+
+comma(sum(perform_df$n_test)) %>% cat()
 
 train_density <- usmap::plot_usmap(data = perform_df,
                     regions = c('counties'),
@@ -431,7 +434,7 @@ perform_df %>%
     strip.background = element_blank()
   )
  
-## FRR Map ####
+# FRR Map ####
 
 ag_regions_ref %>%
   mutate(id = as.character(id)) 
@@ -477,71 +480,56 @@ setwd('~/fmv/data/model/county')
 nolte_perform <- map_dfr(
   states,
   ~ read_parquet(paste0("nolte/performance/stats_", .x, ".pqt"))) %>%
-  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}"))
+  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}")) %>%
+  mutate(source = "Nolte") %>%
+  dplyr::select(source, rsq, mse, n_test)
 
 full_perform <- map_dfr(
   states,
   ~ read_parquet(paste0("rf/performance/stats_", .x, ".pqt"))) %>%
-  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}"))
+  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}")) %>%
+  mutate(source = "Full") %>%
+  dplyr::select(source, rsq, mse, n_test)
 
-tibble(source = c('Nolte','Full'),
-       rsq_mean = c(mean(nolte_perform$rsq),
-                    mean(full_perform$rsq)),
-       rsq_sd = c(sd(nolte_perform$rsq),
-                  sd(full_perform$rsq)))
-
-statsCompare <- function(data, source_name) {
+rbind(
+  full_perform,
+  nolte_perform) %>%
   
-  out <- data %>%
-    summarise(across(c(rsq, mse), 
-                     .fns = list("mean" = mean, "sd" = sd))) %>%
-    mutate(source = source_name) %>%
-    pivot_longer(
-      cols = !source,
-      names_to = "stat",
-      values_to = "value"
-    ) %>%
-    separate(col = "stat",
-             sep = "_",
-             into = c('stat','measure')) %>%
-    pivot_wider(
-      names_from = measure,
-      values_from = value
-    )
-  
-  return(out)
-  
-}
-
-statsCompare(data = nolte_perform, source_name= "Nolte") %>%
-  bind_rows(
-    statsCompare(data = full_perform, source_name = "Full")
+  pivot_longer(
+    cols = rsq:mse,
+    names_to = "stat",
+    values_to = "value"
   ) %>%
-  mutate(stat = case_when(
-    stat == "rsq" ~ "R-Squared",
-    stat == "mse" ~ "Mean Sq. Error"
-  )) %>%
   
-  ggplot(aes(mean, source))+
+  mutate(
+    stat = case_when(
+      stat == "rsq" ~ "R-Squared",
+      stat == "mse" ~ "Mean Sq. Error")
+    ) %>%
   
-  geom_errorbar(aes(xmin=mean-sd, xmax=mean+sd),
-                width=.1, size = 0.5, colour = "grey30")+
-  geom_point(size = 3, colour = "#2fb1bd")+
+  ggplot(aes(value, source)) +
   
-  facet_wrap(~stat, scales = "free_x")+
+  geom_boxplot(outlier.colour = "midnightblue",               
+               outlier.alpha = 0.4,
+               colour = "midnightblue") +
+  
+  facet_wrap(~stat, scales = "free_x") +
   
   labs(
     title = "Model Comparison: Nolte vs. Full",
-    subtitle = "Average county-level performance. Error bars represent 1 std. deviation.",
-    caption = glue::glue("\n\n N = {comma(sum(nolte_perform$n_test))} (Nolte); N = {comma(sum(full_perform$n_test))} (Full)"),
+    subtitle = "County-level performance of extremely randomized trees.",
+    caption = glue::glue("\n\n N = {comma(sum(nolte_perform$n_test))} (Nolte) 
+                         N = {comma(sum(full_perform$n_test))} (Full)"),
     x = NULL,
-    y = NULL
-  )+
+    y = NULL) +
   
   theme(
-    text = element_text(size = 25, family = "Source Sans Pro", colour = "grey30"),
+    text = element_text(size = 25, 
+                        family = "Source Sans Pro", 
+                        colour = "grey30"),
     plot.title = element_text(face = "bold"),
     plot.caption = element_text(face = "italic"),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 10),
     panel.background = element_blank(),
     panel.grid.major.y = element_blank(),
     panel.grid.major.x = element_line(size= 0.2, colour = "grey40"),
@@ -549,9 +537,8 @@ statsCompare(data = nolte_perform, source_name= "Nolte") %>%
     panel.border = element_rect(colour = "grey20", fill = NA, size = 1),
     axis.ticks.x = element_blank(),
     strip.background = element_blank(),
-    strip.text.x = element_text(face= "italic")
-  )
-   
+    strip.text.x = element_text(face= "italic"))
+ 
 
 ## MSE and R-Sq map ####
 
