@@ -26,33 +26,3 @@ ag_regions_ref <- ag_regions %>%
     TRUE ~ as.character(fips)
   ))
 
-state_reference <- HPI_county %>%
-  
-  dplyr::select(fips, state) %>%
-  rename(state_name = "state") %>%
-  mutate(state = str_sub(fips, 1, 2)) %>%
-  dplyr::select(state_name, state) %>%
-  filter(!duplicated(state_name)) %>%
-  filter(!is.na(state_name))
-
-
-soil_tbl %>%
-  pivot_longer(
-    cols = AL:WY,
-    names_to = "state_name",
-    values_to = "farmlndcl"
-  ) %>%
-  arrange(state_name) %>%
-  filter(!is.na(farmlndcl)) %>%
-  left_join(state_reference) %>%
-  left_join(ag_regions_ref) %>% 
-  filter(!is.na(name)) %>%
-  count(name, farmlndcl) %>%
-  count(farmlndcl) %>%
-  arrange(desc(n),farmlndcl) %>%  
-  write_sheet(
-    ss = "1AJlJgiMgMQXB9kNKMRuVP6_f5D60-bPmnBMGVYpVPYs",
-    sheet = "AgRegion"
-  )
-  
-

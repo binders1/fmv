@@ -1,3 +1,13 @@
+
+
+# Source custom function(s) ####
+
+source("~/fmv/code/functions/modImport.R")
+source("~/fmv/code/functions/loadFont.R")
+
+
+
+
 # Specify plot parameters ####
 
 
@@ -11,8 +21,20 @@ msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
 
 loadFont("Source Sans Pro", "IBM Plex Sans")
 
+## Specify state and FRR vectors ####
 
-# Load dataframes ####
+states <- list.files("~/fmv/data/cleaned") %>%
+  str_extract("[:upper:]{2}") %>%
+  sort()
+
+frr_vec <- as.character(seq_len(9))
+
+
+
+
+
+# Load model dataframes ####
+
 
 ## County models ####
 
@@ -22,18 +44,18 @@ setwd("~/fmv/data/model/county")
 
 
 #### Nolte performance ####
-county_perform_nolte <- map_dfr(
-  states,
-  ~ read_parquet(paste0("nolte/performance/stats_", .x, ".pqt"))) %>%
-  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}")) %>%
-  mutate(source = "Nolte")
+county_perform_nolte <- modImport(parent_dir = "nolte", 
+                                  stat_dir = "performance",
+                                  file_prefix = "stats_", 
+                                  file_suffix = states,
+                                  add_source = "Nolte")
 
 #### Full performance ####
-county_perform_full <- map_dfr(
-  states,
-  ~ read_parquet(paste0("rf/performance/stats_", .x, ".pqt"))) %>%
-  mutate(across(n_train:n_test, .fns = log, .names = "log_{col}")) %>%
-  mutate(source = "Full")
+county_perform_full <- modImport(parent_dir = "rf", 
+                                 stat_dir = "performance",
+                                 file_prefix = "stats_", 
+                                 file_suffix = states,
+                                 add_source = "Full")
 
 
 
@@ -41,11 +63,19 @@ county_perform_full <- map_dfr(
 
 #### Nolte Predictions ####
 
-county_pred_nolte
+county_pred_nolte <- modImport(parent_dir = "nolte", 
+                               stat_dir = "predictions",
+                               file_prefix = "pred_", 
+                               file_suffix = states,
+                               add_source = "Nolte")
 
 #### Full Predictions ####
 
-county_pred_full
+county_pred_full <- modImport(parent_dir = "rf", 
+                              stat_dir = "predictions",
+                              file_prefix = "pred_", 
+                              file_suffix = states,
+                              add_source = "Full")
 
 
 ### Importance ####
@@ -53,11 +83,19 @@ county_pred_full
 
 #### Nolte Importance ####
 
-county_imp_nolte
+county_imp_nolte <- modImport(parent_dir = "nolte", 
+                              stat_dir = "importance",
+                              file_prefix = "import_", 
+                              file_suffix = states,
+                              add_source = "Nolte")
 
 #### Full Importance ####
 
-county_imp_full
+county_imp_full <- modImport(parent_dir = "rf", 
+                             stat_dir = "importance",
+                             file_prefix = "import_", 
+                             file_suffix = states,
+                             add_source = "Full")
 
 
 
@@ -75,7 +113,11 @@ frr_perform_nolte
 
 #### Full Performance ####
 
-frr_perform_full
+frr_perform_full <- modImport(parent_dir = "rf", 
+                              stat_dir = "performance",
+                              file_prefix = "stats_frr_", 
+                              file_suffix = frr_vec,
+                              add_source = "Full")
 
 
 ### Predictions ####
@@ -86,7 +128,11 @@ frr_pred_nolte
 
 #### Full Predictions ####
 
-frr_pred_full
+frr_pred_full <- modImport(parent_dir = "rf", 
+                           stat_dir = "predictions",
+                           file_prefix = "pred_frr_", 
+                           file_suffix = frr_vec,
+                           add_source = "Full")
 
 
 ### Importance ####
@@ -97,6 +143,10 @@ frr_imp_nolte
 
 #### Full Importance ####
 
-frr_imp_full
+frr_imp_full <- modImport(parent_dir = "rf", 
+                          stat_dir = "importance",
+                          file_prefix = "import_frr_", 
+                          file_suffix = frr_vec,
+                          add_source = "Full")
 
 

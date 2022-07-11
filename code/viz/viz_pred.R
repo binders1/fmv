@@ -1,9 +1,5 @@
 ## Predicted-Actual Visualization ####
 
-states <- list.files("~/fmv/data/cleaned") %>%
-  str_extract("[:upper:]{2}") %>%
-  sort()
-
 setwd("~/fmv/data/model/county")
 
 full_predictions <- map_dfr(states, 
