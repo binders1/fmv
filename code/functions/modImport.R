@@ -35,7 +35,7 @@ modImport <- function(parent_dir, stat_dir,
     
     out <- purrr::map_dfr(
       file_suffix,
-      ~ read_parquet(paste0(path, .x, ".pqt"))
+      ~ arrow::read_parquet(paste0(path, .x, ".pqt"))
     ),
     
     error = function(e)

@@ -13,7 +13,7 @@ importance_county_clean <- county_imp_full %>%
   mutate(state = str_sub(fips, 1, 2)) %>%
   
   pivot_longer(
-    cols = !c(fips,state),
+    cols = !c(fips,state, source),
     names_to = "Variable",
     values_to = "Importance") %>%
   
