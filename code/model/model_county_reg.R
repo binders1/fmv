@@ -62,11 +62,6 @@ for (i in seq_len(length(all_clean))) {
     tibble(.pred = NA, log_priceadj_ha = NA, fips = NA) %>%
       slice(0)
   
-  collect_pred_test <- 
-    tibble(.pred = NA, log_priceadj_ha = NA, fips = NA) %>%
-      slice(0)
-
-  
   ### BASE Performance Stats ####
   
   collect_stats_base <- 
@@ -76,24 +71,12 @@ for (i in seq_len(length(all_clean))) {
                    nobs = NA, rmse = NA, fips = NA, percent_neighbor = NA) %>% 
     slice(0)
   
-  
-  ### BASE Variable Importance ####
-  collect_import_base <- 
-    tibble(name = c(paste0('estimate!!', names(df_import)),
-                    paste0("std.error!!", names(df_import))),
-           na = NA) %>%
-    separate(col = name, into = c('1','2'), sep ="!!") %>%
-    arrange(`2`) %>%
-    mutate(name = paste(`1`, `2`, sep = "!!"), 
-           .keep = "unused") %>%
-    pivot_wider(names_from = name, values_from = na) %>%
-    slice(0)
-  
   ### TEST Predictions ####
-  collect_stats_test <- 
+  
+  collect_pred_test <- 
     tibble(.pred = NA, log_priceadj_ha = NA, fips = NA) %>%
     slice(0)
-  
+
   
   ### TEST Performance Stats ####
   
@@ -302,25 +285,7 @@ for (i in seq_len(length(all_clean))) {
       collect_pred_test <- 
         rbind(collect_pred_test, county_pred_test)
         
-      #### Variable Importance ####
-      
-      # BASE #
-      county_import_base <- 
-        broom::tidy(baseMod) %>%
-        dplyr::select(term, estimate, std.error, p.value) %>%
-        filter(term != "(Intercept)") %>%
-        mutate(fips = state_counties[[j]]) %>%
-        pivot_wider(
-          names_from = term,
-          values_from = c(estimate, std.error, p.value),
-          names_sep = "!!"
-        )
 
-      collect_import_base <- 
-        rbind(collect_import_base, county_import_base)
-      
-      
-      
       #### AIC-selected variables ####
       
       collect_AIC_vars <- collect_AIC_vars %>%
