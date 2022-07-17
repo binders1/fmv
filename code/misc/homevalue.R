@@ -1,4 +1,3 @@
-# install.packages('fredr')
 library(fredr)
 
 Sys.setenv(FRED_API_KEY = "db828b951775e7f2dc8cc3c88541a117")
@@ -78,6 +77,9 @@ library(censusapi)
 apis <- listCensusApis()
 View(apis)
 
+### Set API key ####
+Sys.setenv(CENSUS_KEY="24a0e6e31ba71d8b3e0f70ba0b4037fd194d6aec")
+
 
 metadata <- listCensusMetadata(
   name = "2020/acs/acs5",
@@ -87,23 +89,77 @@ metadata <- listCensusMetadata(
 metadata %>% 
   filter(str_detect(name, "B25077")) %>%
   View()
+
+HPI_county <- readr::read_csv("~/fmv/data/HPIcounty.csv",
+                              show_col_types = F)
+
   
-homevalue <- getCensus(name = "acs/acs5",
-          vintage = 2020, 
-          vars = "B25077_001E", 
-          region = "county:*") %>% tibble() %>% 
+homevalue <- 
+  getCensus(name = "acs/acs5",
+            vintage = 2020, 
+            vars = "B25077_001E", 
+            region = "county:*") %>% 
   filter(!is.element(state, c('02','15','72'))) %>%
   mutate(fips = paste0(state,county)) %>%
   rename(med_val_2020 = 3)
 
-med_home_value <- HPI_tbl %>%
+med_home_value <- 
+  HPI_county %>%
   mutate(across(HPI_2000:HPI_2020, ~ .x/HPI_2020)) %>%
-  left_join(homevalue) %>%
+  left_join(homevalue, by = "fips") %>%
   mutate(across(HPI_2000:HPI_2020, ~ .x * med_val_2020)) %>%
   rename_with(.fn = ~ str_replace(.x, "HPI","VAL"), 
               .cols = HPI_2000:HPI_2020) %>%
-  filter(if_any(VAL_2000:VAL_2020, ~ !is.na(.x)))
+  filter(if_any(VAL_2000:VAL_2020, ~ !is.na(.x))) %>%
+  pivot_longer(
+    cols = VAL_2000:VAL_2020,
+    names_to = c("prefix","year"),
+    names_sep = "_",
+    values_to = "MEDHOMEVAL") %>%
+  mutate(year = as.numeric(year)) %>%
+  dplyr::select(fips, year, MEDHOMEVAL)
 
+## VIZ ####
+
+med_home_value %>%
+  
+  ggplot(aes(year, MEDHOMEVAL)) +
+  
+  geom_boxplot(aes(group = year),
+               colour = "grey30",
+               outlier.colour = "#1696d2", 
+               alpha = 0.3) + 
+  
+  scale_y_continuous(trans = "log10",
+                     labels = scales::comma) +
+
+  scale_x_continuous(breaks = c(2000,
+                               2005,
+                               2010,
+                               2015,
+                               2020)) +
+  
+  labs(title = "Median Home Value Over Time",
+       subtitle = "County-level observations",
+       caption = "*CPI-adjusted 2020 dollars",
+       y= "Median Home Value ($)*",
+       x = NULL) +
+  
+  theme(
+    text = element_text(family = "Source Sans Pro", size = 25),
+    axis.ticks.y = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major.y = element_line(colour = "grey", 
+                                    size = 0.3),
+    panel.grid.minor.y = element_line(colour = "lightgrey",
+                                      size = 0.2),
+    panel.border = element_rect(fill = NA, colour = "grey30",
+                                size = 1),
+    plot.title = element_text(face = "bold"),
+    plot.subtitle = element_text(size = 20),
+    plot.caption = element_text(face = "italic", size = 15),
+    plot.margin = margin(rep(10,4))
+  )
 
 
 
