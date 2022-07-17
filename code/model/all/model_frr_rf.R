@@ -56,6 +56,14 @@ ag_regions_ref <- ag_regions %>%
   left_join(state_ref_tbl, by = c('state' = 'st'))
 
 
+## Generate list of land-locked states ####
+
+source("~/fmv/code/functions/noCoast.R")
+no_cst_states <- noCoast()
+
+## Geneate median home value dataframe #### 
+source("~/fmv/code/functions/medHomeVal.R")
+med_home_value <- medHomeVal()
 
 
 # Loop through all FRRs ####
@@ -86,7 +94,6 @@ for(k in seq_len(nrow(ag_regions_key))) {
                           ".pqt") %>%
     sort()
   
-  
   ## Import current FRR dataframe ####
   
   setwd("~/fmv/data/cleaned")
@@ -101,7 +108,13 @@ for(k in seq_len(nrow(ag_regions_key))) {
   tic('Import complete')
   
   df_import <- map_dfr(clean_to_load, ~ read_parquet(.x)) %>% 
-    filter(fips %in% counties_to_include)
+    filter(fips %in% counties_to_include) %>%
+    mutate(state = str_sub(fips, 1, 2),
+           year = lubridate::year(date)) %>%
+    mutate(across(.cols = any_of(soil_vars),
+           .fns = ~ replace_na(.x, 0))) %>%
+    left_join(med_home_value, by = c("fips", "year")) %>%
+    select(!year)
   
   toc()
   
@@ -109,11 +122,40 @@ for(k in seq_len(nrow(ag_regions_key))) {
                              " obervations"))
   
   
-  model_df <- df_import %>%
-    mutate(across(.cols = any_of(soil_vars),
-                  .fns = ~ replace_na(.x, 0))) %>%
-    dplyr::select(!c(sid, fips, cst_2500, cst_50)) %>%
-    stats::na.omit()
+  imported_states <- 
+    str_sub(df_import$fips, 1, 2) %>% 
+    unique()
+  
+  imported_vars <- 
+    paste(names(df_import), collapse = ", ")
+  
+  
+  ## Replace NA cst_* with 0 for land-locked states
+  
+  if (str_detect(imported_vars, "cst_")) {
+   
+    model_df <- 
+      df_import %>%
+      mutate(across(.cols = starts_with("cst"),
+                    .fns = ~ case_when(
+                      state %in% no_cst_states & is.na(.x) ~ 0,
+                      TRUE ~ .x)
+                    )
+             ) %>%
+      dplyr::select(!fips) %>%
+      stats::na.omit()
+    
+  } else {
+    
+    model_df <- 
+      df_import %>%
+      mutate(cst_2500 = 0,
+             cst_50 = 0) %>%
+      dplyr::select(!fips) %>%
+      stats::na.omit()
+      
+    
+  }
   
   cli::cli_alert_info(paste0("After filtering: ", scales::comma(nrow(model_df)), 
                              " obervations"))
@@ -137,7 +179,8 @@ for(k in seq_len(nrow(ag_regions_key))) {
   ### Formula and Preprocessing ####
   ranger_recipe <- 
     recipes::recipe(formula = log_priceadj_ha ~ ., 
-                    data = train)
+                    data = train) %>%
+    update_role(sid, new_role = "id variable")
   
   ### Engine, Mode, Method ####
   ranger_spec <-

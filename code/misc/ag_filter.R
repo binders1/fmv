@@ -1,14 +1,4 @@
 
-
-ag_filter <- function(data) {
-  
-  out <- 
-    data 
-  
-  return(out)
-  
-}
-
 for (i in seq_len(length(all_sale))) {
   
   state <- str_extract(all_sale[[i]], "[:upper:]{2}")
