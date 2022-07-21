@@ -1,4 +1,3 @@
-# install.packages('fredr')
 library(fredr)
 
 Sys.setenv(FRED_API_KEY = "db828b951775e7f2dc8cc3c88541a117")
@@ -69,45 +68,6 @@ for (i in seq_len(nrow(HPI_county))) {
       sep = "")
   
 }
-
-
-
-## Actual Median House Prices ####
-
-library(censusapi)
-apis <- listCensusApis()
-View(apis)
-
-
-metadata <- listCensusMetadata(
-  name = "2020/acs/acs5",
-  type = "variables"
-)
-
-metadata %>% 
-  filter(str_detect(name, "B25077")) %>%
-  View()
-  
-homevalue <- getCensus(name = "acs/acs5",
-          vintage = 2020, 
-          vars = "B25077_001E", 
-          region = "county:*") %>% tibble() %>% 
-  filter(!is.element(state, c('02','15','72'))) %>%
-  mutate(fips = paste0(state,county)) %>%
-  rename(med_val_2020 = 3)
-
-med_home_value <- HPI_tbl %>%
-  mutate(across(HPI_2000:HPI_2020, ~ .x/HPI_2020)) %>%
-  left_join(homevalue) %>%
-  mutate(across(HPI_2000:HPI_2020, ~ .x * med_val_2020)) %>%
-  rename_with(.fn = ~ str_replace(.x, "HPI","VAL"), 
-              .cols = HPI_2000:HPI_2020) %>%
-  filter(if_any(VAL_2000:VAL_2020, ~ !is.na(.x)))
-
-
-
-
-
 
 
 

@@ -13,8 +13,9 @@ library(arrow)
 library(lubridate)
 
 
-setwd('~/fmv/code')
-source('custom_functions.R')
+setwd('~/fmv/code/functions')
+
+walk(list.files(), source)
 
 
 

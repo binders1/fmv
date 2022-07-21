@@ -3,8 +3,6 @@
 #
 #       Download
 #    Nolte .pqt data
-#         and
-#   Binder ArcResults
 # 
 #=========================
 
