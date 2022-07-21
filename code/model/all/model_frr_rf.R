@@ -15,8 +15,11 @@ gs4_auth("gold1@stolaf.edu")
 
 ## Load custom functions ####
 
-source("~/fmv/code/custom_functions.R")
+fdir <- "~/fmv/code/functions"
 
+walk(list.files(fdir),
+     ~ source(file.path(fdir, .x))
+     )
 
 ## Load soil category names ####
 soil_vars <- 
@@ -57,12 +60,9 @@ ag_regions_ref <- ag_regions %>%
 
 
 ## Generate list of land-locked states ####
-
-source("~/fmv/code/functions/noCoast.R")
 no_cst_states <- noCoast()
 
 ## Geneate median home value dataframe #### 
-source("~/fmv/code/functions/medHomeVal.R")
 med_home_value <- medHomeVal()
 
 
@@ -114,7 +114,7 @@ for(k in seq_len(nrow(ag_regions_key))) {
     mutate(across(.cols = any_of(soil_vars),
            .fns = ~ replace_na(.x, 0))) %>%
     left_join(med_home_value, by = c("fips", "year")) %>%
-    select(!year)
+    select(!c(year, HPI))
   
   toc()
   
@@ -221,12 +221,18 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   n_obs <- nrow(model_df)
   
+  n_train <- nrow(train)
+  
+  n_test <- nrow(test)
+  
   frr_stats <- collect_metrics(rf_fit) %>%
     dplyr::select(.metric, .estimate) %>%
     spread(.metric, .estimate) %>%
     mutate(
       mse = rmse^2,
       nobs = n_obs,
+      n_train = n_train,
+      n_test = n_test,
       id = k) %>%
     left_join(ag_regions_key, by = "id")
   
@@ -234,10 +240,18 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   ### Collect Predictions ####
   
-  frr_predictions <- collect_predictions(rf_fit) %>%
-    mutate(id = k)%>%
+  predictions <- 
+    rf_fit %>% 
+    unnest(.predictions) %>% 
+    select(.pred)
+  
+  frr_predictions <-
+    bind_cols(predictions, test) %>%
+    mutate(id = k,
+           fips = str_sub(sid, 1, 5)) %>%
     left_join(ag_regions_key,
-              by = "id")
+              by = "id") %>%
+    relocate(c(id, frr_name, fips))
   
   
   ### Variable Importance ####
@@ -261,7 +275,7 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   ## Write stats ####
   
-  setwd("~/fmv/data/model/FRR")
+  setwd("~/fmv/data/model/FRR/rf")
   
   write_parquet(frr_stats,
                 paste0("performance/stats_frr_", k, ".pqt"))
