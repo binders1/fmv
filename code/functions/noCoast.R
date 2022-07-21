@@ -9,7 +9,8 @@ noCoast <- function() {
     distinct() %>%
     filter(!is.element(abbr, c("AK", "HI")))
   
-  
+  ## Vector of all state pqt files ####
+  all_clean <- list.files()
   
   
   cst_present <- map(all_clean, 
