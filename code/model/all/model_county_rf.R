@@ -13,7 +13,9 @@ library(arrow)
 tidymodels_prefer()
 
 
-source('~/fmv/code/custom_functions.R')
+# Source custom functions ####
+source("~/fmv/code/functions/sourceFuncs.R")
+sourceFuncs()
 
 ## Load County Adjacency df ####
 county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv",

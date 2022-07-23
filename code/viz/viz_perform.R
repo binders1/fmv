@@ -127,44 +127,6 @@ perform_df %>%
     strip.background = element_blank()
   )
  
-# FRR Map ####
-
-ag_regions_ref %>%
-  mutate(id = as.character(id)) 
-
-frr_colors <- c(`Southern Seaboard` = "#C3AB1B", 
-                `Eastern Uplands` = "#71C276", 
-                `Basin and Range` = "#EEAB56", 
-                `Fruitful Rim` = "#AC842B", 
-                `Mississippi Portal` = "#A8D3F2", 
-                `Prairie Gateway` = "#A5A5A5", 
-                `Northern Great Plains` = "#F3A193", 
-                `Northern Crescent` = "#F1EC00", 
-                `Heartland` = "#CAC7A1")
-
-
-usmap::plot_usmap(
-  data = ag_regions_ref,
-  values = "name",
-  regions = c('counties'),
-  exclude = c('AK', 'HI'),
-  colour = "white",
-  size= 0)+
-  
-  scale_fill_manual(
-    values = frr_colors,
-    na.value = "#F3A193")+
-  
-  labs(
-    title = "USDA Farm Resource Regions",
-    fill = "Farm Resource Region"
-  )+
-  theme(text = element_text(size = 30, colour = "grey30", family = "Source Sans Pro"),
-        plot.title = element_text(face = "bold", hjust = 0.5),
-        legend.position = "right")
-
-
-
 
 ## MSE and R-Sq map ####
 
