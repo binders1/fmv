@@ -65,27 +65,72 @@ val_error <-
   mutate(sq_error = (val_est - MEDHOMEVAL)^2)
 
 
+
 val_error %>%
+  na.omit() %>%
+  ggplot(aes(sq_error)) + 
+  geom_histogram(alpha = 0.7, fill = msecolors[3]) +
+  scale_x_log10(labels = scales::scientific) + 
+  
+  scale_y_continuous(expand = c(0,0),
+                     limits = c(0, 5000)) +
+  
+  labs(
+    title = "MHV Estimates Based on HPI are Distributed Log Normally",
+    x = "Sq. Error (log scale)",
+    y = "Count"
+  ) +
+  
+  theme(
+    text = element_text(family = "Lato", size = 25, colour = "grey30"),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, size = 1, colour = "grey20"),
+    panel.grid.major.y = element_line(colour = "grey"),
+    panel.grid.major.x = element_blank(),
+    plot.margin = margin(rep(20,4)),
+    axis.ticks.y = element_blank()
+  )
+
+val_error %>%
+  na.omit() %>%
   mutate(year = fct_inorder(as.character(year))) %>%
-  ggplot(aes(year, sq_error)) +
+  ggplot(aes(year, sqrt(sq_error))) +
   
-  geom_boxplot() +
+  geom_boxplot(outlier.colour = "grey30",
+               outlier.alpha = 0.5) +
   
-  scale_y_log10()
+  scale_y_log10(labels = scales::comma) +
+  
+  labs(
+    title = "Error from Estimating Home Value with HPI is Consistently Large",
+    subtitle = "Root squared error increases with distance from 2020. Points represent county observations.",
+    y = "Root Sq. Error (log scale)",
+    x = NULL
+  ) +
+  
+  theme(
+    text = element_text(family = "Lato", size = 25, colour = "grey30"),
+    panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, size = 1, colour = "grey20"),
+    panel.grid.major.y = element_line(colour = "grey"),
+    panel.grid.major.x = element_blank(),
+    plot.margin = margin(rep(10,4)),
+    axis.ticks.y = element_blank()
+  )
 
-geom_bar()
 
-lmse_df <- 
+
+lrmse_df <- 
   val_error %>%
   group_by(fips) %>%
-  summarise(log_mse = log(mean(sq_error)))
+  summarise(log_rmse = log(sqrt(mean(sq_error))))
 
 
 usmap::plot_usmap(
-  data = lmse_df,
+  data = lrmse_df,
   regions = c("counties"),
   exclude = c("AK", "HI"),
-  values = "log_mse",
+  values = "log_rmse",
   size = 0,
 ) +
   
@@ -94,14 +139,14 @@ usmap::plot_usmap(
   
   labs(
     title = "Estimating Home Value with HPI Produces Large Error",
-    subtitle = "2010-2019 median home values were estimated using 2010-2019 HPI and 2020 MHV",
+    subtitle = "Med Home Value in county *i* in year *j* was estimated as *MHV^j,i = HPI^j,i x MHV^2020,i*",
     caption = "Sources: US Federal Housing Finance Agency (HPI); American Community Survey (MHV)",
-    fill = "Log MSE"
+    fill = "Log RMSE"
   ) +
   
   theme(
     text = element_text(size = 25, family = "Lato"),
-    plot.subtitle = element_text(size = 17),
+    plot.subtitle = element_markdown(size = 17),
     plot.caption = element_text(size = 15, face = "italic"),
     legend.background = element_blank()
   )
