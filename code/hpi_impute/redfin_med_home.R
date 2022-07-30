@@ -1,4 +1,6 @@
 # source: https://www.redfin.com/news/data-center/
+
+setwd("~/fmv/data/hpi_impute/redfin")
 redfin_data <- read_tsv(
   gzfile("county_market_tracker.tsv000.gz")
   )

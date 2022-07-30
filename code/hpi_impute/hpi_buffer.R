@@ -12,7 +12,7 @@ county_clean <-
   arrange(fips) %>%
   st_as_sf()
 
-county_buffer <- st_buffer(county_clean, 150000)
+county_buffer <- st_buffer(county_clean[1:10,], 150000)
 
 # Intersect Analysis ####
 
