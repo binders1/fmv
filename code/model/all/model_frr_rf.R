@@ -35,9 +35,9 @@ state_ref_tbl <-read_csv('https://gist.githubusercontent.com/dantonnoriega/bf1ac
                          show_col_types = F)
 
 ## Build FRR-county reference table ####
-ss <- as_sheets_id("https://docs.google.com/spreadsheets/d/1rUfzSfVXLjYnI6hlO-WWR588hKI3NCMiPYHHc1JR2zs/edit#gid=1580896317")
+ss <- as_sheets_id("1rUfzSfVXLjYnI6hlO-WWR588hKI3NCMiPYHHc1JR2zs")
 
-ag_regions <-read_sheet(ss = ss, skip = 2)
+ag_regions <- read_sheet(ss = ss, skip = 2)
 
 ag_regions_key <- ag_regions %>%
   dplyr::select(7) %>%
@@ -171,7 +171,8 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   # split data
   set.seed(319)
-  rf_split <- rsample::initial_split(model_df, strata = log_priceadj_ha)
+  rf_split <- rsample::initial_split(model_df, 
+                                     strata = log_priceadj_ha)
   train <- rsample::training(rf_split)
   test <- rsample::testing(rf_split)
   
@@ -196,7 +197,8 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   
   ### Build Workflow ####
-  ranger_workflow <- workflow() %>% 
+  ranger_workflow <- 
+    workflow() %>% 
     add_recipe(ranger_recipe) %>% # the recipe in the formula
     add_model(ranger_spec) # the parameters, engine, importance methods, etc.
   
@@ -277,7 +279,7 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   ## Write stats ####
   
-  setwd("~/fmv/data/model/FRR/rf")
+  setwd("~/fmv/data/model/all/FRR/rf")
   
   write_parquet(frr_stats,
                 paste0("performance/stats_frr_", k, ".pqt"))
