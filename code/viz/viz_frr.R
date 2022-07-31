@@ -4,6 +4,33 @@ FRR_perform <- map_dfr(list.files(), read_parquet)
 
 
 FRR_perform %>%
+  mutate(frr_name = fct_reorder(frr_name, nobs)) %>%
+  ggplot(aes(nobs, frr_name, fill = frr_name)) +
+  geom_bar(stat = "identity") +
+  
+  scale_fill_manual(values = frr_colors) +
+  
+  scale_x_continuous(labels = scales::comma,
+                     expand = c(0,0),
+                     limits = c(0,1.25e+06)) + 
+  
+  labs(title = "Sample Size by Farm Resource Region",
+       subtitle = "Input data for extremely randomized trees, training and testing.",
+       y = NULL, x = "Sample Size") +
+  
+  theme(axis.ticks = element_blank(), 
+        text = element_text(size = 20, colour = "grey30",
+                            family = "Source Sans Pro"),
+        plot.title = element_text(size = 30, face = "bold"),
+        legend.position = "none",
+        panel.background = element_blank(),
+        panel.grid = element_line(colour = "grey92"),
+        panel.border = element_rect(fill = NA, colour = "grey30"),
+        plot.background = element_blank(),
+        plot.margin = margin(rep(15,4)))
+
+# R-Sq, MSE, N ####
+FRR_perform %>%
   select(frr_name, mse, rsq, nobs) %>%
   mutate(frr_name = fct_reorder(frr_name, rsq)) %>%
   pivot_longer(
@@ -47,4 +74,40 @@ FRR_perform %>%
         plot.margin = margin(rep(10,4)))
   
   
+# FRR Map ####
+
+ag_regions_ref %>%
+  mutate(id = as.character(id)) 
+
+frr_colors <- c(`Southern Seaboard` = "#C3AB1B", 
+                `Eastern Uplands` = "#71C276", 
+                `Basin and Range` = "#EEAB56", 
+                `Fruitful Rim` = "#AC842B", 
+                `Mississippi Portal` = "#A8D3F2", 
+                `Prairie Gateway` = "#A5A5A5", 
+                `Northern Great Plains` = "#F3A193", 
+                `Northern Crescent` = "#F1EC00", 
+                `Heartland` = "#CAC7A1")
+
+
+usmap::plot_usmap(
+  data = ag_regions_ref,
+  values = "name",
+  regions = c('counties'),
+  exclude = c('AK', 'HI'),
+  colour = "white",
+  size= 0)+
+  
+  scale_fill_manual(
+    values = frr_colors,
+    na.value = "#F3A193")+
+  
+  labs(
+    title = "USDA Farm Resource Regions",
+    fill = "Farm Resource Region"
+  )+
+  theme(text = element_text(size = 30, colour = "grey30", family = "Source Sans Pro"),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        legend.position = "right")
+
 

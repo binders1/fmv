@@ -2,10 +2,8 @@ library(tidyverse)
 
 # Source custom function(s) ####
 
-source("~/fmv/code/functions/modImport.R")
-source("~/fmv/code/functions/loadFont.R")
-
-
+source("~/fmv/code/functions/sourceFuncs.R")
+sourceFuncs()
 
 
 # Specify plot parameters ####
@@ -19,7 +17,7 @@ msecolors <- c('#549A79', '#FDF2A9', '#C3546E')
 
 ## Load plot fonts ####
 
-loadFont("Source Sans Pro", "IBM Plex Sans")
+loadFont("Source Sans Pro", "IBM Plex Sans", "Lato")
 
 ## Specify state and FRR vectors ####
 

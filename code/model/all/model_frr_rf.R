@@ -62,9 +62,9 @@ ag_regions_ref <- ag_regions %>%
 ## Generate list of land-locked states ####
 no_cst_states <- noCoast()
 
-## Geneate median home value dataframe #### 
-med_home_value <- medHomeVal()
-
+## Load (imputed) median home value dataframe #### 
+medhomeval <-
+  read_parquet("~/fmv/data/mhv_impute/mhv_impute_complete.pqt")
 
 # Loop through all FRRs ####
 
@@ -107,14 +107,16 @@ for(k in seq_len(nrow(ag_regions_key))) {
   
   tic('Import complete')
   
-  df_import <- map_dfr(clean_to_load, ~ read_parquet(.x)) %>% 
+  df_import <- map_dfr(clean_to_load, ~ read_parquet(.x)) %>%
+    select(!HPI) %>%
     filter(fips %in% counties_to_include) %>%
     mutate(state = str_sub(fips, 1, 2),
            year = lubridate::year(date)) %>%
     mutate(across(.cols = any_of(soil_vars),
            .fns = ~ replace_na(.x, 0))) %>%
-    left_join(med_home_value, by = c("fips", "year")) %>%
-    select(!c(year, HPI))
+    left_join(medhomeval, by = c("fips", "year")) %>%
+    select(!year) %>%
+    relocate(final_mhv, .after = "date")
   
   toc()
   
