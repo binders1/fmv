@@ -80,8 +80,11 @@ fips_missing_hpi <-
 
 ## Load county buffer dataframe ####
 buffer_neighbors <-
-  read_parquet("~/fmv/data/hpi_impute/hpi_buffer.pqt") %>%
-  rename(fips = "county_1", buffer_fips = "county_2")
+  read_parquet("~/fmv/data/hpi_impute/hpi_buffer.pqt")
+
+buffer_neighbors %<>%
+  filter(fips != buffer_fips) %>%
+  mutate(inv_dist_sq = 1/(dist_m^2))
 
 
 # IMPUTE WITH MODEL ####
@@ -106,12 +109,25 @@ for (i in seq_len(length(fips_missing_hpi))) {
            buffer_fips != current_fips) %>%
     pull(buffer_fips)
   
+  neighbor_distances <-
+    buffer_neighbors %>%
+    filter(fips == current_fips,
+           buffer_fips != current_fips) %>%
+    select(
+      fips = "buffer_fips",
+      inv_dist_sq
+    )
+  
   ### Take year-specific mean of medhomeval in buffer-neighbors ####
   current_imputed_fips <- 
     all_study_with_missing %>%
     filter(fips %in% current_neighbors) %>%
+    left_join(neighbor_distances,
+              by = "fips") %>%
     group_by(year) %>%
-    summarise(mhv_imputed = mean(medhomeval, na.rm = T)) %>%
+    summarise(mhv_imputed = weighted.mean(medhomeval,
+                                          inv_dist_sq,
+                                          na.rm = T)) %>%
     mutate(fips = current_fips) %>%
     relocate(fips)
   
@@ -143,8 +159,6 @@ mhv_imputed <-
       is.na(mhv_imputed) ~ medhomeval,
       TRUE ~ mhv_imputed
     ))
-
-
 
 # Save imputed values ####
 

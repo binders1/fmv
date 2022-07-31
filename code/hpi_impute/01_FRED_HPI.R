@@ -1,9 +1,22 @@
+
+#================================#
+#
+# Retrieve 2000-2020 HPI for all
+# (available) counties from 
+# FRED API
+#
+#================================#
+
+
+# Set Up ####
+## Load package ####
 library(fredr)
 
+## Set API key ####
 Sys.setenv(FRED_API_KEY = "db828b951775e7f2dc8cc3c88541a117")
 
 
-## Home Price Index by County ####
+# Home Price Index by County ####
 
 HPI_1 <- fredr_release_series(171, 
                               offset = 0,
