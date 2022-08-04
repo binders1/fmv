@@ -1,3 +1,13 @@
+#===================================#
+#
+#  Nolte County Model w/o HPI    ####
+#
+#===================================#
+
+
+# Set up ####
+
+## Load Packages ####
 library(tidymodels)
 library(tidyverse)
 library(usemodels)
@@ -11,7 +21,26 @@ library(arrow)
 tidymodels_prefer()
 
 
-source('~/fmv/code/custom_functions.R')
+## Set dirs ####
+
+root <- "~/fmv"
+
+ddir <- file.path(root, "data")
+cdir <- file.path(root, "code")
+odir <- file.path(root, "output")
+
+f_dir <- file.path(cdir, "functions")
+m_dir <- file.path(cdir, "model")
+
+clean_dir <- file.path(ddir, "cleaned")
+
+
+
+## Source custom functions ####
+walk(
+  file.path(f_dir, list.files(f_dir)),
+  source
+  )
 
 ## Load County Adjacency df ####
 county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv",
@@ -19,24 +48,26 @@ county_adjacency <- readr::read_csv("https://data.nber.org/census/geo/county-adj
 
 
 ## Load Nolte (2020) features
+noltevars_path <- file.path(ddir, "nolte2020vars.csv")
 
-setwd("~/fmv/data")
-nolte2020vars <- read_csv("nolte2020vars.csv",
-                          show_col_types = F) %>% 
+nolte2020vars <- 
+  read_csv(noltevars_path,
+           show_col_types = F) %>% 
   pull()
 
+
 ## Set working directory ####
-setwd("~/fmv/data/cleaned")
+
 
 ## Vector of all state pqt files ####
-all_clean <- list.files()
+all_clean <- list.files(clean_dir)
 
 
 # Loop through all 49 states ####
 for (i in 1:49) {
   
   # (re)set working directory to clean data folder
-  setwd("~/fmv/data/cleaned")
+  clean_path <- file.path(clean_dir, all_clean)
   
   ## Current state ####
   state <- stringr::str_extract(all_clean[[i]], "[:upper:]{2}")
@@ -47,7 +78,7 @@ for (i in 1:49) {
   tryCatch(
     
     ## Import current state df ####
-    df_import <- arrow::read_parquet(all_clean[[i]]),
+    df_import <- arrow::read_parquet(clean_path[[i]]),
     
     error = function(e)
       cat('\n\n Data import error occured in', state)
@@ -62,7 +93,7 @@ for (i in 1:49) {
   
   ## County Models ####
   
-  unregister()
+  unregisterCores()
   
   if(foreach::getDoParWorkers()<64) {
     
@@ -74,7 +105,9 @@ for (i in 1:49) {
     
     tryCatch(
       
-      fitRF(j),
+      fitRF(j, 
+            log_priceadj_ha, fips, sid, x45, y45, 
+            dplyr::any_of(nolte2020vars)),
       
       error = function(e)
         cat('\n\n Error occured in county \n\n', 
@@ -82,58 +115,107 @@ for (i in 1:49) {
       
     )
     
-  } %>%
-    bind_rows()
-  
-  unregister()
+  }
   
   
+  ### Extract Test Set and Mod Fit ####
+  
+  #### Test Set ####
+  state_test <- tibble()
+  
+  for (i in seq_len(length(state_rf_fit))) {
+    
+    state_test <-
+      rbind(
+        state_test,
+        state_rf_fit[[i]][[1]]
+      )
+    
+  }
+  
+  state_mod <- tibble()
+  
+  for (i in seq_len(length(state_rf_fit))) {
+    
+    state_mod <-
+      rbind(
+        state_mod,
+        state_rf_fit[[i]][[2]]
+      )
+    
+  }
+  
+  unregisterCores()
+  
+  
+  if (nrow(state_test) > 0) {
   
   ## Collect Pred/Stats/Import ####
   
-  state_predictions <- map(.x = seq_len(nrow(state_rf_fit)),
-                           .f = ~ state_rf_fit$.predictions[[.x]] %>%
-                             dplyr::mutate(fips = state_rf_fit$fips[[.x]])) %>% bind_rows()
+  state_predictions <- 
+    state_mod %>% 
+    select(.predictions) %>% 
+    unnest(.predictions) %>%
+    select(.pred) %>%
+    bind_cols(., state_test)
   
-  state_stats <- map(.x = seq_len(nrow(state_rf_fit)),
-                     .f = ~ state_rf_fit$.metrics[[.x]] %>%
-                       dplyr::select(.metric, .estimate) %>%
-                       dplyr::mutate(fips = state_rf_fit$fips[[.x]]) %>%
-                       pivot_wider(
-                         names_from = .metric,
-                         values_from = .estimate
-                       ) %>%
-                       mutate(mse = rmse^2,
-                              n_train = state_rf_fit$.workflow[[.x]] %>% 
-                                extract_fit_engine() %>%
-                                .$num.samples,
-                              n_obs = state_rf_fit$n_obs[[.x]],
-                              n_test = n_obs - n_train)) %>% bind_rows()
+  state_stats <-
+    state_mod %>% 
+    select(.metrics, fips) %>% 
+    unnest(.metrics) %>%
+    select(.metric, .estimate, fips) %>%
+    pivot_wider(
+      names_from = .metric,
+      values_from = .estimate) %>%
+    mutate(mse = rmse^2,
+           n_train = map_int(seq_len(nrow(state_mod)), 
+                             ~ state_mod$.workflow[[.x]] %>%
+                               extract_fit_engine() %>%
+                               .$num.samples),
+           n_obs = state_mod$n_obs,
+           n_test = n_obs - n_train,
+           n_neighbor = state_mod$n_neighbor)
   
-  state_importance <- map(.x = seq_len(nrow(state_rf_fit)), 
+  state_importance <- map(.x = seq_len(nrow(state_mod)), 
                           .f = 
-                            ~ state_rf_fit$.workflow[[.x]] %>%
+                            ~ state_mod$.workflow[[.x]] %>%
                             extract_fit_parsnip() %>%
                             vip::vi() %>%
                             pivot_wider(
                               names_from = Variable,
                               values_from = Importance) %>%
-                            mutate(fips = state_rf_fit$fips[[.x]])) %>% bind_rows()
+                            mutate(fips = state_mod$fips[[.x]])) %>% bind_rows()
   
   
   
   
   ## Write state-level model stats to file ####
-  setwd("~/fmv/data/model/county/nolte")
+  nolte_county_dir <- file.path(ddir, "model/nolte/county/base")
+  
+  pred_dir <- file.path(nolte_county_dir, "predictions")
+  perform_dir <- file.path(nolte_county_dir, "performance")
+  imp_dir <- file.path(nolte_county_dir, "importance")
+  
+  pred_file <- paste0("pred_", state, ".pqt")
+  perform_file <- paste0('stats_', state, ".pqt")
+  imp_file <- paste0('import_', state, ".pqt")
+  
+  
   write_parquet(state_predictions, 
-                paste0("predictions/pred_",state, ".pqt"))
+                file.path(pred_dir, pred_file))
   
   write_parquet(state_stats, 
-                paste0('performance/stats_', state, ".pqt"))
+                file.path(perform_dir, perform_file))
   
   write_parquet(state_importance, 
-                paste0('importance/import_', state, ".pqt"))
+                file.path(imp_dir, imp_file))
   
   cat('\n\n Finished:',state, "\n\n")
+  
+  } else {
+    
+    cat('\n\n No obs in: ',state, ". Moving on...\n\n", sep = "")
+    
+  }
   
 }
