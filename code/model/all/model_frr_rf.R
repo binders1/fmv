@@ -68,7 +68,7 @@ medhomeval <-
 
 # Loop through all FRRs ####
 
-for(k in seq_len(nrow(ag_regions_key))) {
+for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
   
   frr_name <- ag_regions_key %>%
     filter(id == k) %>%
@@ -144,7 +144,7 @@ for(k in seq_len(nrow(ag_regions_key))) {
                       TRUE ~ .x)
                     )
              ) %>%
-      dplyr::select(!fips) %>%
+      dplyr::select(!c(fips, state)) %>%
       stats::na.omit()
     
   } else {
@@ -153,7 +153,7 @@ for(k in seq_len(nrow(ag_regions_key))) {
       df_import %>%
       mutate(cst_2500 = 0,
              cst_50 = 0) %>%
-      dplyr::select(!fips) %>%
+      dplyr::select(!c(fips, state)) %>%
       stats::na.omit()
       
     
