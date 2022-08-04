@@ -1,13 +1,12 @@
 # FUNC: given a county dataframe, fits an ERT model ####
 
 # Purpose: low-level nested function within county ERT models. 
-# See ~/fmv/code/model/model_county_rf for use case
 
 # Args ####
 ## j: integer value of county, indexed within the state_counties vector 
+## ...: variables to be included for modeling (log_priceadj_ha, sid, and fips must be included)
 
-
-fitRF <- function(j) {
+fitRF <- function(j, ...) {
   
   HPI_na <- sum(is.na(df_import$HPI))
   
@@ -51,23 +50,23 @@ fitRF <- function(j) {
       model_df <- dplyr::bind_rows(county_df,
                                    neighbor_df %>% 
                                      slice_sample(n = rows_needed)) %>%
-        dplyr::select(log_priceadj_ha, fips, sid, dplyr::any_of(nolte2020vars)) %>%
+        dplyr::select(...) %>%
         stats::na.omit()
       
       mod_nrow <- nrow(dplyr::bind_rows(county_df,
                                         neighbor_df %>% 
                                           slice_sample(n = rows_needed)) %>%
-                         dplyr::select(log_priceadj_ha, fips, sid, dplyr::any_of(nolte2020vars)))
+                         dplyr::select(...))
       
     } else {
       
       model_df <- county_df %>%
-        dplyr::select(log_priceadj_ha, fips, sid, dplyr::any_of(nolte2020vars)) %>%
+        dplyr::select(...) %>%
         stats::na.omit()
       
       mod_nrow <- nrow(
         county_df %>%
-          dplyr::select(log_priceadj_ha, fips, sid, dplyr::any_of(nolte2020vars))
+          dplyr::select(...)
       )
       
     } 
@@ -75,17 +74,17 @@ fitRF <- function(j) {
   } else {
     
     model_df <- county_df %>%
-      dplyr::select(log_priceadj_ha, fips, sid, dplyr::any_of(nolte2020vars)) %>%
+      dplyr::select(...) %>%
       stats::na.omit()
     
     
-    mod_nrow <- nrow(
-      county_df %>%
-        dplyr::select(log_priceadj_ha, fips, sid, dplyr::any_of(nolte2020vars))
-    )
+    mod_nrow <- 
+      nrow(
+        county_df %>%
+          dplyr::select(...)
+        )
     
   }
-  
   
   
   if(mod_nrow>=1000) {
@@ -93,7 +92,7 @@ fitRF <- function(j) {
     ## Modeling ####
     
     rf_data <- model_df %>%
-      dplyr::select(!c(sid, fips)) 
+      dplyr::select(!fips) 
     
     
     ### Construct Model ####
@@ -120,7 +119,8 @@ fitRF <- function(j) {
     #### Formula and Preprocessing ####
     ranger_recipe <- 
       recipes::recipe(formula = log_priceadj_ha ~ ., 
-                      data = train)
+                      data = train) %>%
+      recipes::update_role(sid, new_role = "id")
     
     #### Engine, Mode, Method ####
     ranger_spec <-
@@ -145,8 +145,10 @@ fitRF <- function(j) {
       rf_fit <- tune::last_fit(ranger_workflow, rf_split) %>%
         dplyr::mutate(fips = state_counties[[j]],
                       n_obs = nrow(rf_data),
-                      n_county = nrow(model_df %>% dplyr::filter(fips == state_counties[[j]])),
-                      n_neighbor = nrow(model_df %>% dplyr::filter(fips != state_counties[[j]]))),
+                      n_county = nrow(model_df %>% 
+                                        dplyr::filter(fips == state_counties[[j]])),
+                      n_neighbor = nrow(model_df %>% 
+                                          dplyr::filter(fips != state_counties[[j]]))),
       
       error = function(e)
         warning('Model fit error in county', state_counties[[j]])
@@ -155,7 +157,7 @@ fitRF <- function(j) {
     )
     
     
-    return(rf_fit)
+    return(list(test, rf_fit))
     
   } else {
     return()
