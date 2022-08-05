@@ -196,9 +196,9 @@ for (i in 1:49) {
   perform_dir <- file.path(nolte_county_dir, "performance")
   imp_dir <- file.path(nolte_county_dir, "importance")
   
-  pred_file <- paste0("pred_", state, ".pqt")
-  perform_file <- paste0('stats_', state, ".pqt")
-  imp_file <- paste0('import_', state, ".pqt")
+  pred_file <- paste0("pred_nch_", state, ".pqt")
+  perform_file <- paste0('stats_nch_', state, ".pqt")
+  imp_file <- paste0('import_nch_', state, ".pqt")
   
   
   write_parquet(state_predictions, 
