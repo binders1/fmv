@@ -55,10 +55,6 @@ nolte2020vars <-
            show_col_types = F) %>% 
   pull()
 
-
-## Set working directory ####
-
-
 ## Vector of all state pqt files ####
 all_clean <- list.files(clean_dir)
 
@@ -90,127 +86,157 @@ for (i in 1:49) {
     pull(fips) %>%
     unique()
   
-  
-  ## County Models ####
-  
-  unregisterCores()
-  
-  if(foreach::getDoParWorkers()<64) {
+  if (nrow(df_import) > 0) {
     
-    doParallel::registerDoParallel(64)
+    ## County Models ####
     
-  }
+    unregisterCores()
+    
+    if(foreach::getDoParWorkers()<64) {
+      
+      doParallel::registerDoParallel(64)
+      
+    }
   
-  state_rf_fit <- foreach::foreach(j=seq_len(length(state_counties))) %dopar% {
+    
+    vars_to_select <- 
+      c(nolte2020vars, "log_priceadj_ha",
+        "fips", "sid", "HPI", "x45", "y45")
+    
+    state_rf_fit <- 
+      foreach::foreach(j=seq_len(length(state_counties))) %dopar% {
     
     tryCatch(
       
       fitRF(j, 
-            log_priceadj_ha, fips, sid, HPI, x45, y45, 
-            dplyr::any_of(nolte2020vars)),
+            any_of(vars_to_select)),
       
       error = function(e)
         cat('\n\n Error occured in county \n\n', 
             state_counties[[j]])
       
     )
+      
+      }
+  
+    unregisterCores()
     
-  }
-  
-  
-  ### Extract Test Set and Mod Fit ####
-  
-  #### Test Set ####
-  state_test <- tibble()
-  
-  for (i in seq_len(length(state_rf_fit))) {
+    null_mods <- 
+      map_lgl(
+        state_rf_fit,
+        is.null
+      ) %>%
+      sum()
     
-    state_test <-
-      rbind(
-        state_test,
-        state_rf_fit[[i]][[1]]
-      )
+    if (null_mods == length(state_counties)) {
+      
+      cat("\n No models specified in", state, ". Moving on...")
+      
+    } else {
+      
+      ### Extract Test Set and Mod Fit ####
+      
+      #### Test Set ####
+      state_test <- tibble()
+      
+      for (k in seq_len(length(state_rf_fit))) {
+        
+        current_fit <- state_rf_fit[[k]][[1]]
+        
+        if (!("HPI" %in% names(current_fit)) &
+            !is.null(current_fit)) {
+          
+          current_fit %<>%
+            mutate(HPI = NA)
+          
+        }
+        
+        
+        state_test <-
+          rbind(
+            state_test,
+            current_fit
+          )
+        
+      }
+      
+      state_mod <- tibble()
+      
+      for (i in seq_len(length(state_rf_fit))) {
+        
+        state_mod <-
+          rbind(
+            state_mod,
+            state_rf_fit[[i]][[2]]
+          )
+        
+      }
+      
+      
+      
+      ## Collect Pred/Stats/Import ####
+      
+      state_predictions <- 
+        state_mod %>% 
+        select(.predictions) %>% 
+        unnest(.predictions) %>%
+        select(.pred) %>%
+        bind_cols(., state_test)
+      
+      state_stats <-
+        state_mod %>% 
+        select(.metrics, fips) %>% 
+        unnest(.metrics) %>%
+        select(.metric, .estimate, fips) %>%
+        pivot_wider(
+          names_from = .metric,
+          values_from = .estimate) %>%
+        mutate(mse = rmse^2,
+               n_train = map_int(seq_len(nrow(state_mod)), 
+                                 ~ state_mod$.workflow[[.x]] %>%
+                                   extract_fit_engine() %>%
+                                   .$num.samples),
+               n_obs = state_mod$n_obs,
+               n_test = n_obs - n_train,
+               n_neighbor = state_mod$n_neighbor)
+      
+      state_importance <- 
+        map(.x = seq_len(nrow(state_mod)), 
+            .f = ~ state_mod$.workflow[[.x]] %>%
+              extract_fit_parsnip() %>%
+              vip::vi() %>%
+              pivot_wider(
+                names_from = Variable,
+                values_from = Importance) %>%
+              mutate(fips = state_mod$fips[[.x]])) %>% 
+        bind_rows()
+      
+      
+      ## Write state-level model stats to file ####
+      nch_dir <- file.path(ddir, "model/nolte/county/hpi")
+      
+      pred_dir <- file.path(nch_dir, "predictions")
+      perform_dir <- file.path(nch_dir, "performance")
+      imp_dir <- file.path(nch_dir, "importance")
+      
+      pred_file <- paste0("pred_nch_", state, ".pqt")
+      perform_file <- paste0('stats_nch_', state, ".pqt")
+      imp_file <- paste0('import_nch_', state, ".pqt")
+      
+      
+      write_parquet(state_predictions, 
+                    file.path(pred_dir, pred_file))
+      
+      write_parquet(state_stats, 
+                    file.path(perform_dir, perform_file))
+      
+      write_parquet(state_importance, 
+                    file.path(imp_dir, imp_file))
+      
+      cat('\n\n Finished:',state, "\n\n")
+      
+    }
     
-  }
-  
-  state_mod <- tibble()
-  
-  for (i in seq_len(length(state_rf_fit))) {
-    
-    state_mod <-
-      rbind(
-        state_mod,
-        state_rf_fit[[i]][[2]]
-      )
-    
-  }
-  
-  unregisterCores()
-  
-  
-  if (nrow(state_test) > 0) {
-  
-  ## Collect Pred/Stats/Import ####
-  
-  state_predictions <- 
-    state_mod %>% 
-    select(.predictions) %>% 
-    unnest(.predictions) %>%
-    select(.pred) %>%
-    bind_cols(., state_test)
-  
-  state_stats <-
-    state_mod %>% 
-    select(.metrics, fips) %>% 
-    unnest(.metrics) %>%
-    select(.metric, .estimate, fips) %>%
-    pivot_wider(
-      names_from = .metric,
-      values_from = .estimate) %>%
-    mutate(mse = rmse^2,
-           n_train = map_int(seq_len(nrow(state_mod)), 
-                             ~ state_mod$.workflow[[.x]] %>%
-                               extract_fit_engine() %>%
-                               .$num.samples),
-           n_obs = state_mod$n_obs,
-           n_test = n_obs - n_train,
-           n_neighbor = state_mod$n_neighbor)
-  
-  state_importance <- map(.x = seq_len(nrow(state_mod)), 
-                          .f = 
-                            ~ state_mod$.workflow[[.x]] %>%
-                            extract_fit_parsnip() %>%
-                            vip::vi() %>%
-                            pivot_wider(
-                              names_from = Variable,
-                              values_from = Importance) %>%
-                            mutate(fips = state_mod$fips[[.x]])) %>% bind_rows()
-  
-  
-  
-  
-  ## Write state-level model stats to file ####
-  nolte_county_dir <- file.path(ddir, "model/nolte/county/hpi")
-  
-  pred_dir <- file.path(nolte_county_dir, "predictions")
-  perform_dir <- file.path(nolte_county_dir, "performance")
-  imp_dir <- file.path(nolte_county_dir, "importance")
-  
-  pred_file <- paste0("pred_", state, ".pqt")
-  perform_file <- paste0('stats_', state, ".pqt")
-  imp_file <- paste0('import_', state, ".pqt")
-  
-  
-  write_parquet(state_predictions, 
-                file.path(pred_dir, pred_file))
-  
-  write_parquet(state_stats, 
-                file.path(perform_dir, perform_file))
-  
-  write_parquet(state_importance, 
-                file.path(imp_dir, imp_file))
-  
-  cat('\n\n Finished:',state, "\n\n")
   
   } else {
     

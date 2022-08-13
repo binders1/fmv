@@ -55,10 +55,6 @@ nolte2020vars <-
            show_col_types = F) %>% 
   pull()
 
-
-## Set working directory ####
-
-
 ## Vector of all state pqt files ####
 all_clean <- list.files(clean_dir)
 
@@ -90,6 +86,7 @@ for (i in 1:49) {
     pull(fips) %>%
     unique()
   
+  if (nrow(df_import) > 0) {
   
   ## County Models ####
   
@@ -146,9 +143,7 @@ for (i in 1:49) {
   }
   
   unregisterCores()
-  
-  
-  if (nrow(state_test) > 0) {
+
   
   ## Collect Pred/Stats/Import ####
   
@@ -190,15 +185,15 @@ for (i in 1:49) {
   
   
   ## Write state-level model stats to file ####
-  nolte_county_dir <- file.path(ddir, "model/nolte/county/base")
+  ncb_dir <- file.path(ddir, "model/nolte/county/base")
   
-  pred_dir <- file.path(nolte_county_dir, "predictions")
-  perform_dir <- file.path(nolte_county_dir, "performance")
-  imp_dir <- file.path(nolte_county_dir, "importance")
+  pred_dir <- file.path(ncb_dir, "predictions")
+  perform_dir <- file.path(ncb_dir, "performance")
+  imp_dir <- file.path(ncb_dir, "importance")
   
-  pred_file <- paste0("pred_", state, ".pqt")
-  perform_file <- paste0('stats_', state, ".pqt")
-  imp_file <- paste0('import_', state, ".pqt")
+  pred_file <- paste0("pred_ncb_", state, ".pqt")
+  perform_file <- paste0('stats_ncb_', state, ".pqt")
+  imp_file <- paste0('import_ncb_', state, ".pqt")
   
   
   write_parquet(state_predictions, 
