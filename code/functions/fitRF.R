@@ -18,7 +18,7 @@ fitRF <- function(j, ...) {
     
     county_df <- df_import %>%
       dplyr::filter(fips==state_counties[[j]]) %>%
-      dplyr::select(!HPI)
+      select(!HPI)
     
   } else {
     
@@ -53,10 +53,11 @@ fitRF <- function(j, ...) {
         dplyr::select(...) %>%
         stats::na.omit()
       
-      mod_nrow <- nrow(dplyr::bind_rows(county_df,
+      mod_nrow <- dplyr::bind_rows(county_df,
                                         neighbor_df %>% 
                                           slice_sample(n = rows_needed)) %>%
-                         dplyr::select(...))
+                         dplyr::select(...) %>%
+        nrow()
       
     } else {
       
