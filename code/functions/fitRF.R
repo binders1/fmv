@@ -50,7 +50,7 @@ fitRF <- function(j, ...) {
       model_df <- dplyr::bind_rows(county_df,
                                    neighbor_df %>% 
                                      slice_sample(n = rows_needed)) %>%
-        dplyr::select(everything()) %>%
+        dplyr::select(...) %>%
         stats::na.omit()
       
       mod_nrow <- dplyr::bind_rows(county_df,
