@@ -10,6 +10,22 @@ library(tidymodels)
 
 tidymodels_prefer()
 
+
+
+## Set dirs ####
+
+root <- "~/fmv"
+
+ddir <- file.path(root, "data")
+cdir <- file.path(root, "code")
+odir <- file.path(root, "output")
+
+f_dir <- file.path(cdir, "functions")
+m_dir <- file.path(cdir, "model")
+
+clean_dir <- file.path(ddir, "cleaned")
+
+
 ## Authorize gs4 connection ####
 gs4_auth("gold1@stolaf.edu")
 
@@ -28,11 +44,10 @@ soil_vars <-
   pull(category) %>%
   unique()
 
-
-
 ## State abbr-to-number ref table ####
-state_ref_tbl <-read_csv('https://gist.githubusercontent.com/dantonnoriega/bf1acd2290e15b91e6710b6fd3be0a53/raw/11d15233327c8080c9646c7e1f23052659db251d/us-state-ansi-fips.csv',
-                         show_col_types = F)
+state_ref_tbl <-
+  read_csv('https://gist.githubusercontent.com/dantonnoriega/bf1acd2290e15b91e6710b6fd3be0a53/raw/11d15233327c8080c9646c7e1f23052659db251d/us-state-ansi-fips.csv',
+           show_col_types = F)
 
 ## Build FRR-county reference table ####
 ss <- as_sheets_id("1rUfzSfVXLjYnI6hlO-WWR588hKI3NCMiPYHHc1JR2zs")
@@ -64,11 +79,12 @@ no_cst_states <- noCoast()
 
 ## Load (imputed) median home value dataframe #### 
 medhomeval <-
-  read_parquet("~/fmv/data/mhv_impute/mhv_impute_complete.pqt")
+  read_parquet(file.path(ddir, "mhv_impute/mhv_impute_complete.pqt"))
+
 
 # Loop through all FRRs ####
 
-for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
+for(k in seq_len(nrow(ag_regions_key))) {
   
   frr_name <- ag_regions_key %>%
     filter(id == k) %>%
@@ -79,24 +95,27 @@ for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
   cli::cli_h2("Loading Data")
   
   ## Specify states to load in ####
-  states_to_load <- ag_regions_ref %>%
+  states_to_load <- 
+    ag_regions_ref %>%
     filter(id == k) %>%
     pull(stusps) %>%
     unique()
   
-  counties_to_include <- ag_regions_ref %>%
+  
+  ## Restrict to only counties used in nolte_county_base ####
+  counties_to_include <- 
+    ag_regions_ref %>%
     filter(id == k) %>%
     pull(fips) %>%
     sort()
   
-  clean_to_load <- paste0("clean_", 
-                          states_to_load, 
-                          ".pqt") %>%
+  clean_to_load <- 
+    paste0("clean_",
+           states_to_load,
+           ".pqt") %>%
     sort()
   
   ## Import current FRR dataframe ####
-  
-  setwd("~/fmv/data/cleaned")
   
   cli::cli_alert_info(
     paste0(str_extract(clean_to_load, "[:upper:]{2}"), collapse = ", "))
@@ -107,16 +126,15 @@ for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
   
   tic('Import complete')
   
-  df_import <- map_dfr(clean_to_load, ~ read_parquet(.x)) %>%
-    select(!HPI) %>%
+  clean_paths <- file.path(clean_dir, clean_to_load)
+  
+  df_import <- 
+    map_dfr(clean_to_load, ~ read_parquet(.x)) %>%
+    # filter to only nolte_county_base counties
     filter(fips %in% counties_to_include) %>%
-    mutate(state = str_sub(fips, 1, 2),
-           year = lubridate::year(date)) %>%
     mutate(across(.cols = any_of(soil_vars),
-           .fns = ~ replace_na(.x, 0))) %>%
-    left_join(medhomeval, by = c("fips", "year")) %>%
-    select(!year) %>%
-    relocate(final_mhv, .after = "date")
+                  .fns = ~ replace_na(.x, 0))) %>%
+    mutate(state = str_sub(fips, 1, 2))
   
   toc()
   
@@ -229,9 +247,11 @@ for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
   
   n_test <- nrow(test)
   
-  frr_stats <- collect_metrics(rf_fit) %>%
+  frr_stats <- 
+    collect_metrics(rf_fit) %>%
     dplyr::select(.metric, .estimate) %>%
-    spread(.metric, .estimate) %>%
+    pivot_wider(names_from = .metric, 
+                values_from = .estimate) %>%
     mutate(
       mse = rmse^2,
       nobs = n_obs,
@@ -260,7 +280,8 @@ for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
   
   ### Variable Importance ####
   
-  frr_importance <- rf_fit %>%
+  frr_importance <- 
+    rf_fit %>%
     extract_fit_parsnip() %>%
     vip::vi() %>%
     add_row(Variable = "id",
@@ -279,16 +300,38 @@ for(k in 5:9) { # seq_len(nrow(ag_regions_key))) {
   
   ## Write stats ####
   
-  setwd("~/fmv/data/model/all/FRR/rf")
+  ffb_dir <- file.path(ddir, "model/full/frr/base")
   
-  write_parquet(frr_stats,
-                paste0("performance/stats_frr_", k, ".pqt"))
+  pred_dir <- file.path(ffb_dir, "predictions")
+  perform_dir <- file.path(ffb_dir, "performance")
+  imp_dir <- file.path(ffb_dir, "importance")
+  
+  pred_file <- 
+    file.path(
+      pred_dir, paste0("pred_ffb_", k, ".pqt")
+    )
+  
+  perform_file <-  
+    file.path(
+      perform_dir, paste0("stats_ffb_", k, ".pqt")
+    )
+  
+  imp_file <-  
+    file.path(
+      imp_dir, paste0("import_ffb_", k, ".pqt")
+    )
   
   write_parquet(frr_predictions,
-                paste0("predictions/pred_frr_", k, ".pqt"))
+                pred_file
+                )
+  
+  write_parquet(frr_stats,
+                perform_file
+                )
   
   write_parquet(frr_importance,
-                paste0("importance/import_frr_", k, ".pqt"))
+                imp_file
+                )
   
   
   cli::cli_alert_success(paste0("Finished: ", frr_name))
