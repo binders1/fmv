@@ -1,0 +1,143 @@
+# Load package ####
+
+# Set up ####
+root <- "~/fmv"
+ddir <- file.path(root, "data")
+cdir <- file.path(root, "code")
+
+# Source Prep ####
+source(file.path(cdir, "functions/sourceFuncs.R"))
+source(file.path(cdir, "misc/ag_regions.R"))
+source(file.path(cdir, "viz/model/frr/viz_frr_prep.R"))
+
+
+# Load font ####
+font <- "Open Sans"
+loadFont(font)
+
+# Load FRR predictions (ffb) ####
+
+mods_to_load <- c("ffb", "fcb")
+
+full_predictions <-
+  map(
+    mods_to_load,
+    loadResults,
+    res_type = "predictions"
+  )
+
+names(full_predictions) <- mods_to_load
+
+full_predictions$fcb %<>%
+  mutate(fips = str_sub(sid, 1, 5)) %>%
+  select(fips, model, .pred, log_priceadj_ha)
+
+full_predictions$ffb %<>%
+  select(fips, model, .pred, log_priceadj_ha)
+
+
+full_predictions %<>%
+  data.table::rbindlist(., fill = T) %>%
+  mutate(sq_error = (.pred - log_priceadj_ha)^2) %>%
+  group_by(fips, model) %>%
+  mutate(mse = mean(sq_error)) %>%
+  ungroup() %>%
+  select(model, fips, mse) %>%
+  mutate(model = if_else(model=="ffb", "Full FRR", "Full County")) %>%
+  distinct()
+
+frr_missing_obs <-
+  full_predictions %>%
+  pivot_wider(
+    names_from = model,
+    values_from = mse
+  ) %>%
+  filter(is.na(`Full FRR`)) %>%
+  select(fips) %>%
+  left_join(us_counties,
+            by = "fips") %>%
+  st_as_sf()
+
+frr_mse_spatial <-
+  us_counties %>%
+  left_join(full_predictions,
+            by = "fips") %>%
+  
+  mutate(mse_b = cut(mse, breaks = c(0, 0.5, 1, 5, 40)))
+
+mse_90_pctl <- 
+  quantile(frr_mse_spatial$mse, 
+           na.rm = T, probs = .9) %>%
+  unname()
+
+frr_mse_spatial %<>%
+  filter(mse <= mse_90_pctl) %>%
+  na.omit()
+
+
+
+# Map County-level prediction error ####
+
+ggplot() +
+  
+  #geom_sf(data = us_counties,
+  #        fill = "grey90",
+  #        colour = NA) +
+  
+  geom_sf(data = frr_mse_spatial, 
+          aes(fill = mse), colour = NA,
+          alpha = 0.8) +
+  
+  geom_sf(data = frr_missing_obs,
+          colour = NA, fill = "black") +
+  
+  geom_sf(data = us_states, 
+          colour = "grey30", 
+          size = 0.3, 
+          fill = NA) +
+  
+  facet_wrap(~model) +
+  
+  scale_fill_gradientn(limits = c(0, mse_90_pctl),
+                       breaks = c(0, 0.5, 1.0, 1.5),
+                       labels = c("0", "0.5", "1.0", "1.5"),
+                      colours = rev(brewer.pal(8, "RdYlGn")),
+                      na.value = "grey90") +
+  
+  coord_sf(crs = st_crs(2163)) +
+  
+  labs(    
+    title = "Prediction Error Comparison: County vs. FRR",
+    subtitle = "Mean squared error in full county and full FRR models. >90th percentile removed for clarity.\n",
+    caption = "14 counties blacked out to indicate no FRR testing obs where a county model was specified",
+    fill = "MSE",
+    colour = "Farm Resource Region"
+  ) +
+  
+  guides(
+    fill = guide_colorbar(
+      barheight = 13,
+      barwidth = 0.6,
+      frame.colour = "black",
+      ticks.colour = "black"
+    )
+  ) +
+  
+  theme(
+    text = element_text(size = 25, family = font),
+    plot.title = element_text(size = 30, face = "bold"),
+    plot.subtitle = element_text(size = 20),
+    plot.caption = element_text(size = 15, face = "italic"),
+    plot.margin = margin(rep(10, 4)),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank()
+  )
+
+
+
+
+
+
+
