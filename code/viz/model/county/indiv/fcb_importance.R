@@ -1,4 +1,8 @@
 
+# Load Font ####
+font <- "Open Sans"
+loadFont(font)
+
 # Importance ####
 fcb_imp <- 
   loadResults("fcb", "importance") %>%
@@ -17,7 +21,6 @@ fcb_imp <-
     str_detect(Variable, "^Dew") ~ "DewTemp",
     str_detect(Variable, "(?<!Dew)Temp") ~ "Temp",
     str_detect(Variable, "Precip") ~ "Precip",
-    str_detect(Variable, "frontage$") ~ "Water Frontage",
     TRUE ~ as.character(Variable)
   )) %>%
   group_by(group, fips) %>%
@@ -35,7 +38,9 @@ fcb_imp <-
     group %in% nolte2020vars ~ paste0("<span style='color:Grey;'>", 
                                       group,
                                       "</span>"),
-    TRUE ~ paste0("<span style='font-weight:1000;'>", group, "</span>")),
+    TRUE ~ paste0("<span style='font-weight:1000;'>", 
+                  group, 
+                  "</span>")),
     group = fct_reorder(group, imp_med))
 
 # VIZ
