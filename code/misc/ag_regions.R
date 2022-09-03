@@ -1,5 +1,5 @@
 library(googlesheets4)
-
+googlesheets4::gs4_auth("gold1@stolaf.edu")
 ss <- as_sheets_id("https://docs.google.com/spreadsheets/d/1rUfzSfVXLjYnI6hlO-WWR588hKI3NCMiPYHHc1JR2zs/edit#gid=1580896317")
 
 ag_regions <-read_sheet(ss = ss, skip = 2)
@@ -8,7 +8,7 @@ ag_regions_key <- ag_regions %>%
   dplyr::select(7) %>%
   slice(1:9) %>%
   separate(col = 1,
-           into = c('id','name'),
+           into = c('id','frr_name'),
            sep = "=") %>%
   mutate(id = as.double(id))
   

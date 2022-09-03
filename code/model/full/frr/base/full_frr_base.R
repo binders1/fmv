@@ -161,21 +161,29 @@ for(k in seq_len(nrow(ag_regions_key))) {
                       state %in% no_cst_states & is.na(.x) ~ 0,
                       TRUE ~ .x)
                     )
-             ) %>%
-      dplyr::select(!c(fips, state)) %>%
-      stats::na.omit()
+             )
     
+  
   } else {
     
     model_df <- 
       df_import %>%
       mutate(cst_2500 = 0,
-             cst_50 = 0) %>%
-      dplyr::select(!c(fips, state)) %>%
-      stats::na.omit()
+             cst_50 = 0)
       
     
   }
+  
+  
+  ## Add Median Home Value ####
+  
+  model_df %<>%
+    mutate(year = lubridate::year(date)) %>%
+    left_join(medhomeval,
+              by = c("fips", "year")) %>%
+    select(!c(fips, year, state, HPI)) %>%
+    na.omit()
+  
   
   cli::cli_alert_info(paste0("After filtering: ", scales::comma(nrow(model_df)), 
                              " obervations"))

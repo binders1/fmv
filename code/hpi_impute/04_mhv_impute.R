@@ -82,12 +82,13 @@ fips_missing_hpi <-
 buffer_neighbors <-
   read_parquet("~/fmv/data/hpi_impute/hpi_buffer.pqt")
 
+## Calculate Inverse Square Distance from focal county centroid
 buffer_neighbors %<>%
   filter(fips != buffer_fips) %>%
   mutate(inv_dist_sq = 1/(dist_m^2))
 
 
-# IMPUTE WITH MODEL ####
+# IMPUTE WITH WEIGHTED MEAN ####
 
 ## Allocate empty tibble for imputations ####
 collect_imputed_fips <- tibble()
@@ -119,6 +120,7 @@ for (i in seq_len(length(fips_missing_hpi))) {
     )
   
   ### Take year-specific mean of medhomeval in buffer-neighbors ####
+  ### weighted by the inverse square distance from focal county centroid
   current_imputed_fips <- 
     all_study_with_missing %>%
     filter(fips %in% current_neighbors) %>%
