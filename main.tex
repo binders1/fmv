@@ -118,16 +118,49 @@ With this expanded dataset, we model the fair market value of parcels--measured 
 
 \section{Results}
 
-We extend Nolte (2020)'s approach along two dimensions: added variables and extended spatial coverage. Below, we summarize the result from each.
+We extend Nolte (2020)'s approach along two dimensions: added variables and extended spatial coverage. Below, results from each are summarized.
 
 \subsection{Added Variables}
 
-To Nolte's base county model ("Nolte"), we add variables on climatic conditions, soil type, and housing market values.
+To Nolte's base county model (``Nolte"), we add variables on climatic conditions, soil type, and housing market values (``Full"). Figure \ref{fig:fcb_importance} shows the relative predictive contributions of each feature in the Full county model, where each dot represents a single county. The most impactful additions of this paper are the climatic variables (precipitation, dew temperature, and temperature) and housing price index (used in place of dollar values in the county models), followed by prime soil and soil of statewide importance, which is one productivity quality tier below prime. Irrigation status, both ever-irrigated and irrigated in the three years preceding the parcel's sale, contribute little predictive power, although both exhibit significant heterogeneity across counties. Conditional soil types (prime if warm enough, if protected, if irrigated, etc.) and smaller-scale importance, such as locally important soil types, offer little prediction importance to the model.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6in]{exhibits/fcb_importance_all.png}
+    \caption{Permutation feature importance from full county model. Features added by this paper denoted in bold.}
+    \label{fig:fcb_importance}
+\end{figure}
+
+The added variables ameliorate specific limitations of the Nolte model. For instance, lacking a variable that tracks local real estate market trends over time, the Nolte model may be biased at the early and later ends of its sample range (2000-2019). Figure \ref{fig:nolte_resid_time} shows the effect of adding housing price index (HPI) data to the Nolte county model. While over-time heteroskedasticity remains even after the addition of HPI, the variable reduces the magnitude of the error, particularly the over-prediction in the early years of the sample and the under-prediction in its later years.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6in]{exhibits/nolte_resid_time.png}
+    \caption{Mean annual prediction error in Nolte base county model, compared to the addition of annual housing price index data at the county-level. Error bars represent one standard error.}
+    \label{fig:nolte_resid_time}
+\end{figure}
+
+Our Full model offers modest but consistent improvements in model performance at the county level. Figure \ref{fig:county_compare_boxplot} shows the average county-level mean squared error and r-squared of the Full and Nolte models. Nationally, the Full model outperforms the Nolte model, with an average mean squared error (in logged 2020 \$ per hectare) of X compared to Nolte's Y and an average r-squared of X compared to Y.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6in]{exhibits/county_compare_boxplot.png}
+    \caption{Mean county-level model performance, Full compared to Nolte. Outliers removed for clarity.}
+    \label{fig:county_compare_boxplot}
+\end{figure}
+
+National performance aggregations mask substantial heterogeneity across county characteristics. In particularly, a county's observation density is strongly correlated with both performance measures. Figure \ref{fig:compare_county_nobs_perf} shows the relationship between model performance and the total number of observations in the county where the model was trained and tested. The monotonicity of the decrease (increase) in mean squared error (r-squared) as county-level models increase in size affirms the intuitive benefits of greater sample sizes. In pursuit of larger datasets, however, analysts will encounter a fundamental challenge: expanding the sample size necessarily broadens the geographic range from which observations will be drawn. This may debilitate the model's predictive power if the broader geographic scope mixes land markets with disparate characteristics, economic dynamics, and time trends. Yet failing to expand the geographic scope has its own costs. In states such as Wyoming and Idaho, any given county has too few observations to model land value, forcing the analyst to discard perfectly good data.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=6in]{exhibits/compare_county_nobs_perf.png}
+    \caption{County-level model performance against total observations in the county.}
+    \label{fig:compare_county_nobs_perf}
+\end{figure}
 
 \subsection{Extended Coverage}
 
-% First talk about county level results in the context of benefits of added variables. Here's where to put the HPI stuff
-% Variable importance is big here
+We attempt to solve this seemingly unavoidable trade-off between model size and observation homogeneity by specifying models at the level of the farm resource region.
 
 % Motivate FRR model by discussing compare_county_nobs_perf
 % and how we see better performance in higher density counties
@@ -139,10 +172,8 @@ To Nolte's base county model ("Nolte"), we add variables on climatic conditions,
 
 RESULTS
 \subsection{County-level results}
- \subsubsection{Nolte v. Nolte w/ HPI}
- %\subsection{Error breakdown: full mod performance among only ag parcels}
+ \subsection{Error breakdown: full mod performance among only ag parcels}
  
- \subsubsection{Variable importance}
 
 \subsection{Farm resource region results}
 
@@ -172,20 +203,6 @@ RESULTS
 
  
  
-\begin{figure}
-    \centering
-    \includegraphics[width=6in]{figures/rf_rsq_map.png}
-    \caption{Sales By County}
-    \label{fig:rsq_county}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=6in]{figures/rf_mse_map.png}
-    \caption{Model Performance: Prediction Error}
-    \label{fig:mse_county}
-\end{figure}
-
 
 \section{Discussion}
 
