@@ -55,7 +55,7 @@ $^2$Boston University
 \end{center}
 
 \small
-Planning for cost-effective conservation requires reliable estimates of land costs, spatially-differentiated at high resolution. Nolte (2020) provides an estimation approach that dramatically improves estimates for undeveloped land. Much undeveloped land of conservation interest is under threat of conversion to agricultural use or is already agricultural. Here we improve on the accuracy and coverage of estimation models for such land by incorporating additional variables known to affect agricultural land value and by modeling at scales corresponding to regional agricultural markets. Our estimates improve accuracy by X percent on average and extend coverage by Y percent. 
+Planning for cost-effective conservation requires reliable estimates of land costs, spatially-differentiated at high resolution. Nolte (2020) provides an estimation approach that dramatically improves estimates for undeveloped land. Much undeveloped land of conservation interest is under threat of conversion to agricultural use or is already agricultural. Here we improve on the accuracy and coverage of estimation models for such land by incorporating additional variables known to affect agricultural land value and by modeling at scales corresponding to regional agricultural markets. We find that median home value, climatic variables, and several soil type variables contribute substantially to predictive power. Our estimates improve accuracy by X percent on average and extend coverage by 31\% percent. %31 comes from the added # of counties in FRR compared to county models
 
 \newpage
 
@@ -81,7 +81,7 @@ In addition to incorporating additional predictors, we consider the possibility 
     \label{fig:frr_map}
 \end{figure}
 
-BRIEF OVERVIEW OF RESULTS W/ REFERENCE TO SECTIONS? 
+We find parcel-level climatic conditions and soil type, as well as county-level home values, contribute substantially to the model's predictive power. Our county-level model improves prediction error by X ppt and explanatory power ($R^2$) by Y ppt. By modeling at the FRR level, we extend coverage in areas that were dropped in county modeling due to insufficient density by 465 counties while preserving comparable predictive accuracy to county-level approaches. Together, these results suggest, first, that environmentally informed drivers of land market value constitute essential inputs into conservation cost models and, second, that modeling at broader scales while preserving relative homogeneity of market characteristics extends the capacity of such work. The paper proceeds as follows. Section 2 describes the data sources and methodology. Section 3 summarizes the results from both the county and FRR models, comparing their performance to that of Nolte (2020)'s approach. Section 4 discusses broader policy-relevant implications of the results. Section 5 concludes.
 
 
 \section{Data and Methods}
@@ -103,11 +103,11 @@ Farmland classifications are operationalized as the percent of each parcel conta
 To incorporate information on local real estate markets, we add yearly all-transaction house price index values at the county level (\cite{FederalHousing2022}).
 
 To focus our analysis on agricultural land value, we filter the ZTRAX data to only include parcels that are undeveloped, agricultural, or potentially agricultural (see Appendix for complete filtering criteria).
-Our filter results in 5.26 million unique sales observations nationwide, split into testing (\textit{n = 1.47 million}) and training (\textit{n = 3.78 million}) sets stratified along the outcome variable (Fig. \ref{fig:train_test}).
+Our filter results in 5.26 million unique sales observations nationwide, split into testing (\textit{n = 1.47 million}) and training (\textit{n = 3.78 million}) sets stratified along the outcome variable (Fig. \ref{fig:train_test}). 
 
 \begin{figure}
     \centering
-    \includegraphics[width=6in]{figures/test_train_density.png}
+    \includegraphics[width=6in]{archive/figures/test_train_density.png}
     \caption{Observation density by training and testing sets}
     \label{fig:train_test}
 \end{figure}
@@ -117,6 +117,25 @@ With this expanded dataset, we model the fair market value of parcels--measured 
 \newpage
 
 \section{Results}
+
+We extend Nolte (2020)'s approach along two dimensions: added variables and extended spatial coverage. Below, we summarize the result from each.
+
+\subsection{Added Variables}
+
+To Nolte
+
+\subsection{Extended Coverage}
+
+% First talk about county level results in the context of benefits of added variables. Here's where to put the HPI stuff
+% Variable importance is big here
+
+% Motivate FRR model by discussing compare_county_nobs_perf
+% and how we see better performance in higher density counties
+% So the question is whether we can retain the spatial-homo-
+% geneity that comes with counties while harnessing the power 
+% of higher density models
+
+% Then go into FRR modeling benefits
 
 RESULTS
 \subsection{County-level results}
@@ -167,16 +186,6 @@ RESULTS
     \label{fig:mse_county}
 \end{figure}
 
-\newpage
-
-\begin{figure}
-    \centering
-    \includegraphics[width=6in]{figures/nolte_full_compare.png}
-    \caption{Model performance: Only Nolte features vs. all features model}
-    \label{fig:nolte_full_compare}
-\end{figure}
-
-\newpage
 
 \section{Discussion}
 
