@@ -6,7 +6,6 @@
 \usepackage{graphicx}
 \graphicspath{ {output/} } % compile mode must be normal for images to display
 
-
 % Customize figure captions
 \usepackage{caption}
 
@@ -61,7 +60,7 @@ $^2$Boston University
 \end{center}
 
 \small
-Planning for cost-effective conservation requires reliable estimates of land costs, spatially-differentiated at high resolution. Nolte (2020) provides an estimation approach that dramatically improves estimates for undeveloped land. Much undeveloped land of conservation interest is under threat of conversion to agricultural use or is already agricultural. Here we improve on the accuracy and coverage of estimation models for such land by incorporating additional variables known to affect agricultural land value and by modeling at scales corresponding to regional agricultural markets. We find that median home value, climatic variables, and several soil type variables contribute substantially to predictive power. Our estimates improve accuracy by X percent on average and extend coverage by 31\% percent. %31 comes from the added # of counties in FRR compared to county models
+Planning for cost-effective conservation requires reliable estimates of land costs, spatially-differentiated at high resolution. Nolte (2020) provides an estimation approach that dramatically improves estimates for undeveloped land. Much undeveloped land of conservation interest is under threat of conversion to agricultural use or is already agricultural. Here we improve on the accuracy and coverage of estimation models for such land by incorporating additional variables known to affect agricultural land value and by modeling at scales corresponding to regional agricultural markets. We find that median home value, climatic variables, and several soil type variables contribute substantially to predictive power. Our estimates improve accuracy by X percent on average and extend coverage into 376 counties occupying 1.35 million km$^2$.
 
 \newpage
 
@@ -106,7 +105,7 @@ Farmland classifications are operationalized as the percent of each parcel conta
 
 30-year, monthly climate normals of minimum, mean, and maximum temperature, as well as dew temperature and precipitation come from the PRISM Climate Group (\cite{PRISMClimate2021}). We aggregate these to the meteorological season. Parcel irrigation status is based on annual 1997-2017 estimates at a resolution of 30 sq. meters, produced by the Landsat-based Irrigation Dataset, or LANID-US (\cite{Xie2021MappingStates}). We create two binary irrigation variables to record 1) whether the parcel had ever been irrigated prior to sale, and 2) whether it was irrigated at any point in the 3 years immediately preceding the sale. 
 
-To incorporate information on local real estate markets, we add yearly all-transaction house price index values at the county level (\cite{FederalHousing2022}). At the farm resource region level, to allow for comparability between counties, we source open access home value data from Realtor.com (\cite{RealtorData}), which provides monthly county-level reports of median listing price from July 2016 to June 2022. We select 2017 as the base year due to it having the lowest proportion of data quality flags (an automatically triggered indicator of prices being outside their normal range) of any sample year. Median listing prices are summarized at the year-county level and then multiplied by corresponding HPI values (with base year 2017) to estimate dollar values across the 2000-2020 sample period. In counties missing HPI values, median home value is estimated as the inverse squared distance weighted mean of estimated median home values in every county within 150 km of the focal county. 
+To incorporate information on local real estate markets, we add yearly all-transaction house price index values at the county level (\cite{FederalHousing2022}). At the farm resource region level, to allow for comparability between counties, we source open access home value data from Realtor.com (\cite{RealtorData}), which provides monthly county-level reports of median listing price from July 2016 to present (June 2022 at time of writing). We select 2017 as the base year due to it having the lowest proportion of data quality flags (an automatically triggered indicator of prices being outside their normal range) of any sample year. Median listing prices are summarized at the year-county level and then multiplied by corresponding HPI values (with base year 2017) to estimate dollar values across the 2000-2020 sample period. In counties missing HPI values, median home value is estimated as the inverse squared distance weighted mean of estimated median home values in every county within 150 km of the focal county. 
 
 To focus our analysis on agricultural land value, we filter the ZTRAX data to only include parcels that are undeveloped, agricultural, or potentially agricultural (see Appendix for complete filtering criteria).
 Our filter results in 5.04 million unique sales observations nationwide, split into testing (\textit{n = 1.26 million}) and training (\textit{n = 3.78 million}) sets stratified along the outcome variable (Fig. \ref{fig:train_test}). In county models, this 0.75:0.25 split occurs within the county; in farm resource region models, training and testing observations are distributed farm resource region-wide. 
@@ -133,7 +132,7 @@ To Nolte (2020)'s base county model (``Nolte"), we add variables on climatic con
 \begin{figure}
     \centering
     \includegraphics[width=1\textwidth]{exhibits/fcb_importance_all.png}
-    \caption{Permutation feature importance from full county model. Features added by this paper denoted in bold.}
+    \caption{Permutation feature importance from full county model. Climatic variables grouped for clarity. Features added by this paper denoted in bold.}
     \label{fig:fcb_importance}
 \end{figure}
 
