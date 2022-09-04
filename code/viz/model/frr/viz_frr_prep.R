@@ -58,7 +58,8 @@ us_counties <-
 us_counties %<>%
   filter(!(STATEFP %in% state_rm)) %>%
   select(
-    fips = "GEOID"
+    fips = "GEOID",
+    ALAND, AWATER
   )
 
 ## AINANH shp ####

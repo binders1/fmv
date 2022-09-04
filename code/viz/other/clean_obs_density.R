@@ -122,3 +122,7 @@ clean_obs_density <-
 
 clean_obs_density
 
+
+
+nrow(clean_sf) %>% scales::comma()
+
