@@ -1,29 +1,27 @@
 # Load packages ####
 library(sf)
+library(ggtext)
 
-
-
-# Load font ####
-font <- "Open Sans"
-loadFont(font)
 
 # Set up ####
 root <- "~/fmv"
 ddir <- file.path(root, "data")
 cdir <- file.path(root, "code")
+clean_dir <- file.path(ddir, "cleaned")
 
-# Source Prep ####
+
+# Source spatial files and functions ####
 source(file.path(cdir, "functions/sourceFuncs.R"))
+sourceFuncs()
 source(file.path(cdir, "misc/ag_regions.R"))
 source(file.path(cdir, "viz/model/frr/viz_frr_prep.R"))
 
-
-# Load results ####
-ffb_pred <- 
-  loadResults("ffb", "predictions")
-
+# Load font ####
+font <- "Open Sans"
+loadFont(font)
 
 
+# Create tessellation ####
 
 # EPSG:5070 projection of states
 state_5070 <- st_transform(us_states, 
@@ -48,38 +46,44 @@ overlap_idx <-
 state_tessel <-
   state_grid[overlap_idx]
 
+# Trim tessellation to fit state polygon extent 
+tessel_crop <-
+  st_intersection(state_tessel,
+                state_5070)
 
-# Create spatial df of predictions
-ffb_pred_proj <- 
-  ffb_pred %>%
-  select(.pred, x, y) %>%
+# Load full cleaned data ####
+
+clean_to_load <-
+  list.files(clean_dir, 
+             full.names = TRUE)
+
+clean_sf <-
+  map_dfr(clean_to_load, read_parquet) %>%
+  select(sid, x, y) %>%
   st_as_sf(coords = c("x", "y"), crs = st_crs(5070))
 
+# Combine obs and hex tessellation ####
+
 # Bind predicted obs to hex's
-ffb_intersect <-
-  st_intersects(state_tessel,
-                ffb_pred_proj) %>%
+clean_intersect <-
+  st_intersects(tessel_crop,
+                clean_sf) %>%
   map_int(., length)
 
 # Count obs in each hex
-tessel_ffb_count <-
-  state_tessel %>%
+tessel_clean_count <-
+  tessel_crop %>%
   st_as_sf() %>%
-  mutate(n = ffb_intersect)
-
-# Crop tesselation to CONUS outline
-tessel_count_crop <-
-  st_intersection(tessel_ffb_count,
-                  state_5070) %>%
+  mutate(n = clean_intersect) %>%
   st_set_geometry(., "geometry") %>%
   filter(!str_detect(st_geometry_type(.), "POINT"))
 
+# VIZ ####
 
-# VIZ: obs count by hex
-ggplot() +
+clean_obs_density <-
+  ggplot() +
   
-  geom_sf(data = tessel_count_crop,
-          aes(fill = n), colour = NA) +
+  geom_sf(data = tessel_clean_count, aes(fill = n), size = 0) +
   
   geom_sf(data = state_5070, 
           fill = NA, size = 0.3) +
@@ -91,9 +95,9 @@ ggplot() +
   ) +
   
   labs(
-    title = "FRR Model: Testing Observation Density",
-    subtitle = "10km^2 tesselation of the conterminous US",
-    fill = "Testing\nObservations"
+    title = "Observation Density",
+    subtitle = "10km^2 tessellation of the conterminous US",
+    fill = "Observed\nSales"
   ) +
   
   guides(
@@ -108,7 +112,7 @@ ggplot() +
   theme(
     text = element_text(family = font, size = 25),
     plot.title = element_text(size = 30, face = "bold"),
-    plot.subtitle = ggtext::element_markdown(),
+    plot.subtitle = ggtext::element_markdown(size = 20),
     legend.title = element_text(size = 18),
     legend.text = element_text(size = 18),
     panel.background = element_blank(),
@@ -116,4 +120,5 @@ ggplot() +
     axis.text = element_blank()
   )
 
+clean_obs_density
 

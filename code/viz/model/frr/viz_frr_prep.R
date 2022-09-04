@@ -20,78 +20,6 @@ state_dir <- file.path(sdir, "state_shp")
 county_dir <- file.path(sdir, "county_shp")
 aiannh_dir <- file.path(sdir, "aiannh")
 
-
-
-frr_sf <- 
-  ag_regions_ref %>%
-  mutate(
-    fips = case_when(
-      fips == "46113" ~ "46102",
-      TRUE ~ as.character(fips)
-    )
-  ) %>%
-  select(fips, id, frr_name) %>%
-  left_join(
-    us_counties,
-    by = "fips"
-  )
-
-# Create FRR polygons ####
-
-
-## Vector of FRR ids to iterate over ####
-frr_names <-
-  frr_sf %>%
-  arrange(frr_id) %>%
-  pull(frr_name) %>%
-  unique()
-
-## Function to create single polygon for each FRR ####
-frrUnion <- function(data, frr) {
-  
-  out <-
-    
-    data %>%
-    
-    # subset to only current frr
-    filter(frr_name == frr) %>%
-    
-    # convert to sf object 
-    st_as_sf() %>%
-    
-    # merge all counties within frr 
-    st_union() %>%
-    tibble() %>%
-    
-    # add frr name
-    mutate(frr_name = as.character(frr)) %>%
-    relocate(frr_name) %>%
-    
-    # convert back to sf object
-    st_as_sf() %>%
-    
-    # name geometry column
-    st_set_geometry(value = "geometry")
-    
-  
-  return(out)
-  
-}
-
-
-# If frr_shp doesn't yet exist...
-if (!exists("frr_shp")) {
-  
-  
-  # ...map the union function across all FRRs
-  frr_shp <-
-    map_dfr(frr_names, 
-            ~ frrUnion(data = frr_sf, 
-                       frr = .x))
-  
-}
-
-
 # Load spatial files ####
 
 ## Set undesired states/territories ####
@@ -149,6 +77,77 @@ aiannh_sf <-
 
 
 
+
+
+# FRR shp ####
+frr_sf <- 
+  ag_regions_ref %>%
+  mutate(
+    fips = case_when(
+      fips == "46113" ~ "46102",
+      TRUE ~ as.character(fips)
+    )
+  ) %>%
+  select(fips, id, frr_name) %>%
+  left_join(
+    us_counties,
+    by = "fips"
+  )
+
+# Create FRR polygons ####
+
+
+## Vector of FRR ids to iterate over ####
+frr_names <-
+  frr_sf %>%
+  arrange(id) %>%
+  pull(frr_name) %>%
+  unique()
+
+## Function to create single polygon for each FRR ####
+frrUnion <- function(data, frr) {
+  
+  out <-
+    
+    data %>%
+    
+    # subset to only current frr
+    filter(frr_name == frr) %>%
+    
+    # convert to sf object 
+    st_as_sf() %>%
+    
+    # merge all counties within frr 
+    st_union() %>%
+    tibble() %>%
+    
+    # add frr name
+    mutate(frr_name = as.character(frr)) %>%
+    relocate(frr_name) %>%
+    
+    # convert back to sf object
+    st_as_sf() %>%
+    
+    # name geometry column
+    st_set_geometry(value = "geometry")
+    
+  
+  return(out)
+  
+}
+
+
+# If frr_shp doesn't yet exist...
+if (!exists("frr_shp")) {
+  
+  
+  # ...map the union function across all FRRs
+  frr_shp <-
+    map_dfr(frr_names, 
+            ~ frrUnion(data = frr_sf, 
+                       frr = .x))
+  
+}
 
 
 
