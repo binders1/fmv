@@ -86,7 +86,7 @@ In addition to incorporating additional predictors, we consider the possibility 
     \label{fig:FRR_map}
 \end{figure}
 
-We find parcel-level climatic conditions and soil type, as well as county-level home values, contribute substantially to the model's predictive power. Our county-level model improves prediction error by X percent and explanatory power ($R^2$) by Y percent. By modeling at the farm resource region level, we extend coverage in areas that were dropped in county modeling due to insufficient density by 465 counties while preserving comparable predictive accuracy to county-level approaches. Together, these results suggest, first, that environmentally informed drivers of land market value constitute essential inputs into conservation cost models and, second, that modeling at broader scales while preserving relative homogeneity of market characteristics extends the capacity of such work. The paper proceeds as follows. Section 2 describes the data sources and methodology. Section 3 summarizes the results from both the county and farm resource region models, comparing their performance to that of Nolte (2020)'s approach. Section 4 discusses broader policy-relevant implications of the results. Section 5 concludes.
+We find parcel-level climatic conditions and soil type, as well as county-level home values, contribute substantially to the model's predictive power. Our model improves prediction error by X percent and explanatory power ($R^2$) by Y percent. By modeling at the farm resource region level, we extend coverage in areas that were dropped in county modeling due to insufficient density by 465 counties while preserving comparable predictive accuracy to county-level approaches. Together, these results suggest, first, that environmentally informed drivers of land market value constitute essential inputs into conservation cost models and, second, that modeling at broader scales while preserving relative homogeneity of market characteristics extends the capacity of such work. The paper proceeds as follows. Section 2 describes the data sources and methodology. Section 3 summarizes the results from both the county and farm resource region models, comparing their performance to that of Nolte (2020)'s approach. Section 4 discusses broader policy-relevant implications of the results. Section 5 concludes.
 
 
 \section{Data and Methods}
@@ -108,13 +108,13 @@ Farmland classifications are operationalized as the percent of each parcel conta
 To incorporate information on local real estate markets, we add yearly all-transaction house price index values at the county level (\cite{FederalHousing2022}). At the farm resource region level, to allow for comparability between counties, we source open access home value data from Realtor.com (\cite{RealtorData}), which provides monthly county-level reports of median listing price from July 2016 to present (June 2022 at time of writing). We select 2017 as the base year due to it having the lowest proportion of data quality flags (an automatically triggered indicator of prices being outside their normal range) of any sample year. Median listing prices are summarized at the year-county level and then multiplied by corresponding HPI values (with base year 2017) to estimate dollar values across the 2000-2020 sample period. In counties missing HPI values, median home value is estimated as the inverse squared distance weighted mean of estimated median home values in every county within 150 km of the focal county. 
 
 To focus our analysis on agricultural land value, we filter the ZTRAX data to only include parcels that are undeveloped, agricultural, or potentially agricultural (see Appendix for complete filtering criteria).
-Our filter results in 5.04 million unique sales observations nationwide, split into testing (\textit{n = 1.26 million}) and training (\textit{n = 3.78 million}) sets stratified along the outcome variable (Fig. \ref{fig:train_test}). In county models, this 0.75:0.25 split occurs within the county; in farm resource region models, training and testing observations are distributed farm resource region-wide. 
+Our filter results in 5.04 million unique sales observations nationwide, split into testing (\textit{n = 1.26 million}) and training (\textit{n = 3.78 million}) sets stratified along the outcome variable (Fig. \ref{fig:clean_obs_density}). In county models, this 0.75:0.25 split occurs within the county; in farm resource region models, training and testing observations are distributed farm resource region-wide. 
 
 \begin{figure}
     \centering
-    \includegraphics[width=1\textwidth]{archive/figures/test_train_density.png}
-    \caption{Observation density by training and testing sets}
-    \label{fig:train_test}
+    \includegraphics[width=1\textwidth]{exhibits/clean_obs_density.png}
+    \caption{Spatial distribution of sales observations, 2000-2020, in filtered dataset. N = 5.04 million. Cells represent 10 km$^2$ tessellation of the conterminous US.}
+    \label{fig:clean_obs_density}
 \end{figure}
 
 With this expanded dataset, we model the fair market value of parcels--measured as logged per-hectare price, adjusted for inflation using monthly consumer price index (CPI) values (\cite{blsConsumerPrice})--using extremely randomized trees, a decision tree-based bagging algorithm. Extremely randomized trees are built with 500 base learners (trees), $\frac{p}{3}$ random features tried at each split, where $p$ is the total set of predictive features, and a required minimum leaf size of 3. We compare county and farm resource region performance on predictive accuracy, explanatory power, and variable importance. Following Nolte (2020), the county analysis is parallelized at the county level. Counties with fewer than 1000 observations are augmented with randomly sampled sales from adjacent counties until the focal county reaches 1000 observations. If the county and its neighbors combined fail to achieve 1000 complete observations, no model is specified. 1,571 county models are specified using this approach. We specify further models at each of the nine farm resource regions. 
@@ -226,7 +226,6 @@ CONCLUSION
 
 \section{Appendix}
 
-
 \subsection{Parcel filter}
 
 \begin{enumerate}
@@ -246,7 +245,19 @@ CONCLUSION
 
 
 \subsection{Multi-parcel Aggregation}
+Our analysis employs sales as the individual sample unit. In the case of sales involving multiple parcels, we aggregate predictors across sales. 
 
+We take the arithmetic mean of all Nolte (2020) variables except river and lake frontage length, which we sum across all parcels.
+
+For all climatic variables added by this paper (precipitation, dew temperature, and temperature), we take the hectare-weighted mean across all parcels.
+
+For irrigation indicator variables (ever irrigated and irrigated in the past three years), we take the maximum of all parcels' indicators. If any parcel in the sale has been irrigated, the sale is considered irrigated.
+
+For soil types, we calculate a given soil type's proportion $p_j$ as the proportion of total soil area across each parcel $i$ occupied by that soil type:
+
+\[
+p_j = \displaystyle\frac{\sum\limits_{i=1}^{n}p_{j,i}}{\sum\limits_{i=1}^{n}area_i}
+\]
 
 
 \newpage
