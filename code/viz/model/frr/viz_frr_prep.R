@@ -20,8 +20,67 @@ state_dir <- file.path(sdir, "state_shp")
 county_dir <- file.path(sdir, "county_shp")
 aiannh_dir <- file.path(sdir, "aiannh")
 
+# Load spatial files ####
+
+## Set undesired states/territories ####
+
+state_rm <-
+  c("02", "15", "60", "66", "69", "72", "78")
+
+## State .shp ####
+
+state_shp <- list.files(state_dir, pattern = "shp$")
+
+us_states <-
+  st_read(
+    file.path(state_dir, state_shp)
+  )
+
+us_states %<>%
+  janitor::clean_names() %>%
+  select(
+    state_fips = "statefp",
+    abbr = "stusps"
+  ) %>%
+  filter(!(state_fips %in% state_rm))
 
 
+## County shp ####
+
+county_shp <- list.files(county_dir, pattern = "shp$")
+
+us_counties <-
+  st_read(
+    file.path(county_dir, 
+              county_shp)
+  )
+
+us_counties %<>%
+  filter(!(STATEFP %in% state_rm)) %>%
+  select(
+    fips = "GEOID",
+    ALAND, AWATER
+  )
+
+## AINANH shp ####
+
+aiannh_shp <-
+  list.files(aiannh_dir, 
+             pattern = "shp$", 
+             full.names = TRUE)
+
+aiannh_sf <-
+  st_read(aiannh_shp) %>%
+  st_crop(., 
+          xmin = -130, xmax = -60,
+          ymin = 20, ymax = 50) %>%
+  st_transform(., crs = st_crs(5070))
+
+
+
+
+
+# FRR shp ####
 frr_sf <- 
   ag_regions_ref %>%
   mutate(
@@ -42,7 +101,7 @@ frr_sf <-
 ## Vector of FRR ids to iterate over ####
 frr_names <-
   frr_sf %>%
-  arrange(frr_id) %>%
+  arrange(id) %>%
   pull(frr_name) %>%
   unique()
 
@@ -90,65 +149,6 @@ if (!exists("frr_shp")) {
                        frr = .x))
   
 }
-
-
-# Load spatial files ####
-
-## Set undesired states/territories ####
-
-state_rm <-
-  c("02", "15", "60", "66", "69", "72", "78")
-
-## State .shp ####
-
-state_shp <- list.files(state_dir, pattern = "shp$")
-
-us_states <-
-  st_read(
-    file.path(state_dir, state_shp)
-  )
-
-us_states %<>%
-  janitor::clean_names() %>%
-  select(
-    state_fips = "statefp",
-    abbr = "stusps"
-  ) %>%
-  filter(!(state_fips %in% state_rm))
-
-
-## County shp ####
-
-county_shp <- list.files(county_dir, pattern = "shp$")
-
-us_counties <-
-  st_read(
-    file.path(county_dir, 
-              county_shp)
-  )
-
-us_counties %<>%
-  filter(!(STATEFP %in% state_rm)) %>%
-  select(
-    fips = "GEOID"
-  )
-
-## AINANH shp ####
-
-aiannh_shp <-
-  list.files(aiannh_dir, 
-             pattern = "shp$", 
-             full.names = TRUE)
-
-aiannh_sf <-
-  st_read(aiannh_shp) %>%
-  st_crop(., 
-          xmin = -130, xmax = -60,
-          ymin = 20, ymax = 50) %>%
-  st_transform(., crs = st_crs(5070))
-
-
-
 
 
 

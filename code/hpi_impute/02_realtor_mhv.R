@@ -5,9 +5,9 @@ library(lubridate)
 # source: https://www.realtor.com/research/data/
 
 # Load data ####
-setwd("~/fmv/data/hpi_impute/realtor")
+setwd()
 realtor_data <- 
-  read_parquet("realtor_listing.pqt")
+  read_parquet("~/fmv/data/mhv_impute/realtor/realtor_listing.pqt")
 
 
 # Clean county and state names ####
