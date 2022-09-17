@@ -1,14 +1,12 @@
-# Load package ####
+# Load packages ####
 
 
-# Load FRR importance (ffb) ####
-ffb_imp <-
-  loadResults("ffb", "importance")
 
 ## Load Nolte (2020) features
 root <- "~/fmv"
 ddir <- file.path(root, "data")
 cdir <- file.path(root, "code")
+odir <- file.path(root, "output")
 noltevars_path <- file.path(ddir, "nolte2020vars.csv")
 
 nolte2020vars <- 
@@ -19,9 +17,14 @@ nolte2020vars <-
 
 # Source Prep ####
 source(file.path(cdir, "functions/sourceFuncs.R"))
+sourceFuncs()
 source(file.path(cdir, "misc/ag_regions.R"))
 source(file.path(cdir, "viz/model/frr/viz_frr_prep.R"))
 
+
+# Load FRR importance (ffb) ####
+ffb_imp <-
+  loadResults("ffb", "importance")
 
 # Load font ####
 font <- "Open Sans"
@@ -79,23 +82,67 @@ ffb_imp_clean <-
     group = fct_reorder(group, imp_med))
 
 # VIZ ####
+
+## Top N FRR Importance Plot ####
+
+ffb_imp_clean %>%
+  
+  arrange(-imp_med) %>%
+  group_by(frr) %>%
+  slice(1:20) %>%
+  ungroup() %>%
+  
+  ggplot(aes(Importance,
+             group, colour = frr)
+         ) +
+  
+  geom_point(size = 2.5) +
+  
+  scale_x_continuous(expand = c(0.01,0), 
+                     breaks = seq(0, 1.5, by = 0.25)) +
+  scale_y_discrete(expand = c(0.03,0.03)) +
+  scale_colour_manual(
+    values = frr_colors
+  ) +
+  
+  labs(
+    title = "Feature Importance by Farm Resource Region: Top 20 Features",
+    subtitle = 
+      "Permutation feature importance. Features added by this paper denoted in **bold**.",
+    caption = "Climatic variables grouped for clarity",
+    x = "Feature Importance",
+    y = NULL,
+    colour = "Farm Resource Region") +
+  
+  theme(
+    text = element_text(family = font, size = 25),
+    axis.ticks = element_blank(),
+    axis.text.y = ggtext::element_markdown(),
+    axis.title.x = element_text(size = 20),
+    legend.key = element_blank(),
+    legend.title = element_text(size = 19),
+    panel.background = element_blank(),
+    panel.grid.major.y = element_line(size = 0.1, colour = "grey70"),
+    panel.grid.major.x = element_blank(),
+    plot.title = element_text(face= "bold"),
+    plot.subtitle = element_markdown(size = 20),
+    plot.caption = element_text(size = 15, face = "italic")
+  )
+
+
+
+
 ## Full FRR Importance Plot ####
 
 ffb_imp_clean  %>%
   
   ggplot(aes(Importance,
              group, colour = frr)
-         ) +
+  ) +
   
   geom_hline(yintercept = 0) +
   
   geom_point() +
-  
-  #stat_boxplot(geom = "errorbar",
-  #             size = 0.2) +
-  #geom_boxplot(alpha = 1, size = 0.2, 
-  #             colour = "black", outlier.size = 0.6,
-  #             outlier.colour = "grey50") +
   
   scale_x_continuous(expand = c(0.01,0), 
                      breaks = seq(0, 1.5, by = 0.25)) +

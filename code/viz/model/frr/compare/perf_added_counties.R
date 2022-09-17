@@ -1,12 +1,6 @@
 # Load packages ####
 library(sf)
 
-
-
-# Load font ####
-font <- "Open Sans"
-loadFont(font)
-
 # Set up ####
 root <- "~/fmv"
 ddir <- file.path(root, "data")
@@ -14,8 +8,15 @@ cdir <- file.path(root, "code")
 
 # Source Prep ####
 source(file.path(cdir, "functions/sourceFuncs.R"))
+sourceFuncs()
 source(file.path(cdir, "misc/ag_regions.R"))
 source(file.path(cdir, "viz/model/frr/viz_frr_prep.R"))
+
+# Load font ####
+font <- "Open Sans"
+loadFont(font)
+
+
 
 
 # Load results ####
@@ -72,15 +73,24 @@ length(ffb_only_counties)
 # Added property km^2 ####
 sum(ffb_only_df$ha)/100
 
-# Added county hectares ####
-ffb_only_df %>%
+# Added county km2 ####
+added_km2_county <-
+  ffb_only_df %>%
   filter(!duplicated(fips)) %>%
   transmute(
     fips,
     area_km = (ALAND + AWATER)/1e+06) %>%
-  summarise(added_ha = sum(area_km))
+  summarise(added_km = sum(area_km))
 
-
+ggplot() +
+  
+  geom_sf(data = frr_shp, aes(fill = frr_name), colour =NA) +
+  
+  geom_sf(data = ffb_only_df, colour =NA, fill = "black") +
+  
+  scale_fill_manual(
+    values = frr_colors
+  )
 
 # Mean squared error by county
 
