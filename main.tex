@@ -37,7 +37,7 @@
 
 \Large
  \begin{center}
-High-Resolution Estimates of Agricultural Land Value for Conservation\footnote[2]{Gold and Binder acknowledge financial support from the David \& Lissa Leege Endowment and professional development grant funds from the Faculty Life Committee of St Olaf College. They would also like to thank Rushikesh Jadhav for research assistance and Sara Dale and Craig Rice for their indispensable technical assistance.}\\ 
+Accounting for regional market dynamics improves and extends land value estimates\footnote[2]{Gold and Binder acknowledge financial support from the David \& Lissa Leege Endowment and professional development grant funds from the Faculty Life Committee of St Olaf College. They would also like to thank Rushikesh Jadhav for research assistance and Sara Dale and Craig Rice for their indispensable technical assistance.}\\ 
 % I need to verify that I'm acknowledging the funding sources properly.
 
 \vspace{10pt}
@@ -59,7 +59,7 @@ $^2$Boston University
 \end{center}
 
 \small
-Planning for cost-effective conservation requires reliable estimates of land costs, spatially-differentiated at high resolution. Nolte (2020) provides an estimation approach that dramatically improves estimates for undeveloped land. Much undeveloped land of conservation interest is under threat of conversion to agricultural use or is already agricultural. Here we improve on the accuracy and coverage of estimation models for such land by incorporating additional variables known to affect agricultural land value and by modeling at scales corresponding to regional agricultural markets. We find that median home value, climatic variables, and several soil type variables contribute substantially to predictive power. Our estimates improve accuracy by X percent on average and extend coverage into 376 counties occupying 1.35 million km$^2$.
+Planning for cost-effective conservation requires reliable estimates of land costs, spatially-differentiated at high resolution. Nolte (2020) provides an estimation approach that dramatically improves estimates for undeveloped land. Much undeveloped land of conservation interest is under threat of conversion to agricultural use or is already agricultural. Here we improve on the accuracy and coverage of estimation models for such land by incorporating additional variables known to affect agricultural land value and by modeling at scales corresponding to regional agricultural markets. We find that median home value, climatic variables, and several soil type variables contribute substantially to predictive power. Our estimates improve accuracy by 13\% on average, across common parcels, and extend coverage into 376 counties occupying 1.35 million km$^2$.
 
 \newpage
 
@@ -85,7 +85,7 @@ In addition to incorporating additional predictors, we consider the possibility 
     \label{fig:FRR_map}
 \end{figure}
 
-We find parcel-level climatic conditions and soil type, as well as county-level home values, contribute substantially to the model's predictive power. Our model improves prediction error by X percent and explanatory power ($R^2$) by Y percent. By modeling at the farm resource region level, we extend coverage in areas that were dropped in county modeling due to insufficient density by 465 counties while preserving comparable predictive accuracy to county-level approaches. Together, these results suggest, first, that environmentally informed drivers of land market value constitute essential inputs into conservation cost models and, second, that modeling at broader scales while preserving relative homogeneity of market characteristics extends the capacity of such work. The paper proceeds as follows. Section 2 describes the data sources and methodology. Section 3 summarizes the results from both the county and farm resource region models, comparing their performance to that of Nolte (2020)'s approach. Section 4 discusses broader policy-relevant implications of the results. Section 5 concludes.
+We find parcel-level climatic conditions and soil type, as well as county-level home values, contribute substantially to the model's predictive power. Overall, our modeling approach, which both expands the set of predictors and models at a regional scale, improves prediction error by 13\% across common parcels. Decomposing this effect, we see that adding variables alone (without modeling at a regional scale) reduces prediction error by 9\% across common parcels, while modeling at a regional scale \textit{further} reduces prediction error by 5\% across common parcels. By modeling at the farm resource region level, we extend coverage in areas that were dropped in county modeling due to insufficient density by 376 counties while preserving comparable predictive accuracy to county-level approaches. Together, these results suggest, first, that environmentally informed drivers of land market value constitute essential inputs into conservation cost models and, second, that modeling at broader scales while preserving relative homogeneity of market characteristics extends the capacity of such work. The paper proceeds as follows. Section 2 describes the data sources and methodology. Section 3 summarizes the results from both the county and farm resource region models, comparing their performance to that of Nolte (2020)'s approach. Section 4 discusses broader policy-relevant implications of the results. Section 5 concludes.
 
 
 \section{Data and Methods}
@@ -166,7 +166,7 @@ National performance aggregations mask substantial heterogeneity across county c
 
 We attempt to solve this trade-off between model size and observation homogeneity by specifying models at the level of the farm resource region (Figure \ref{fig:FRR_map}). Note the spatial discontinuity of several regions, most notably the Fruitful Rim, which is scattered from the Pacific Northwest to Florida.
 
-Specifying nine farm resource region-wide models enables the inclusion of observations that are dropped in county-level modeling. For example, Montana...
+Specifying nine farm resource region-wide models enables the inclusion of observations that are dropped in county-level modeling. 
 
 In the farm resource region models, such observations contribute to both training and testing. Figure \ref{fig:frr_test_density} shows the spatial distribution and density of observations used to evaluate farm resource region model performance. States like Montana and Wyoming, which are discarded from county models, are incorporated despite relatively low observation density. 
 
@@ -208,18 +208,39 @@ Features added in the Full model contribute to predictive power in similar patte
 
 
 
-
-
-
 \section{Discussion}
 
-DISCUSSION
+\textbf{Brainstorming}
 
-\newpage
+\textit{Exploration of accuracy-improvement mechanisms}
+\begin{itemize}
+    \item We see that the models with our expanded predictor set improve performance. The mechanism seems relatively straightforward: our new predictors add new valuable information to the RF model, allowing it to bin observations more accurately.
+    \item We see that the FRR models provide substantial \textit{further} improvement. The mechanism here seems less obvious, but my theory is that is can be mostly attributed to the increase in variation among some key predictors, like median home value and climate conditions. Restricting yourself to just time series variation of, e.g., home prices within a single county does not really reveal the relationship between land value and home prices in the same way that observing a panel of county-level prices would.  
+\end{itemize}
+
+\textit{Our work is policy-relevant}
+\begin{itemize}
+    \item Broader coverage allows for conservation planning in areas that would otherwise have to rely on estimates in neighboring states
+    \item Inclusion of residential real estate market indicators--and validation of how predictive they are of undeveloped land values--could allow for extensibility into areas where real estate information is available but other predictors are either not available or only available at highly aggregated spatial scales.
+    \item The importance of climatic variables in our variables indicates that climate change will have an effect on land values, and therefore on conservation planning. An interesting future direction could be quantifying the \textit{causal} effect of each of our climate variables in a more Ricardian-like paper, though I'm not sure what our ``angle" would be, given how ubiquitous that literature is.
+    \item FRR models' expansion into rural areas is useful, since that's where high-impact conservation easements/purchasing are happening--but we'd need to confirm that this is true and why. Is it merely a function of lower cost, or is there some higher ecological value in these remote areas?
+\end{itemize}
+
+\textit{Our work contributes to the literature}
+\begin{itemize}
+    \item Confirms Ricardian theory of land attribute capitalization, like soil type and climate conditions.
+\end{itemize}
 
 \section{Conclusion}
 
-CONCLUSION
+To effectively preserve and maintain critical habitats and ecosystems, conservation advocates, policymakers, and managers rely on land cost estimates to weigh different strategies in the face of scarce resources. Hindered by limitations of data and computing power, efforts to produce land value estimates have suffered from low spatial resolution. Nolte (2020), approaching the general problem of land value estimation, established a methodology and database that greatly improved value estimates of undeveloped land, employing parcel-level sales data and a large set of predictors. As developers and agricultural producers look to undeveloped or partially agricultural land to convert to lucrative use, conservation planners require a thorough and reliable picture of property valuation in order to cost-effectively build conservation agendas.
+
+In this paper, we improve the accuracy and coverage of previous estimation models for undeveloped land value, leveraging an added set of economically-relevant, high resolution climatic and ecological predictors, as well as incorporating time series data on county-specific residential real estate markets. In addition, we build our models at larger scales, corresponding to regional agricultural markets, which expands the overall reach by 376 counties.
+
+Median home value, climatic information, and several soil type variables contribute substantially to predictive power across county and farm resource region models. Compared to Nolte (2020), our estimates reduce prediction error by 27\% across the conterminous US.
+
+
+
 
 \newpage
 
@@ -244,7 +265,7 @@ CONCLUSION
 
 
 \subsection{Multi-parcel Aggregation}
-Our analysis employs sales as the individual sample unit. In the case of sales involving multiple parcels, we aggregate predictors across sales. 
+Our analysis employs sales as the individual sample unit. In the case of sales involving multiple parcels, we aggregate predictor values across sales. 
 
 We take the arithmetic mean of all Nolte (2020) variables except river and lake frontage length, which we sum across all parcels.
 
