@@ -3,6 +3,9 @@
 
 \usepackage[symbol]{footmisc} % footnote symbols
 
+\usepackage{float} % force figure location with [H]
+\usepackage{xcolor}
+
 \usepackage{graphicx}
 \graphicspath{ {output/} } % compile mode must be normal for images to display
 
@@ -74,14 +77,11 @@ There is reason to believe that expanding both the set of agriculturally and eco
 
 While many of the land quality attributes that determine economic value are fixed, or change only very slowly over time, many drivers of supply and demand—income, preferences, technology, and the availability of substitutes---vary over time. Failing to account for time-varying predictors can lead to an erosion of predictive power. When sales prices exhibit trends over time, not only will overall estimation accuracy suffer but models might systematically over- or under-predict sales values for observations before or after the median sales year if they do not adequately control for such tends. To address these issues, we add median home price indices to our set of predictors. Home price indices capture changing dynamics in residential land markets that can exert pressure on (or otherwise correlate with) the price of undeveloped land. Accounting for variation in local home prices might thus improve the predictive power of models aimed at estimating the value of agricultural or other undeveloped land. 
 
-In addition to incorporating additional predictors, we consider the possibility that modeling at scales larger than the county can ease local observation constraints, improving both the coverage and accuracy of resulting estimates. Many counties have few sales records in the ZTRAX database. Nolte (2020) implements a 1000-observation minimum for modeling parcel land values within a county, supplementing a focal county’s observations with observations drawn from neighboring counties where possible. Even with this supplementation procedure, 27 percent of counties fail to meet the threshold, and prediction accuracies for counties with sufficient-but-low observation densities are notably poorer than those for other counties. We explore the benefits of modeling at the larger scale of USDA farm resource regions (Fig. \ref{fig:FRR_map}), which are delineated in consideration of county-level, often cross-state similarities in geography and agricultural production (\cite{FRR2000}).
+In addition to incorporating additional predictors, we consider the possibility that modeling at scales larger than the county can ease local observation constraints, improving both the coverage and accuracy of resulting estimates. Many counties have few sales records in the ZTRAX database. Nolte (2020) implements a 1000-observation minimum for modeling parcel land values within a county, supplementing a focal county’s observations with observations drawn from neighboring counties where possible. In replicating  this supplementation procedure with vacant, undeveloped, and agricultural parcels, we find that 27 percent of counties in the study sample fail to meet the threshold, and prediction accuracies for counties with sufficient-but-low observation densities are notably poorer than those for other counties. 
 
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/FRR_map.png}
-    \caption{USDA Farm Resource Regions}
-    \label{fig:FRR_map}
-\end{figure}
+National performance aggregations mask substantial heterogeneity across county characteristics. In particular, a county's observation density is strongly correlated with both performance measures. Figure \ref{fig:compare_county_nobs_perf} shows the relationship between model performance and the total number of observations in the county where the model was trained and tested. The monotonicity of the decrease (increase) in mean squared error (r-squared) as county-level models increase in size affirms the intuitive benefits of greater sample sizes. In pursuit of larger datasets, however, analysts will encounter a fundamental challenge: expanding the sample size necessarily broadens the geographic range from which observations will be drawn. This may debilitate the model's predictive power if the broader geographic scope mixes land markets with disparate characteristics, economic dynamics, and time trends. Yet failing to expand the geographic scope has its own costs. In states such as Wyoming and Idaho, any given county has too few observations to model land value, forcing the analyst to discard perfectly good data.
+
+We attempt to solve this trade-off between model size and observation homogeneity by specifying models at the level of the farm resource region (Figure \ref{fig:FRR_map}). Farm resource regions  are delineated in consideration of county-level, often cross-state similarities in geography and agricultural production (\cite{FRR2000}).
 
 Overall, our modeling approach, which both expands the set of predictors and models at a regional scale, improves prediction error by 13 percent. Decomposing this effect, we see that adding variables alone (without modeling at a regional scale) reduces prediction error by 9 percent, while modeling at a regional scale \textit{further} reduces prediction error by 5 percent (based on parcels modeled at both scales, using the full set of predictors). By modeling at the farm resource region level, we extend coverage in areas that were dropped in county modeling due to insufficient density by 376 counties while preserving comparable predictive accuracy to county-level approaches. In short, our approach enhances the quality and quantity of parcel-level estimate of fair market value. 
 
@@ -104,13 +104,6 @@ Farmland classifications are operationalized as the percent of each parcel conta
 
 To incorporate information on local real estate markets, we add yearly all-transaction house price index values at the county level (\cite{FederalHousing2022}). At the farm resource region level, to allow for comparability between counties, we source open access home value data from Realtor.com (\cite{RealtorData}), which provides monthly county-level reports of median listing price from July 2016 to present (June 2022 at time of writing). We select 2017 as the base year due to it having the lowest proportion of data quality flags (an automatically triggered indicator of prices being outside their normal range) of any sample year. Median listing prices are summarized at the year-county level and then multiplied by corresponding HPI values (with base year 2017) to estimate dollar values across the 2000-2020 sample period. In counties missing HPI values, median home value is estimated as the inverse squared distance weighted mean of estimated median home values in every county within 150 km of the focal county. 
 
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/clean_obs_density.png}
-    \caption{Spatial distribution of sales observations, 2000-2020, in filtered dataset. N = 5.04 million. Cells represent 10 km$^2$ tessellation of the conterminous US.}
-    \label{fig:clean_obs_density}
-\end{figure}
-
 Altogether, we estimate fair market value in four primary model runs, corresponding to different combinations of predictor set (our ''Full'' set of predictors or the ''Restricted'' set including only variables from Nolte (2020)) and geographic scale of analysis (county-level or farm resource region-level). 
 
 \newpage
@@ -119,98 +112,45 @@ Altogether, we estimate fair market value in four primary model runs, correspond
 
 \subsection{The value of added predictors}
 
-Individually and collectively, the additional predictors in our ''Full'' set offer modest and meaningful improvements to model performance relative to the ''Restricted" set. Figure \ref{fig:fcb_importance} shows the relative predictive contributions of each feature in the Full predictor set for models estimated at the county level. The most impactful additions of this paper are the climatic variables (precipitation, dew temperature, and temperature) and housing price index (used in place of dollar values in the county models), followed by prime soil and soil of statewide importance, which is one quality tier below prime. Irrigation status, both ever-irrigated and irrigated in the three years preceding the parcel's sale, contribute little predictive power, although both exhibit significant heterogeneity across counties. Conditionally prime soil types (prime if warm enough, if protected, if irrigated, etc.) and soil types important only at local scales offer little prediction importance to the model.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/fcb_importance_t20.png}
-    \caption{Permutation feature importance from full county model, top 20 features. Climatic variables grouped for clarity. Features added by this paper denoted in bold. Each dot represents a single county.}
-    \label{fig:fcb_importance}
-\end{figure}
+Individually and collectively, the additional predictors in our ``Full'' set offer modest and meaningful improvements to model performance relative to the ``Restricted" set. Figures \ref{fig:fcb_importance} and \ref{fig:ffb_importance} show the relative predictive contributions of each feature in the Full predictor set for models estimated at the county and farm resource region level, respectively. The most impactful additions of this paper are the climatic variables (precipitation, dew temperature, and temperature) and real estate indicators (House Price Index at the county level and median home value at the farm resource region level), followed by prime soil and soil of statewide importance, which is one quality tier below prime and does not appear in the top 20 features displayed in Figures \ref{fig:fcb_importance} and \ref{fig:ffb_importance}. Irrigation status, both ever-irrigated and irrigated in the three years preceding the parcel's sale, contribute little predictive power, although both exhibit significant heterogeneity across counties (see Appendix A.2 for the importance of all features). Conditionally prime soil types (prime if warm enough, if protected, if irrigated, etc.) and soil types important only at local scales offer little prediction importance to the model.
 
 Accounting for changes in related real estate markets plays an especially important role in better predicting fair market value. Figure \ref{fig:nolte_resid_time} shows the effect of adding housing price index (HPI) data to the otherwise restricted set of predictors in the county-level model. While over-time heteroskedasticity remains even after the addition of HPI, its inclusion reduces the magnitude of the error, particularly the over-prediction in the early years of the sample and the under-prediction in its later years.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/nolte_resid_time.png}
-    \caption{Mean annual prediction error in Nolte base county model, compared to the addition of annual housing price index data at the county-level. Error bars represent one standard error.}
-    \label{fig:nolte_resid_time}
-\end{figure}
-
-Altogether, our Full model offers modest but consistent improvements in model performance at the county level. Figure \ref{fig:county_compare_boxplot} shows the average county-level mean squared error and r-squared of the Full and Restricted models. Nationally, the Full model outperforms the Restricted model, with an average mean squared error (in logged 2020 \$ per hectare) of X1 and an average R-squared of X2 compared to Y1 and Y2, respectively, in the Restricted model.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/county_compare_boxplot.png}
-    \caption{Mean county-level model performance, Full compared to Nolte. Outliers removed for clarity.}
-    \label{fig:county_compare_boxplot}
-\end{figure}
-
-National performance aggregations mask substantial heterogeneity across county characteristics. In particularly, a county's observation density is strongly correlated with both performance measures. Figure \ref{fig:compare_county_nobs_perf} shows the relationship between model performance and the total number of observations in the county where the model was trained and tested. The monotonicity of the decrease (increase) in mean squared error (r-squared) as county-level models increase in size affirms the intuitive benefits of greater sample sizes. In pursuit of larger datasets, however, analysts will encounter a fundamental challenge: expanding the sample size necessarily broadens the geographic range from which observations will be drawn. This may debilitate the model's predictive power if the broader geographic scope mixes land markets with disparate characteristics, economic dynamics, and time trends. Yet failing to expand the geographic scope has its own costs. In states such as Wyoming and Idaho, any given county has too few observations to model land value, forcing the analyst to discard perfectly good data.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/compare_county_nobs_perf.png}
-    \caption{Full and Restricted county model performance against total county-level observations.}
-    \label{fig:compare_county_nobs_perf}
-\end{figure}
+Altogether, our Full model offers modest but consistent improvements in model performance at the county level. Figure \ref{fig:county_compare_boxplot} shows the average county-level mean squared error and r-squared of the Full and Restricted models. Nationally, the Full model outperforms the Restricted model, with an average mean squared error (in logged 2020 \$ per hectare) of 0.95 and an average R-squared of 0.66 compared to 1.04 and 0.63, respectively, in the Restricted model.
 
 \subsection{Regional Scale Modeling}
 
-We attempt to solve this trade-off between model size and observation homogeneity by specifying models at the level of the farm resource region (Figure \ref{fig:FRR_map}). Note the spatial discontinuity of several regions, most notably the Fruitful Rim, which is scattered from the Pacific Northwest to Florida.
-
-
-Specifying models at the scale of the farm resource region enables the inclusion of observations that are dropped in county-level modeling and enhances accuracy. In Figure \ref{fig:compare_ffb_fcb_mse}, we see that many states which are wholly absent from the county models receive predicted land values in the farm resource region model, including Montana, Maine, Idaho, Wyoming, Mississippi, and Kansas. Several more states see their coverage greatly extended. In Missouri, for instance, the county models are only able to generate land value estimates in the urban and exurban regions surrounding St. Louis. The farm resource region models, by contrast, expand into the rural hinterland of Missouri, offering a broader array of land value predictions. Overall, farm resource region modeling extends coverage by 376 counties, constituting an additional area of 1.35 million km$^2$ (the added properties make up 818.7 km$^2$). Across these added counties, model performance remains well within the previously observed range, with a median mean squared error of 0.895 and a mean of 1.56. Elsewhere, we see minor changes to coverage but improvements to predictive accuracy. In North Dakota, beyond the addition of several counties, the sparsely populated state benefits from its inclusion in the broader Northern Great Plains farm resource region. This allows North Dakota observations that would otherwise have been siloed off with only a handful of other observations in their respective counties to be modeled alongside observations in segments of Wyoming, Montana, and Minnesota, among other states, which share agricultural and climatic characteristics.
-
-
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/compare_ffb_fcb_mse.png}
-    \caption{Mean squared error in Full county model (left) and Full farm resource region model (right). Counties with MSE greater than the 90th percentile have been removed for visual clarity. Blacked-out counties indicate 14 instances wherein a county model was specified but the farm resource region model did not include testing observations in that county.}
-    \label{fig:compare_ffb_fcb_mse}
-\end{figure}
+Specifying models at the scale of the farm resource region enables the inclusion of observations that are dropped in county-level modeling and enhances accuracy. In Figure \ref{fig:compare_ffb_fcb_mse}, we see that many states which are wholly absent from the county models receive predicted land values in the farm resource region model, including Montana, Maine, Idaho, Wyoming, Mississippi, and Kansas. Several more states see their coverage greatly extended. In Missouri, for instance, the county models are only able to generate land value estimates in the urban and exurban regions surrounding St. Louis. The farm resource region models, by contrast, expand into the rural hinterland of Missouri, offering a broader array of land value predictions. Overall, farm resource region modeling extends coverage by 376 counties, constituting an additional area of 1.35 million km$^2$ (the added properties make up 818.7 km$^2$). Across these added counties, model performance remains well within the previously observed range, with a median mean squared error of 0.895 and a mean of 1.56. Elsewhere, we see minor changes to coverage but improvements to predictive accuracy.
 
 Features added in the Full model contribute to predictive power in similar patterns to feature importance across county models. Figure \ref{fig:ffb_importance_all} shows the distribution of feature importance by farm resource region. Median home value is the fourth most important predictor, after size and several building characteristics. Climatic variables continue to offer substantial importance, with dew temperature, temperature, and precipitation falling in the upper half of all predictors. As in the county models, prime soil and soil of statewide importance remain considerably higher ranked than all conditional soil types, which consistently offer near-zero feature importance across all nine regions. Though it is not among the top 20 features displayed in Figure \ref{fig:ffb_importance_all}, irrigation status exhibits modest feature importance across both ever-irrigated and irrigated in the last three years.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/ffb_importance_t20.png}
-    \caption{Permutation feature importance by farm resource region, top 20 features. Climatic variables grouped for clarity. Features added by this paper denoted in bold.}
-    \label{fig:ffb_importance_all}
-\end{figure}
+Consistent with county-level findings, we observe that, across Restricted and Full predictor sets, farm resource region model prediction accuracy is greater in larger counties, even without controlling for the overall size of the farm resource region model (Figure \ref{fig:frr_compare_mse_size}). In counties with greater than 1,000 observations, the Full model produces an average mean squared of error of 0.83. That figure grows 1.12 in counties with fewer than 1,000 observations. Across both size categories, the Full model outperforms the Restricted model.
 
-Consistent with county-level findings, we observe that, across Restricted and Full predictor sets, farm resource region model prediction accuracy is greater in larger counties, even without controlling for the overall size of the farm resource region model (Figure \ref{fig:frr_compare_mse_size}). In counties with greater than 1,000 observations, the Full model produces an average mean squared of error of X. That figure grows Y in counties with fewer than 1,000 observations. Across both size categories, the Full model outperforms the Restricted model.
+Overall, the Full set continues to outperform the Restricted set at the farm resource region level, with an average mean squared error of 0.76 compared to 0.87 for the Restricted set. This improvement is comparable to the improvement observed at the county level, when the Full set is compared to the Restricted set (0.95 and 1.04 mean squared error, respectively, across all parcels in both models). 
 
-\begin{figure}
-    \centering
-    \includegraphics[width=1\textwidth]{exhibits/frr_compare_mse_size.png}
-    \caption{Average county-level mean squared error in farm resource region models by size category, Restricted compared to Full. Outliers removed for clarity.}
-    \label{fig:frr_compare_mse_size}
-\end{figure}
-
+In low observation density areas, the benefits of modeling at the farm resource region level remain. In counties with fewer than 1000 observations, the farm resource region model ($MSE=1.02$) outperforms the county model ($MSE=1.10$).
 
 \section{Discussion}
 
-\textbf{Brainstorming}
+\subsection{Accuracy Improvement Mechanisms}
 
-\textit{Exploration of accuracy-improvement mechanisms}
-\begin{itemize}
-    \item We see that the models with our expanded predictor set improve performance. The mechanism seems relatively straightforward: our new predictors add new valuable information to the RF model, allowing it to bin observations more accurately.
-    \item We see that the FRR models provide substantial \textit{further} improvement. The mechanism here seems less obvious, but my theory is that is can be mostly attributed to the increase in variation among some key predictors, like median home value and climate conditions. Restricting yourself to just time series variation of, e.g., home prices within a single county does not really reveal the relationship between land value and home prices in the same way that observing a panel of county-level prices would.  
-    
-\end{itemize}
+Both at the county and farm resource region levels, the Full set of predictors improve model performance. The mechanism through which this improvement acts is likely to be straightforward. The predictors added by this study contribute valuable information to the tree-based ensemble model, allowing it to more accurately ``bin" observations, consistent with the theoretical foundations of Ricardian land value literature. Of particular importance here are the real estate market indicators, House Price Index (county models) and median home value (farm resource region models). The consistent feature importance exhibited by both predictors suggests that having access to high quality indicators of spatiotemporal variation in  local and regional residential real estate markets may greatly improve conservation planners' ability to estimate the cost of non-residential properties, including the vacant, undeveloped, and agricultural parcels of interest to the present study.
 
-\textit{Our work is policy-relevant}
-\begin{itemize}
-    \item Broader coverage allows for conservation planning in areas that would otherwise have to rely on estimates in neighboring states
-    \item The importance of climatic variables in our variables indicates that climate change will have an effect on land values, and therefore on conservation planning. An interesting future direction could be quantifying the \textit{causal} effect of each of our climate variables in a more Ricardian-like paper, though I'm not sure what our ``angle" would be, given how ubiquitous that literature is.
-    \item FRR models' expansion into rural areas is useful, since that's where high-impact conservation easements/purchasing are happening--but we'd need to confirm that this is true and why. Is it merely a function of lower cost, or is there some higher ecological value in these remote areas?
-\end{itemize}
+Further, we observe that the farm resource region models improve model performance, relative to county modeling. While less clear than the mechanism described above, it is arguable that the improvement may be attributed to the increase in variation among several key predictors. Take, for example, a consistently ``important" climatic variable such as temperature. Building a county-level model allows only for temperature variation within a highly localized climate over time. This variation pales in comparison to that of the farm resource region models. The Fruitful Rim model incorporates climatic observations from such geographically disparate locales as Florida, Texas, and Idaho, providing a greatly expanded matrix of predictors upon which the model may generate cost predictions. A similar argument is relevant to real estate markets and the associated region-level price variation, compared to within-county variation.
 
-\textit{Our work contributes to the literature}
-\begin{itemize}
-    \item Confirms Ricardian theory of land attribute capitalization, like soil type and climate conditions.
-\end{itemize}
+This geographic expansion benefits sparsely populated regions.  In low-density North Dakota, beyond the addition of several counties, the state benefits from its inclusion in the broader Northern Great Plains farm resource region, wherein North Dakota observations that would otherwise have been siloed off with only a handful of other observations in their respective counties are now modeled alongside observations in segments of Wyoming, Montana, and Minnesota, among other states, which share agricultural and climatic characteristics. 
+
+\subsection{Policy Implications}
+
+The broader coverage afforded by our farm resource region modeling allows for conservation planning in areas that would otherwise need to rely on estimates in neighbor states. For instance, across the entire state of Montana, our sample contains only 507 observations, all of which are discarded under the county-level modeling paradigm. Conversely, using farm resource region models allows for such observations to be grouped and modeled alongside observations in either the Basin and Range or Northern Great Plains that bear a resemblance to those otherwise discarded Montana observations. In the absence of the farm resource region approach, policy analysis and conservation planning would be forced to use observations in neighboring states as proxies for Montana parcels.
+
+Similarly, the expansion into rural areas afforded by the farm resource region models (see, for example, the expanded coverage in Missouri in Figure \ref{fig:compare_ffb_fcb_mse}) brings high-resolution land value estimates to the areas in which high-impact conservation easements and fee simple purchasing is occurring.
+
+{\color{red}{Need to confirm this ``high-impact conservtion happens in rural areas" argument. Is it merely a function of lower cost, or is there some higher ecological value in these remote areas? Conservation almanac data may be useful here.}}
+
+\subsection{Future Directions}
+
+The importance of climatic variables across the suite of models we build indicates that climate change will continue to exercise strong effects on land markets across the US. Such disruptions, especially if they are spatially heterogeneous, may upend conservation planning in the short- and long-terms. As the present study does not attempt to investigate the precise sensitivities or magnitudes associated with variation in climatic conditions, future work could quantify the individual causal effects of temperature, precipitation, and other climatic variables at play in the agricultural and undeveloped land markets treated here. 
 
 \section{Conclusion}
 
@@ -220,9 +160,95 @@ In this paper, we improve the accuracy and coverage of previous estimation model
 
 \newpage
 
-\section{Appendix}
+\vspace*{200pt}
 
-\subsection{Parcel filter}
+\begin{huge}
+    \begin{center}
+        Figures
+    \end{center}
+\end{huge}
+
+\newpage
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/compare_county_nobs_perf.png}
+    \caption{Restricted county model performance across total county-level observations.}
+    \label{fig:compare_county_nobs_perf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/FRR_map.png}
+    \caption{USDA Farm Resource Regions}
+    \label{fig:FRR_map}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/clean_obs_density.png}
+    \caption{Spatial distribution of sales observations, 2000-2020, in filtered dataset. N = 5.04 million. Cells represent 10 km$^2$ tessellation of the conterminous US.}
+    \label{fig:clean_obs_density}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/fcb_importance_t20.png}
+    \caption{Permutation feature importance from full county model, top 20 features. Climatic variables grouped for clarity. Features added by this paper denoted in bold. Each dot represents a single county.}
+    \label{fig:fcb_importance}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/ffb_importance_t20.png}
+    \caption{Permutation feature importance by farm resource region, top 20 features. Climatic variables grouped for clarity. Features added by this paper denoted in bold.}
+    \label{fig:ffb_importance}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/nolte_resid_time.png}
+    \caption{Mean annual prediction error in Restricted county model, compared to the addition of annual housing price index data at the county level.}
+    \label{fig:nolte_resid_time}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/county_compare_boxplot.png}
+    \caption{Mean county-level model performance, Full compared to Nolte. Outliers removed for clarity.}
+    \label{fig:county_compare_boxplot}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/compare_ffb_fcb_mse.png}
+    \caption{Mean squared error in Full county model (left) and Full farm resource region model (right). Counties with MSE greater than the 90th percentile have been removed for visual clarity. Blacked-out counties indicate 14 instances wherein a county model was specified but the farm resource region model did not include testing observations in that county.}
+    \label{fig:compare_ffb_fcb_mse}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{exhibits/frr_compare_mse_size.png}
+    \caption{Average county-level mean squared error in farm resource region models by size category, Restricted compared to Full. Outliers removed for clarity.}
+    \label{fig:frr_compare_mse_size}
+\end{figure}
+
+
+
+\newpage
+\newpage
+
+\vspace*{200pt}
+
+\begin{huge}
+    \begin{center}
+        Appendix
+    \end{center}
+\end{huge}
+
+\newpage
+
+\subsection*{A.1 Parcel filter}
 
 \begin{enumerate}
     \item Meets ``undeveloped" criteria established by Nolte (2020), \textbf{or}
@@ -237,10 +263,28 @@ In this paper, we improve the accuracy and coverage of previous estimation model
     \end{enumerate}
 \end{enumerate}
 
-\subsection{Alternate Model Specifications}
+\newpage
+
+\subsection*{A.2 Feature Importance: All Features}
 
 
-\subsection{Multi-parcel Aggregation}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{exhibits/fcb_importance_all.png}
+    \caption{Permutation feature importance from full county model, all features. Climatic variables grouped for clarity. Features added by this paper denoted in bold. Each dot represents a single county.}
+    \label{fig:fcb_importance_all}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{exhibits/ffb_importance_all.png}
+    \caption{Permutation feature importance by farm resource region, all features. Climatic variables grouped for clarity. Features added by this paper denoted in bold.}
+    \label{fig:ffb_importance_all}
+\end{figure}
+
+\newpage
+
+\subsection*{A.3 Multi-parcel Aggregation}
 Our analysis employs sales as the individual sample unit. In the case of sales involving multiple parcels, we aggregate predictor values across sales. 
 
 We take the arithmetic mean of all Nolte (2020) variables except river and lake frontage length, which we sum across all parcels.
@@ -249,7 +293,7 @@ For all climatic variables added by this paper (precipitation, dew temperature, 
 
 For irrigation indicator variables (ever irrigated and irrigated in the past three years), we take the maximum of all parcels' indicators. If any parcel in the sale has been irrigated, the sale is considered irrigated.
 
-For soil types, we calculate a given soil type's proportion $p_j$ as the proportion of total soil area across each parcel $i$ occupied by that soil type:
+For soil types, we calculate a given soil type j's proportion $p_j$ as the proportion of total soil area across each parcel $i$ occupied by that soil type:
 
 \[
 p_j = \displaystyle\frac{\sum\limits_{i=1}^{n}p_{j,i}}{\sum\limits_{i=1}^{n}area_i}
