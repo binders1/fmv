@@ -63,9 +63,9 @@ ggplot(data = fcb_imp,
     y = NULL)+
   
   theme(
-    text = element_text(family = "sans", size = 11),
+    text = element_text(family = "sans", size = 13),
     axis.ticks = element_blank(),
-    axis.title.x = element_text(size = 12),
+    axis.title.x = element_text(size = 17),
     axis.text.y = ggtext::element_markdown(size = 10),
     panel.background = element_blank(),
     panel.grid.major.x = element_line(size = 0.3, colour = "grey70"),
@@ -102,7 +102,7 @@ ggplot(aes(Importance,
   theme(
     text = element_text(family = "sans", size = 14),
     axis.ticks = element_blank(),
-    axis.title.x = element_text(size = 17),
+    axis.title.x = element_text(size = 20),
     axis.text.y = ggtext::element_markdown(size = 14),
     panel.background = element_blank(),
     panel.grid.major.x = element_line(size = 0.3, colour = "grey70"),

@@ -148,19 +148,14 @@ ffb_imp_clean  %>%
     colour = "Farm Resource Region") +
   
   theme(
-    text = element_text(family = "sans", size = 11),
+    text = element_text(family = "sans", size = 13),
     axis.ticks = element_blank(),
     axis.text.y = ggtext::element_markdown(size = 9),
-    axis.title.x = element_text(size = 13),
+    axis.title.x = element_text(size = 17),
     legend.key = element_blank(),
     legend.title = element_text(size = 13),
     panel.background = element_blank(),
-    #panel.border = element_rect(fill = NA, colour = "black"),
     panel.grid.major.y = element_line(size = 0.1, colour = "grey70"),
     panel.grid.major.x = element_blank(),
-    plot.title = element_text(face= "bold"),
-    plot.subtitle = element_markdown(size = 20),
-    plot.caption = element_text(size = 15, face = "italic"),
-    plot.margin = margin(rep(15, 4))
-  )
+    )
 
