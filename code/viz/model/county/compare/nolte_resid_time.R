@@ -1,6 +1,3 @@
-# Load Font ####
-font <- "Open Sans"
-loadFont(font)
 
 # Load Results ####
 mods_to_load <-
@@ -24,7 +21,12 @@ nolte_pred_clean <-
   group_by(model, year) %>%
   summarise(mean_error = mean(error),
             se_error = sd(error)/sqrt(n())) %>%
-  mutate(model = if_else(model == "ncb", "Restricted", "Restricted + HPI"))
+  mutate(
+    model = if_else(
+      model == "ncb", 
+      "Restricted", 
+      "Restricted + HPI")
+    )
 
 
 # VIZ residual over time by model ####
@@ -55,14 +57,11 @@ nolte_pred_clean %>%
   ) +
   
   theme(
-    text = element_text(family = font, size = 24),
+    text = element_text(family = "sans", size = 15),
     axis.ticks = element_blank(),
     strip.background = element_blank(),
     legend.key = element_blank(),
     legend.title = element_blank(),
-    plot.title = element_text(face = "bold", size = 27),
-    plot.subtitle = element_text(size = 20),
-    plot.margin = margin(rep(20, 4)),
     panel.background = element_blank(),
     panel.grid.major.y = element_line(colour = "grey70", size = 0.3),
     panel.grid.major.x = element_blank(),

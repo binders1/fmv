@@ -1,6 +1,3 @@
-# Load Fonts
-font <- "Open Sans"
-loadFont(font)
 
 mods_to_load <-
   c("fcb", "ncb")
@@ -24,7 +21,7 @@ perf_fcb_ncb %<>%
   mutate(
     model = case_when(
       model == "fcb" ~ "Full",
-      model == "ncb" ~ "Nolte"),
+      model == "ncb" ~ "Restricted"),
     stat = if_else(stat == "rsq", 
                    "R-Squared", 
                    "Mean Squared Error")
@@ -51,29 +48,23 @@ perf_fcb_ncb %>%
   scale_fill_manual(
     values = c(
       `Full` = brewer.pal(4, "Paired")[1],
-      `Nolte` = brewer.pal(4, "Paired")[3]
+      `Restricted` = brewer.pal(4, "Paired")[3]
     )
   ) +
   
   labs(
-    title = "County Model Comparison: Performance",
-    subtitle = "Full and Nolte base county models.\n",
     y = NULL,
     x = NULL
   ) +
   
   theme(
-    text = element_text(family = font, size = 24),
+    text = element_text(family = "sans", size = 14),
     axis.ticks = element_blank(),
     strip.background = element_blank(),
     legend.position = "none",
-    plot.title = element_text(face = "bold", size = 27),
-    plot.subtitle = element_text(size = 20),
-    plot.margin = margin(rep(20, 4)),
     panel.background = element_blank(),
     panel.grid.major.y = element_line(colour = "grey70", size = 0.3),
-    panel.grid.major.x = element_blank(),
-    panel.spacing = unit(10, "pt")
+    panel.grid.major.x = element_blank()
   )
 
 
