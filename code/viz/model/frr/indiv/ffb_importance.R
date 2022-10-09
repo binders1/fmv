@@ -88,9 +88,11 @@ ffb_imp_clean %>%
   slice(1:20) %>%
   ungroup() %>%
   
-  ggplot(aes(Importance,
-             group, colour = frr)
-         ) +
+  ggplot(
+    aes(Importance, group, colour = frr)
+    ) +
+
+  geom_hline(yintercept = 0) +
   
   geom_point(size = 2.5) +
   
@@ -107,19 +109,16 @@ ffb_imp_clean %>%
     colour = "Farm Resource Region") +
   
   theme(
-    text = element_text(family = font, size = 25),
+    text = element_text(family = "sans", size = 16),
     axis.ticks = element_blank(),
     axis.text.y = ggtext::element_markdown(),
-    axis.title.x = element_text(size = 20),
+    axis.title.x = element_text(size = 14),
     legend.key = element_blank(),
-    legend.title = element_text(size = 19),
+    legend.title = element_text(size = 14),
     panel.background = element_blank(),
     panel.grid.major.y = element_line(size = 0.1, colour = "grey70"),
     panel.grid.major.x = element_blank(),
-    plot.title = element_text(face= "bold"),
-    plot.subtitle = element_markdown(size = 20),
-    plot.caption = element_text(size = 15, face = "italic")
-  )
+    )
 
 
 
@@ -163,49 +162,4 @@ ffb_imp_clean  %>%
     plot.subtitle = element_markdown(size = 20),
     plot.caption = element_text(size = 15, face = "italic"),
     plot.margin = margin(rep(15, 4))
-  )
-
-#### FRR Climate Importance Plots ####
-importance_frr_clean %>%
-  
-  filter(str_detect(group, "(Temp|Precip)"),
-         !is.nan(Importance)) %>%
-  mutate(Variable = str_remove_all(Variable,"(Precip_|DewTempMean_|^Temp)"),
-         Variable = str_to_title(Variable)) %>%
-  
-  
-  ggplot(aes(Importance, Variable))+
-  
-  geom_point(aes(colour = frr), 
-             size = 2.5, alpha = 0.9)+
-  #geom_boxplot(outlier.shape = NA)+
-  
-  scale_x_continuous(limits = c(0,NA))+
-  
-  scale_colour_manual(
-    values = frr_colors
-  ) +
-  
-  facet_wrap(~group, scales = "free_y")+
-  
-  labs(
-    title = 'Feature Importance by Farm Resource Region: Climate',
-    subtitle = 'Permutation importance. Farm resource region full model.',
-    x = "Feature Importance",
-    y = NULL,
-    colour = "Farm Resource Region")+
-  
-  theme(
-    text = element_text(family = font, size = 18),
-    strip.text = element_text(face = "italic", size = 16),
-    strip.background = element_blank(),
-    axis.ticks.y = element_line(size = 0.5),
-    axis.title.x = element_text(face = "bold"),
-    legend.key = element_blank(),
-    plot.title = element_text(face = "bold"),
-    plot.margin = margin(rep(15,4)),
-    panel.grid.major.y = element_line(colour = "grey70"),
-    panel.grid.major.x = element_blank(),
-    panel.background = element_blank(),
-    panel.border = element_rect(fill = NA, colour = "black")
   )

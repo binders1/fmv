@@ -100,15 +100,12 @@ ggplot(aes(Importance,
     ) +
   
   theme(
-    text = element_text(family = font, size = 25),
+    text = element_text(family = "sans", size = 14),
     axis.ticks = element_blank(),
-    axis.title.x = element_text(size = 19),
-    axis.text.y = ggtext::element_markdown(size = 20),
+    axis.title.x = element_text(size = 17),
+    axis.text.y = ggtext::element_markdown(size = 14),
     panel.background = element_blank(),
     panel.grid.major.x = element_line(size = 0.3, colour = "grey70"),
     panel.grid.major.y = element_blank(),
-    plot.title = element_text(face= "bold"),
-    plot.subtitle = ggtext::element_markdown(size = 20),
-    plot.caption = element_text(size = 15, face = "italic")
-  )
+    )
 

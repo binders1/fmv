@@ -58,7 +58,7 @@ perf_fcb_ncb %>%
   ) +
   
   theme(
-    text = element_text(family = "sans", size = 14),
+    text = element_text(family = "sans", size = 20),
     axis.ticks = element_blank(),
     strip.background = element_blank(),
     legend.position = "none",

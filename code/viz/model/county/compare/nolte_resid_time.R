@@ -57,7 +57,7 @@ nolte_pred_clean %>%
   ) +
   
   theme(
-    text = element_text(family = "sans", size = 15),
+    text = element_text(family = "sans", size = 19),
     axis.ticks = element_blank(),
     strip.background = element_blank(),
     legend.key = element_blank(),
