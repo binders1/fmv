@@ -35,9 +35,9 @@ nolte_pred_clean %>%
   
   geom_hline(yintercept = 0) +
   
-  geom_line(size = 0.75) +
+  geom_line(size = 1.5) +
   
-  geom_point(shape = 21, size = 1.75,
+  geom_point(shape = 21, size = 3.5,
              fill = "white") +
   
   scale_y_continuous(limits = c(-0.3,0.35),
