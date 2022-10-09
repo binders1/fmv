@@ -95,8 +95,6 @@ clean_obs_density <-
   ) +
   
   labs(
-    title = "Observation Density",
-    subtitle = "10km^2 tessellation of the conterminous US",
     fill = "Observed\nSales"
   ) +
   

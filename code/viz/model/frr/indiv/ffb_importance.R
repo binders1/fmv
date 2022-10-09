@@ -21,14 +21,9 @@ sourceFuncs()
 source(file.path(cdir, "misc/ag_regions.R"))
 source(file.path(cdir, "viz/model/frr/viz_frr_prep.R"))
 
-
 # Load FRR importance (ffb) ####
 ffb_imp <-
   loadResults("ffb", "importance")
-
-# Load font ####
-font <- "Open Sans"
-loadFont(font)
 
 
 # Clean FRR Importance data ####
@@ -52,9 +47,10 @@ ffb_imp_clean <-
   
   # group climatic variables
   mutate(group = case_when(
-    str_detect(Variable, "^Dew") ~ "DewTemp",
-    str_detect(Variable, "(?<!Dew)Temp") ~ "Temp",
-    str_detect(Variable, "Precip") ~ "Precip",
+    str_detect(Variable, "^Dew") ~ "Dew Temperature",
+    str_detect(Variable, "(?<!Dew)Temp") ~ "Temperature",
+    str_detect(Variable, "Precip") ~ "Precipitation",
+    Variable == "final_mhv" ~ "Median Home Value",
     TRUE ~ as.character(Variable)
   )) %>%
   
@@ -106,10 +102,6 @@ ffb_imp_clean %>%
   ) +
   
   labs(
-    title = "Feature Importance by Farm Resource Region: Top 20 Features",
-    subtitle = 
-      "Permutation feature importance. Features added by this paper denoted in **bold**.",
-    caption = "Climatic variables grouped for clarity",
     x = "Feature Importance",
     y = NULL,
     colour = "Farm Resource Region") +
@@ -152,21 +144,17 @@ ffb_imp_clean  %>%
   ) +
   
   labs(
-    title = "Feature Importance by Farm Resource Region",
-    subtitle = 
-      "Permutation feature importance. Features added by this paper denoted in **bold**.",
-    caption = "Climatic variables grouped for clarity",
     x = "Feature Importance",
     y = NULL,
     colour = "Farm Resource Region") +
   
   theme(
-    text = element_text(family = font, size = 25),
+    text = element_text(family = "sans", size = 11),
     axis.ticks = element_blank(),
-    axis.text.y = ggtext::element_markdown(size = 10),
-    axis.title.x = element_text(size = 20),
+    axis.text.y = ggtext::element_markdown(size = 9),
+    axis.title.x = element_text(size = 13),
     legend.key = element_blank(),
-    legend.title = element_text(size = 19),
+    legend.title = element_text(size = 13),
     panel.background = element_blank(),
     #panel.border = element_rect(fill = NA, colour = "black"),
     panel.grid.major.y = element_line(size = 0.1, colour = "grey70"),
