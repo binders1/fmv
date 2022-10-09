@@ -4,13 +4,9 @@
 font <- "Open Sans"
 loadFont(font)
 
-
-mods_to_load <-
-  c("ncb", "fcb")
-
 # Load results ####
 perform_density <-
-  map(mods_to_load, 
+  map("ncb", 
       ~ loadResults(model = .x, res_type = "performance")) %>%
   data.table::rbindlist(., fill = T) %>%
   select(fips, model, rsq, mse, n_obs) %>%
@@ -21,16 +17,12 @@ perform_density <-
   ) %>%
   mutate(stat = if_else(stat == "rsq", 
                         "R-Squared", 
-                        "Mean Squared Error"),
-         model = case_when(
-           model == "fcb" ~ "Full",
-           model == "ncb" ~ "Nolte"
-           )
+                        "Mean Squared Error")
          )
 
-# VIZ ####
+# VIZ ####  
 perform_density %>%
-  ggplot(aes(n_obs, value, colour = model)) +
+  ggplot(aes(n_obs, value)) +
   
   geom_point(colour = "grey75",
              alpha = 0.4,
@@ -38,7 +30,8 @@ perform_density %>%
   
   geom_smooth(
     size = 0.5, method = "loess", 
-    se = FALSE
+    se = FALSE,
+    colour = brewer.pal(4, "Paired")[4]
     ) +
   
   geom_hline(yintercept = 0) +
@@ -47,18 +40,10 @@ perform_density %>%
   
   scale_x_log10(labels = scales::comma) +
   scale_y_continuous(limits = c(0, NA)) +
-  scale_colour_manual(
-    values = c(
-      `Full` = brewer.pal(4, "Paired")[2],
-      `Nolte` = brewer.pal(4, "Paired")[4]
-    )
-  ) +
   
   labs(
-    title = "County Model Comparison: Performance by Model Size\n",
     x = "\n# Observations in Model (Train + Test)",
-    y = NULL,
-    linetype = "Model" 
+    y = NULL 
   ) +
   
   theme(
@@ -84,3 +69,13 @@ perform_density %>%
     strip.background = element_blank()
   )
 
+  
+  png(
+    filename = "~/output/exhibits/compare_county_nobs_perf.png",
+    res = 600,
+    width = 6,
+    height = 4,
+    units = "in",
+    pointsize = 10
+  )
+dev.off()

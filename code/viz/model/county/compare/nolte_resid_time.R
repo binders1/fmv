@@ -24,7 +24,7 @@ nolte_pred_clean <-
   group_by(model, year) %>%
   summarise(mean_error = mean(error),
             se_error = sd(error)/sqrt(n())) %>%
-  mutate(model = if_else(model == "ncb", "Nolte", "Nolte + HPI"))
+  mutate(model = if_else(model == "ncb", "Restricted", "Restricted + HPI"))
 
 
 # VIZ residual over time by model ####
@@ -32,12 +32,6 @@ nolte_pred_clean %>%
   ggplot(aes(year, mean_error, colour = model)) +
   
   geom_hline(yintercept = 0) +
-  
-  geom_errorbar(aes(ymin = mean_error - se_error,
-                    ymax = mean_error + se_error),
-                width = 0.2, size = 0.4,
-                position = "dodge",
-                colour = "grey30") +
   
   geom_line(size = 0.75) +
   
@@ -50,16 +44,14 @@ nolte_pred_clean %>%
   
   scale_colour_manual(
     values = c(
-      `Nolte` = brewer.pal(4, "Paired")[3],
-      `Nolte + HPI` = brewer.pal(4, "Paired")[4]
+      `Restricted` = brewer.pal(4, "Paired")[3],
+      `Restricted + HPI` = brewer.pal(4, "Paired")[4]
     )
   ) +
   
   labs(
-    title = "Prediction Error by Year: Nolte Models",
-    subtitle = "Mean prediction error (with standard errors). Nolte county model compared to addition of House Price Index",
     x = NULL,
-    y = "Mean Error"
+    y = "Mean Prediction Error"
   ) +
   
   theme(

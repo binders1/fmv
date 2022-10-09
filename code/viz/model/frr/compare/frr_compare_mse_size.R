@@ -19,13 +19,11 @@ ncb_size_cat <-
 # Load predictions ####
 
 mods_to_load <- 
-  c("ffb", "nfb")
+  c("ffb" = "ffb", "nfb" = "nfb")
 
 frr_predictions <-
   map(mods_to_load, 
       ~ loadResults(model = .x, res_type = "predictions"))
-
-names(frr_predictions) <- mods_to_load
 
 # Subset to only <1000 obs counties ####
 frr_size_cat_pred <-
@@ -75,16 +73,11 @@ frr_size_cat_mse %>%
   ) +
   
   labs(
-    title = "FRR Model Comparison: High vs. Low Density Counties",
-    subtitle = "Prediction error across county size",
     x = "\nMean Squared Error",
     y = NULL
   ) +
   theme(axis.ticks = element_blank(), 
         text = element_text(size = 24, family = font),
-        plot.title = element_text(size = 28, face = "bold"),
-        plot.subtitle = element_text(size = 20),
-        plot.caption = element_text(size = 16, face = "italic"),
         plot.background = element_blank(),
         plot.margin = margin(rep(25, 4)),
         legend.title = element_blank(),
@@ -92,14 +85,16 @@ frr_size_cat_mse %>%
         panel.background = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_line(colour = "grey90"),
-        #panel.border = element_rect(colour = "black", fill = NA), 
         strip.background = element_blank()
   )
 
 
 
 
-
-
+# Average MSE nad R^2
+frr_size_cat_mse %>%
+  filter(model == "Full") %>%
+  group_by(size_cat) %>%
+  summarise(avg_mse = mean(mse, na.rm = TRUE))
 
 
