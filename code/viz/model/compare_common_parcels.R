@@ -12,11 +12,6 @@ sourceFuncs()
 source(file.path(cdir, "misc/ag_regions.R"))
 source(file.path(cdir, "viz/model/frr/viz_frr_prep.R"))
 
-
-# Load font ####
-font <- "Open Sans"
-loadFont(font)
-
 # Function that compares MSE across common parcels of two models
 
 comparePerf <- function(mod1, mod2) {
@@ -70,6 +65,9 @@ ncb_to_fcb <- comparePerf("ncb", "fcb")
 
 # Compare fcb --> ffb (FRR modeling)
 fcb_to_ffb <- comparePerf("fcb", "ffb")
+
+# Compare nfb --> ffb (Full model at FRR)
+nfb_to_ffb <- comparePerf("nfb", "ffb")
 
 
 
