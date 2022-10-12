@@ -1,9 +1,3 @@
-
-# Load Font
-font <- "Open Sans"
-loadFont(font)
-
-
 # Get vector of <1000 obs counties ####
 ncb_size_cat <-
   loadResults(model = "ncb", res_type = "performance") %>%
