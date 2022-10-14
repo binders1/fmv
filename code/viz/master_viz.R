@@ -80,7 +80,7 @@ exhibit_tbl <-
 
 exhibit_tbl <- 
   exhibit_tbl %>%
-  slice(6)
+  slice(8)
   
 purrr::pwalk(
   .l = exhibit_tbl,

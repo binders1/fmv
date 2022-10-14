@@ -3,7 +3,7 @@ compare_ffb_fcb_mse <- function() {
   
   # Load FRR predictions (ffb) ####
   
-  mods_to_load <- c("ffb", "fcb")
+  mods_to_load <- c("ffb" = "ffb", "fcb" = "fcb")
   
   full_predictions <-
     map(
@@ -11,8 +11,6 @@ compare_ffb_fcb_mse <- function() {
       loadResults,
       res_type = "predictions"
     )
-  
-  names(full_predictions) <- mods_to_load
   
   full_predictions$fcb %<>%
     mutate(fips = str_sub(sid, 1, 5)) %>%
@@ -91,21 +89,24 @@ compare_ffb_fcb_mse <- function() {
     coord_sf(crs = st_crs(2163)) +
     
     labs(    
-      fill = "MSE"
+      fill = "Mean Sq. Error"
     ) +
     
     guides(
       fill = guide_colorbar(
-        barheight = 8,
-        barwidth = 0.5,
+        barheight = 0.5,
+        barwidth = 8,
         frame.colour = "black",
-        ticks.colour = "black"
+        ticks.colour = "black",
+        title.position = "top",
+        title.hjust = 0.5
       )
     ) +
     
     fmv_theme +
     
-    theme(axis.text = element_blank())
+    theme(axis.text = element_blank(),
+          legend.position = "bottom")
 
 }
 
