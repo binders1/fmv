@@ -86,7 +86,7 @@ ffb_importance_t20 <- function() {
     scale_x_continuous(
       expand = c(0.02,0),
       breaks = seq(0, 1.5, by = 0.25)
-      ) +
+    ) +
     scale_y_discrete(expand = c(0.03,0.03)) +
     scale_colour_manual(
       values = frr_colors

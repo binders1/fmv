@@ -9,7 +9,7 @@ fcb_importance_t20 <- function() {
       fips = if_else(nchar(fips) == 4,
                      paste0("0", fips),
                      fips)
-      ) %>%
+    ) %>%
     
     mutate(state = str_sub(fips, 1, 2)) %>%
     
@@ -44,14 +44,14 @@ fcb_importance_t20 <- function() {
           paste0("<span style='color:Grey;'>",
                  group,
                  "</span>"),
-      TRUE ~ 
-        paste0("<span style='font-weight:1000;color:Black;'>",
-               group,
-               "</span>")),
+        TRUE ~ 
+          paste0("<span style='font-weight:1000;color:Black;'>",
+                 group,
+                 "</span>")),
       
       group = fct_reorder(group, imp_med)
       
-      ) %>%
+    ) %>%
     
     # filter to only top 20 most important features
     group_by(fips) %>%
@@ -74,7 +74,7 @@ fcb_importance_t20 <- function() {
       outlier.size = 1,
       outlier.alpha = 0.1, 
       outlier.colour = "grey30"
-      ) +
+    ) +
     geom_vline(xintercept = 0) +
     
     scale_x_continuous(expand = c(0,0), 
@@ -93,5 +93,5 @@ fcb_importance_t20 <- function() {
       panel.grid.major.x = element_line(color = "grey80"),
       panel.grid.major.y = element_blank()
     )
-
+  
 }

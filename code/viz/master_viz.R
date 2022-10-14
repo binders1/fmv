@@ -72,15 +72,15 @@ exhibit_tbl <-
     "nolte_resid_time"        , nolte_resid_time,
     "county_compare_boxplot"  , county_compare_boxplot,
     "compare_ffb_fcb_mse"     , compare_ffb_fcb_mse,
-    "frr_compare_mse_size"    , "x",
-    "fcb_importance_all"      , "x",
-    "ffb_importance_all"      , "x",
+    "frr_compare_mse_size"    , frr_compare_mse_size,
+    "fcb_importance_all"      , fcb_importance_all,
+    "ffb_importance_all"      , ffb_importance_all,
     "frr_performance_size"    , frr_performance_size
   )
 
 exhibit_tbl <- 
   exhibit_tbl %>%
-  slice(7)
+  slice(6)
   
 purrr::pwalk(
   .l = exhibit_tbl,

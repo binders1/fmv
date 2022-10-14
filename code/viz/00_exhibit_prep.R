@@ -147,7 +147,7 @@ if (!exists("frr_shp")) {
 }
 
 # =====================================================
-# 03). Set custom colors and theme
+# 03). Read in Nolte (2020) Variables
 # =====================================================
 noltevars_path <- file.path(ddir, "nolte2020vars.csv")
 
@@ -156,6 +156,8 @@ nolte2020vars <-
            show_col_types = F) %>% 
   pull() %>%
   c(., "ha", "x45", "y45")
+
+
 
 # =====================================================
 # 04). Set custom colors and theme

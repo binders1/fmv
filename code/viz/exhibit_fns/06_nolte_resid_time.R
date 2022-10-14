@@ -38,9 +38,9 @@ nolte_resid_time <- function() {
     
     geom_hline(yintercept = 0) +
     
-    geom_line(size = 1.5) +
+    geom_line(size = 1) +
     
-    geom_point(shape = 21, size = 3.5,
+    geom_point(shape = 21, size = 2.5,
                fill = "white") +
     
     scale_y_continuous(limits = c(-0.3,0.35),
