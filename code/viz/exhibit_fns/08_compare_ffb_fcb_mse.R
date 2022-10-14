@@ -80,11 +80,13 @@ compare_ffb_fcb_mse <- function() {
     
     facet_wrap(~model) +
     
-    scale_fill_gradientn(limits = c(0, mse_90_pctl),
-                         breaks = c(0, 0.5, 1.0, 1.5),
-                         labels = c("0", "0.5", "1.0", "1.5"),
-                         colours = rev(brewer.pal(8, "RdYlGn")),
-                         na.value = "grey90") +
+    scale_fill_gradientn(
+      limits = c(0, mse_90_pctl),
+      breaks = c(0, 0.5, 1.0, 1.5),
+      labels = c("0", "0.5", "1.0", "1.5"),
+      colours = rev(brewer.pal(8, "RdYlGn")),
+      na.value = "grey90"
+      ) +
     
     coord_sf(crs = st_crs(2163)) +
     
@@ -94,14 +96,16 @@ compare_ffb_fcb_mse <- function() {
     
     guides(
       fill = guide_colorbar(
-        barheight = 13,
-        barwidth = 0.6,
+        barheight = 8,
+        barwidth = 0.5,
         frame.colour = "black",
         ticks.colour = "black"
       )
     ) +
     
-    fmv_theme
+    fmv_theme +
+    
+    theme(axis.text = element_blank())
 
 }
 

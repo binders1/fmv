@@ -7,7 +7,7 @@ library(ggtext)
 root <- "~/fmv"
 ddir <- file.path(root, "data")
 cdir <- file.path(root, "code")
-clean_dir <- file.path(ddir, "cleaned")
+
 
 
 # Source spatial files and functions ####
