@@ -97,6 +97,7 @@ ffb_importance_all <- function() {
       axis.text.y = ggtext::element_markdown(size = 6),
       panel.grid.major.y = element_line(size = 0.2, 
                                         colour = "grey80"),
-      legend.key = element_blank()
+      legend.key = element_blank(),
+      legend.position = c(0.82, .48)
     )
 }

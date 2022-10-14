@@ -107,7 +107,7 @@ compare_ffb_fcb_mse <- function() {
     
     theme(axis.text = element_blank(),
           legend.position = "bottom")
-
+  
 }
 
 

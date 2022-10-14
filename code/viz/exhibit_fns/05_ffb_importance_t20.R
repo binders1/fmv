@@ -62,7 +62,11 @@ ffb_importance_t20 <- function() {
       
       group = fct_reorder(group, imp_med)
       
-    )
+    ) %>%
+    group_by(frr) %>%
+    slice_max(order_by = imp_med, n = 20) %>%
+    ungroup() 
+    
   
   # VIZ ####
   
@@ -70,21 +74,16 @@ ffb_importance_t20 <- function() {
   
   ffb_imp_clean %>%
     
-    arrange(-imp_med) %>%
-    group_by(frr) %>%
-    slice(1:20) %>%
-    ungroup() %>%
-    
     ggplot(
       aes(Importance, group, colour = frr)
     ) +
     
     geom_hline(yintercept = 0) +
     
-    geom_point(size = 2.5, alpha = 0.8) +
+    geom_point(size = 1.75, alpha = 0.9) +
     
     scale_x_continuous(
-      expand = c(0.02,0),
+      expand = c(0.02, 0),
       breaks = seq(0, 1.5, by = 0.25)
     ) +
     scale_y_discrete(expand = c(0.03,0.03)) +
@@ -103,7 +102,8 @@ ffb_importance_t20 <- function() {
       axis.text.y = ggtext::element_markdown(),
       panel.grid.major.y = element_line(size = 0.2, 
                                         colour = "grey80"),
-      legend.key = element_blank()
+      legend.key = element_blank(),
+      legend.position = c(0.82, 0.37)
     )
   
 }
