@@ -21,19 +21,12 @@ save_png_custom <- function(filename, .fn, ...) {
       grDevices::dev.off()
     })
   )
-  
-  png_wrapper(filename,
-              res = 600,
-              width = 7,
-              height = 4,
-              units = "in"
-              )
-  
-  p <- .fn(...)
+
+  png_wrapper(filename, ...)
+
+  p <- .fn()
   
   grid::grid.draw(p)
-  
-  invisible(filename)
   
   message("Saved: ", filename, "\n")
   

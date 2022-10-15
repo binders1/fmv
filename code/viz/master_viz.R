@@ -59,33 +59,42 @@ plot_fns_source <-
 purrr::walk(plot_fns_source, source)
 
 
-# Create dataframe of all plot filenames and generating fns
+# Create dataframe of all plot filenames and generating fns,
+# along with png parameters (resolution (dpi), width, height, units)
 
 exhibit_tbl <-
   dplyr::tribble(
-    ~filename                 , ~.fn,
-    "compare_county_nobs_perf", compare_county_nobs_perf,
-    "FRR_map"                 , FRR_map,
-    "clean_obs_density"       , clean_obs_density, # TODO: test
-    "fcb_importance_t20"      , fcb_importance_t20,
-    "ffb_importance_t20"      , ffb_importance_t20,
-    "nolte_resid_time"        , nolte_resid_time,
-    "county_compare_boxplot"  , county_compare_boxplot,
-    "compare_ffb_fcb_mse"     , compare_ffb_fcb_mse,
-    "frr_compare_mse_size"    , frr_compare_mse_size,
-    "fcb_importance_all"      , fcb_importance_all,
-    "ffb_importance_all"      , ffb_importance_all,
-    "frr_performance_size"    , frr_performance_size
-  )
+  ~filename                 , ~.fn                    , ~res, ~width, ~height, ~units,                
+  
+  "compare_county_nobs_perf", compare_county_nobs_perf, 600 , 7     , 4      , "in"  ,
+  "FRR_map"                 , FRR_map                 , 600 , 7     , 4      , "in"  ,
+  "clean_obs_density"       , clean_obs_density       , 600 , 7     , 4      , "in"  ,
+  "fcb_importance_t20"      , fcb_importance_t20      , 600 , 7     , 4      , "in"  ,
+  "ffb_importance_t20"      , ffb_importance_t20      , 600 , 7     , 4      , "in"  ,
+  "nolte_resid_time"        , nolte_resid_time        , 600 , 7     , 4      , "in"  ,
+  "county_compare_boxplot"  , county_compare_boxplot  , 600 , 7     , 4      , "in"  ,
+  "compare_ffb_fcb_mse"     , compare_ffb_fcb_mse     , 600 , 8     , 3.5    , "in"  ,
+  "frr_compare_mse_size"    , frr_compare_mse_size    , 600 , 7     , 4      , "in"  ,
+  "fcb_importance_all"      , fcb_importance_all      , 600 , 7     , 4      , "in"  ,
+  "ffb_importance_all"      , ffb_importance_all      , 600 , 7     , 4      , "in"  ,
+  "frr_performance_size"    , frr_performance_size    , 600 , 8     , 4      , "in"
+  ) 
 
+  
+  
+  
 exhibit_tbl <- 
   exhibit_tbl %>%
-  slice(11)
+  slice(8)
   
 purrr::pwalk(
   .l = exhibit_tbl,
   .f = save_png_custom
 )
+
+
+
+
 
 
 

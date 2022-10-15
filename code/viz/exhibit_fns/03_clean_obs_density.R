@@ -61,7 +61,6 @@ clean_obs_density <- function() {
   
   # VIZ ####
   
-  clean_obs_density <-
     ggplot() +
     
     geom_sf(data = tessel_clean_count, aes(fill = n), size = 0) +
@@ -76,18 +75,23 @@ clean_obs_density <- function() {
     ) +
     
     labs(
-      fill = "Observed\nSales"
+      fill = "Observed Sales"
     ) +
     
     guides(
       fill = guide_colorbar(
-        barwidth = 0.6,
-        barheight = 12,
+        barwidth = 10,
+        barheight = 0.6,
         frame.colour = "black",
-        ticks.colour = "black"
+        ticks.colour = "black",
+        title.hjust = 0.5,
+        title.position = "top"
       )
     ) +
     
-    fmv_theme
+    fmv_theme +
+    
+    theme(axis.text = element_blank(),
+          legend.position = "bottom")
   
 }

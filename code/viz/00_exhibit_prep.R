@@ -177,8 +177,8 @@ frr_colors <- c(`Southern Seaboard` = "#A8D3F2",
 # custom ggplot theme
 fmv_theme <-
   theme(
-    text = element_text(size = 12, family = "sans",
-                        lineheight = 0.3, margin = margin(rep(0, 4))),
+    text = element_text(size = 12, family = "sans", 
+                        margin = margin(rep(0, 4))),
     panel.background = element_blank(),
     panel.grid.major.y = element_line(colour = "grey", size = 0.3),
     panel.grid.major.x = element_blank(),
