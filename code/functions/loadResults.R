@@ -5,73 +5,70 @@
 # Args ####
 
 
-loadResults <- function(model = c("fcb", "ffb", "ffr", 
-                                  "ncb", "nch", "nfb", "nfr"),
-                        res_type = c("importance", "performance", 
-                                     "predictions"),
-                        inc_mod = TRUE, inc_type = TRUE) {
-  
-  if (length(res_type) > 1) {
+loadResults <- 
+  function(
+    model        = c("fcb", "ffb", "ffr", "ncb", 
+                     "nch", "nfb", "nfr"),
+    res_type     = c("importance", "performance", "predictions"),
+    include_mod  = TRUE,
+    include_type = TRUE
+    ) {
     
-    stop("res_type must be character string of length 1")
+    # check args
+    model <- match.arg(model)
+    res_type <- match.arg(res_type)
+    
+    if (length(res_type) > 1) stop("res_type must be character string of length 1")
+    if (length(model) > 1) stop("model must be character string of length 1")
+    
+    
+    # Specify directory containing desired results type 
+    model_dir <- "~/fmv/data/model"
+    
+    full_dir <- file.path(model_dir, "full")
+    nolte_dir <- file.path(model_dir, "nolte")
+    
+    model_dir <- 
+      switch(model,
+             fcb = file.path(full_dir, "county/base"),
+             
+             ffb = file.path(full_dir, "frr/base"),
+             ffr = file.path(full_dir, "frr/restricted"),
+             
+             ncb = file.path(nolte_dir, "county/base"),
+             nch = file.path(nolte_dir, "county/hpi"),
+             
+             nfb = file.path(nolte_dir, "frr/base"),
+             nfr = file.path(nolte_dir, "frr/restricted")
+      )
+    
+    target_dir <- 
+      file.path(model_dir, res_type)
+    
+    files_to_load <- 
+      list.files(target_dir, full.names = TRUE)
+    
+    res_list <-
+      lapply(files_to_load, 
+             arrow::read_parquet)
+    
+    out <-
+      data.table::rbindlist(res_list,
+                            fill = TRUE)
+    
+    if (include_mod) {
+      out$model <- model
+    }
+    
+    if (include_type) {
+      out$type <- res_type
+    }
+    
+    # return tibble dataframe
+    dplyr::tibble(out) %>%
+      dplyr::relocate(c(model, type))
     
   }
-  
-  if (length(model) > 1) {
-    
-    stop("model must be character string of length 1")
-    
-  }
-  
-  mod_dir <- "~/fmv/data/model"
-  
-  full_dir <- file.path(mod_dir, "full")
-  nolte_dir <- file.path(mod_dir, "nolte")
-  
-  # full models 
-  ## county
-  fcb <- file.path(full_dir, "county/base")
-  ## frr
-  ffb <- file.path(full_dir, "frr/base")
-  ffr <- file.path(full_dir, "frr/restricted")
-  
-  # nolte models
-  ## county
-  ncb <- file.path(nolte_dir, "county/base")
-  nch <- file.path(nolte_dir, "county/hpi")
-  ## frr
-  nfb <- file.path(nolte_dir, "frr/base")
-  nfr <- file.path(nolte_dir, "frr/restricted")
-  
-  # specify directory containing desired results type
-  target_dir <- 
-    file.path(get(model), res_type)
-  
-  files_to_load <- 
-    list.files(target_dir, full.names = T)
-  
-  res_list <-
-    lapply(files_to_load, 
-           arrow::read_parquet)
-  
-  out <-
-    data.table::rbindlist(res_list,
-                          fill = T)
-  
-  if (inc_mod) {
-    out$model <- model
-  }
-  
-  if (inc_type) {
-    out$type <- res_type
-  }
-  
-  out <- dplyr::tibble(out) %>%
-    dplyr::relocate(c(model, type))
-  
-  return(out) 
-  
-}
 
 
 
@@ -88,7 +85,7 @@ resultList <- function(model) {
   
   names(outlist) <- c("importance", "performance", "predictions") 
   
-  return(outlist)
+  outlist
   
 }
 

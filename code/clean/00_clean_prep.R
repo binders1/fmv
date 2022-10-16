@@ -30,16 +30,14 @@ nolte2020vars_df <-
 nolte2020vars <- 
   nolte2020vars_df %>%
   dplyr::filter(!stringr::str_detect(nolte_2020, "\\+")) %>%
-  dplyr::pull(nolte_2020)
+  pull(nolte_2020)
 
 ### Specify variables for aggregation ####
 
-extract_for_agg <- function(agg_method) {
-  
+extract_for_agg <- function(.method) {
   nolte2020vars_df %>%
-    dplyr::filter(aggregate_method == agg_method) %>%
+    dplyr::filter(aggregate_method == .method) %>%
     dplyr::pull(matched_to_gold2022)
-  
 }
 
 # Nolte variables to average 

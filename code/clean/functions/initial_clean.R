@@ -14,13 +14,14 @@ clean_inflation <- function(data) {
 
 clean_HPI <- function(data) {
   
-  left_join(HPI_county, 
-            by = c("fips","year")) %>%
+  data %>%
+    left_join(HPI_county,
+              by = c("fips","year")) %>%
     relocate(HPI, .after = "CPI")
 }
 
 clean_logprice <- function(data) {
-  
-  mutate(log_priceadj_ha = log(price_adj/ha)) %>%
+  data %>%
+    mutate(log_priceadj_ha = log(price_adj/ha)) %>%
     relocate(log_priceadj_ha, .after = 'price_adj') 
 }

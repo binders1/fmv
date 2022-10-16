@@ -1,4 +1,5 @@
-soil_categories <- soil_counts %>%
+soil_categories <- 
+  soil_counts %>%
   dplyr::select(farmlndcl) %>%
   
   mutate(group = str_extract_all(farmlndcl, 
