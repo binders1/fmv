@@ -140,12 +140,8 @@ for (i in 1:49) {
           
         }
         
-        
         state_test <-
-          rbind(
-            state_test,
-            current_fit
-          )
+          rbind(state_test, current_fit)
         
       }
       
