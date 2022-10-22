@@ -15,22 +15,16 @@ all_sale_pids <-
   pull(name)
 
 ## Retrieve New Soil farmlncl <-> new-category crosswalk ####
-# TODO: make local file
-soil_crosswalk <- 
-  googlesheets4::range_read(
-    ss = "1AJlJgiMgMQXB9kNKMRuVP6_f5D60-bPmnBMGVYpVPYs",
-    sheet = "New Categories"
-  )
+soil_crosswalk <- read_helper_data("soil_crosswalk.csv")
 
 ## Retrieve vars used in Nolte (2020) ####
 nolte2020vars_df <- 
-  read_csv(file.path(ddir, "nolte2020vars.csv"),
-           show_col_types = FALSE)
+  read_helper_data("nolte2020vars.csv")
 
-nolte2020vars <- 
+nolte2020vars <-
   nolte2020vars_df %>%
-  dplyr::filter(!stringr::str_detect(nolte_2020, "\\+")) %>%
-  pull(nolte_2020)
+  dplyr::filter(!stringr::str_detect(matched_to_gold2022, "\\+")) %>%
+  pull(matched_to_gold2022)
 
 ### Specify variables for aggregation ####
 
@@ -47,36 +41,25 @@ noltevars_to_mean <- extract_for_agg("Mean")
 noltevars_to_sum <- extract_for_agg("Sum")
 
 # Climate variables to (weighted) average
-climate_example_loc <- 
-  list.files(pqt_dir, 
-             pattern = "AL\\.pqt$", 
-             full.names = TRUE)
-
 climate_to_mean <- 
-  read_parquet(climate_example_loc) %>%
-  dplyr::select(
-    dplyr::matches('(^Dew|^Temp|^Precip)')
-  ) %>%
-  names()
+  read_helper_data("climatevars_to_mean.csv") %>%
+  pull(variable_name)
 
 
 ## Load CPI data ####
 CPI <- 
-  read_csv(file.path(ddir, 'CPIAUCSL.csv'),
-           show_col_types = FALSE) %>%
+  read_helper_data("CPIAUCSL.csv") %>%
   rename(CPI = "CPIAUCSL") %>%
   mutate(year = lubridate::year(DATE),
                 month = lubridate::month(DATE)) %>%
   dplyr::filter(year >= 2000 & year <= 2020) %>%
-  
   mutate(
     CPI = CPI/CPI[year == 2020 & month == 1]
   )
 
 # Load HPI Index ####
 HPI_county <- 
-  readr::read_csv(file.path(ddir, "mhv_impute", 'HPIcounty.csv'),
-                  show_col_types = F) %>%
+  read_helper_data("HPI_county.csv") %>%
   mutate(across(HPI_2000:HPI_2020, ~ .x/HPI_2020)) %>%
   pivot_longer(
     cols = HPI_2000:HPI_2020,
@@ -84,4 +67,7 @@ HPI_county <-
     values_to = "HPI"
   ) %>%
   mutate(year = as.numeric(str_remove(year, "HPI_")))
+
+# Load imputed median home values by fips-year
+mhv <- read_helper_data("mhv_impute_complete.pqt")
 

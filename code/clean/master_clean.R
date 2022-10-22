@@ -31,6 +31,7 @@ cleaning.dir <- file.path(cdir, "clean")
 
 ## third level
 pqt_dir <- file.path(arc.dir, "parquet")
+soil_dir <- file.path(arc.dir, "soilcodes")
 cleaning_fdir <- file.path(cleaning.dir, "functions")
 
 
@@ -51,8 +52,8 @@ file.path(cleaning.dir, "00_clean_prep.R") %>% source()
 
 # Source cleaning functions 
 walk(
-  list.files(cleaning_fdir, full.names = TRUE),
-  source
+  .x = list.files(cleaning_fdir, full.names = TRUE),
+  .f = source
 )
 
 # Map processing function over all state files
