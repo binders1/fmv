@@ -26,6 +26,8 @@ nolte.dir <- file.path(ddir, "Nolte")
 m.dir <- file.path(ddir, "model")
 clean.dir <- file.path(ddir, "cleaned")
 arc.dir <- file.path(ddir, "ArcResults")
+helper_dir <- file.path(ddir, "helper_data")
+
 f.dir <- file.path(cdir, "functions")
 cleaning.dir <- file.path(cdir, "clean")
 
@@ -60,7 +62,7 @@ walk(
 
 pcis_pqt <- list.files(pqt_dir)
 
-state_seq <- seq_along(pcis_pqt)
+state_seq <- 29:49 #seq_along(pcis_pqt)
 
 walk(
   .x = state_seq,

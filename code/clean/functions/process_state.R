@@ -2,7 +2,7 @@
 process_state <- function(state_index) {
   
   #============================================================
-  # 01) Load data, merge, and perform minor cleaning steps
+  # 01). Load data, merge, and perform minor cleaning steps
   #============================================================
   
   clean_base <-
@@ -29,7 +29,7 @@ process_state <- function(state_index) {
     }
   
   #================================================================
-  # 02) Clean and aggregate: irrigation, soil, climate, and others
+  # 02). Clean and aggregate: irrigation, soil, climate, and others
   #================================================================
   
   # clean and aggregate irrigation variables
@@ -62,7 +62,7 @@ process_state <- function(state_index) {
     )
   
   #================================================================
-  # 03) Merge all cleaned/aggregated datasets together 
+  # 03). Merge all cleaned/aggregated datasets together 
   #================================================================
   
   # Create base dataframe on which to join all others
@@ -101,7 +101,7 @@ process_state <- function(state_index) {
     dplyr::select(!year)
   
   #================================================================
-  # 03) Write to disk
+  # 04). Write to disk
   #================================================================
   
   state <- 

@@ -23,42 +23,39 @@ m_dir <- file.path(cdir, "model")
 
 clean_dir <- file.path(ddir, "cleaned")
 helper_dir <- file.path(ddir, "helper_data")
+model_ddir <- file.path(ddir, "model")
 
-frr_mod_dir <- file.path(cdir, "model", "frr")
+pred_evry_dir <- file.path(m_dir, "predict_everything")
 
-## Load custom functions ####
+## Load global custom functions ####
 
 walk(
   list.files(f_dir, full.names = TRUE),
   source
   )
 
+## Load predict_everything-related functions ####
+walk(
+  list.files(file.path(pred_evry_dir, "functions"), 
+             full.names = TRUE),
+  source
+)
+
 ## Source data prep ####
-file.path(frr_mod_dir, "00_frrmod_prep.R") %>% source()
-
-# =====================================================
-# 01). Import FRR data, select vars, filter counties
-# =====================================================
-frr_import(3)
-
-# =====================================================
-# 02). Run FRR extremely randomized tree model
-# =====================================================
+file.path(pred_evry_dir, 
+          "00_predict_everything_prep.R") %>% 
+  source()
 
 
 # =====================================================
-# 03). Save results to disk
+#
+# Run ERT models, with and without buildings,
+# then predict on entire (bldg or no) FRR data and save
+#
 # =====================================================
 
-
-
-
-
-
-
-
-
-
-
-
-
+walk2(
+  .x = rep(seq(9), 2) %>% sort(),
+  .y = rep(c(TRUE, FALSE), 9),
+  predictions_write
+)  
