@@ -86,7 +86,7 @@ rm(soil_area_data)
 
 # EPSG:5070 projection of states
 state_5070 <- st_transform(us_states, 
-                           crs=st_crs(5070))
+                           crs = st_crs(5070))
 
 # Set cell size
 cs <- 10e+03

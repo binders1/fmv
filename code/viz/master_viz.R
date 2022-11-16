@@ -75,12 +75,14 @@ exhibit_tbl <-
   "county_compare_boxplot"  , county_compare_boxplot  , 600 , 7     , 4      , "in"  ,
   "compare_ffb_fcb_mse"     , compare_ffb_fcb_mse     , 600 , 8     , 3.5    , "in"  ,
   "frr_compare_mse_size"    , frr_compare_mse_size    , 600 , 7     , 4      , "in"  ,
+  "ffb_pred_all"            , ffb_pred_all            , 600 , 8     , 4      , "in"  ,
+  "ffb_pred_all_nobldg"     , ffb_pred_all_nobldg     , 600 , 8     , 4      , "in"  ,
   "fcb_importance_all"      , fcb_importance_all      , 600 , 7     , 4      , "in"  ,
   "ffb_importance_all"      , ffb_importance_all      , 600 , 7     , 4      , "in"  ,
   "frr_performance_size"    , frr_performance_size    , 600 , 8     , 4      , "in"
   ) 
 
-# exhibit_tbl %<>% slice(8)
+exhibit_tbl %<>% slice(11)
   
 purrr::pwalk(
   .l = exhibit_tbl,
