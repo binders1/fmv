@@ -1,24 +1,47 @@
 county_compare_boxplot <- function() {
   
-  mods_to_load <-
-    c("fcb", "ncb")
-  
-  perf_fcb_ncb <-
+  # Load sid-level predictions from all models
+  mod_pred <-
     map(
-      mods_to_load,
-      ~ loadResults(model = .x,
-                    res_type = "performance")
+      .x = c("fcb", "ncb"),
+      .f = loadResults,
+      res_type = "predictions"
     )
   
-  perf_fcb_ncb %<>%
-    map_dfr(.,
-            ~ select(.x,
-                     model, fips, rsq, mse)) %>%
+  
+  common_parcel_vec <- common_parcels(mod_pred)
+  
+  filtered_to_common <-
+    bind_rows(mod_pred) %>%
+    
+    select(model, sid, .pred, log_priceadj_ha) %>%
+    
+    mutate(fips = str_sub(sid, 1, 5)) %>%
+    
+    filter(sid %in% common_parcel_vec)
+  
+  
+  calc_fips_metrics <-
+    filtered_to_common %>%
+    group_by(model, fips) %>%
+    mutate(
+      sq_error = (log_priceadj_ha - .pred)^2,
+      ssr = sum(sq_error, na.rm = TRUE),
+      sst = (log_priceadj_ha - mean(log_priceadj_ha))^2 %>% sum(na.rm = TRUE),
+      
+      mse = mean(sq_error, na.rm = TRUE),
+      rsq = 1 - (ssr/sst)
+    ) %>%
+    ungroup() %>%
+    select(model, fips, mse, rsq) %>%
+    distinct() %>%
+    
     pivot_longer(
       cols = c(rsq, mse),
       names_to = "stat",
       values_to = "value"
     ) %>%
+    
     mutate(
       model = case_when(
         model == "fcb" ~ "Full",
@@ -30,7 +53,7 @@ county_compare_boxplot <- function() {
   
   # Boxplot VIZ ####
   
-  perf_fcb_ncb %>%
+  calc_fips_metrics %>%
     
     ggplot(aes(model, value, fill = model)) +
     
@@ -42,9 +65,9 @@ county_compare_boxplot <- function() {
     
     geom_hline(yintercept = 0, size = 0.4) +
     
-    facet_wrap(~stat, scales = "free_y") +
+    facet_wrap(~stat) +
     
-    scale_y_continuous(limits = c(0, NA)) +
+    scale_y_continuous(limits = c(0, 2)) +
     
     scale_fill_manual(
       values = c(

@@ -1,4 +1,14 @@
 
+# =================================================
+# png_wrapper and save_png_custom
+#
+# Save plots using png graphics device
+#
+# filename = char string; name to save image as
+# .fn = function that generates the image
+# ... = additional parameters to send to png()
+# =================================================
+
 
 # Wrapper around png generation function
 
@@ -34,6 +44,31 @@ save_png_custom <- function(filename, .fn, ...) {
   
 }
 
+
+
+# =================================================
+# common_parcels
+# Find common sids in a group of models
+#
+# model_list = list of model predicted value df's
+# =================================================
+
+common_parcels <- function(model_list) {
+
+  # make list of each model's unique sids
+  unique_sids <-
+    map(
+      model_list,
+      ~ .x[['sid']] %>% unique()
+    )
+  
+  # Return character vector of sids found in all models
+  reduce(
+    .x = unique_sids,
+    .f = base::intersect
+  )
+  
+}
 
 
 
@@ -74,7 +109,7 @@ make_us_tessel <- function(state_sf,
 
 
 #========================================================
-# Load predict_everything parquet file
+# Load predict_everything parquet file and make spatial
 #========================================================
 
 load_pred_all <- function(file) {
