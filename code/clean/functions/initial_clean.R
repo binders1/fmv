@@ -1,6 +1,8 @@
 
 
 clean_inflation <- function(data) {
+  
+  if (is.null(data)) return(NULL)
 
   data %>%
     mutate(month = lubridate::month(date)) %>%
@@ -14,6 +16,8 @@ clean_inflation <- function(data) {
 
 clean_HPI <- function(data) {
   
+  if (is.null(data)) return(NULL)
+  
   data %>%
     left_join(HPI_county,
               by = c("fips","year")) %>%
@@ -21,6 +25,9 @@ clean_HPI <- function(data) {
 }
 
 clean_logprice <- function(data) {
+  
+  if (is.null(data)) return(NULL)
+  
   data %>%
     mutate(log_priceadj_ha = log(price_adj/ha)) %>%
     relocate(log_priceadj_ha, .after = 'price_adj') 

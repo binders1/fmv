@@ -149,12 +149,10 @@ if (!exists("frr_shp")) {
 # =====================================================
 # 03). Read in Nolte (2020) Variables
 # =====================================================
-noltevars_path <- file.path(ddir, "nolte2020vars.csv")
-
 nolte2020vars <- 
-  read_csv(noltevars_path,
-           show_col_types = F) %>% 
-  pull() %>%
+  read_helper_data("nolte2020vars.csv", show_col_types = FALSE) %>%
+  dplyr::filter(!is.na(matched_to_gold2022)) %>%
+  pull(matched_to_gold2022) %>%
   c(., "ha", "x45", "y45")
 
 
