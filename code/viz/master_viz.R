@@ -30,6 +30,7 @@ e.dir <- file.path(odir, "exhibits")
 m.dir <- file.path(ddir, "model")
 clean.dir <- file.path(ddir, "cleaned")
 s.dir <- file.path(ddir, "spatial")
+helper_dir <- file.path(ddir, "helper_data")
   
   state_dir <- file.path(s.dir, "state_shp")
   county_dir <- file.path(s.dir, "county_shp")
