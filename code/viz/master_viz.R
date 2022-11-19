@@ -82,7 +82,7 @@ exhibit_tbl <-
   "frr_performance_size"    , frr_performance_size    , 600 , 8     , 4      , "in"
   ) 
 
-exhibit_tbl %<>% slice(7)
+exhibit_tbl %<>% slice(9)
   
 purrr::pwalk(
   .l = exhibit_tbl,

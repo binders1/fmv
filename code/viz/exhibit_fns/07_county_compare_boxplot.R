@@ -90,17 +90,17 @@ county_compare_boxplot <- function() {
     
     labs(
       y = NULL,
-      x = NULL
+      x = NULL,
+      title = "Mean Squared Error"
     ) +
     
     fmv_theme +
     
     theme(
       legend.title = element_blank(),
-      legend.position = "none"
+      legend.position = "none",
+      plot.title = element_text(hjust = 0.5)
     )
-  
-  
   
   rsq_plot <-
     calc_fips_metrics %>%
@@ -129,14 +129,16 @@ county_compare_boxplot <- function() {
     
     labs(
       y = NULL,
-      x = NULL
+      x = NULL,
+      title = "R-Squared"
     ) +
     
     fmv_theme +
     
     theme(
       legend.title = element_blank(),
-      legend.position = "none"
+      legend.position = "none",
+      plot.title = element_text(hjust = 0.5)
     )
   
   mse_plot + rsq_plot
