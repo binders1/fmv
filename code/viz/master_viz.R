@@ -52,13 +52,12 @@ file.path(v.dir, "00_exhibit_prep.R") %>% source()
 # =====================================================
 
 
-# source all plot fns 
-plot_fns_source <- 
-  list.files(exhibitfn_dir, 
-             full.names = TRUE)
-
-purrr::walk(plot_fns_source, source)
-
+# source all plot fns
+list.files(exhibitfn_dir, full.names = TRUE) %>%
+  purrr::walk(
+    .x = .,
+    .f = source
+  )
 
 # Create dataframe of all plot filenames and generating fns,
 # along with png parameters (resolution (dpi), width, height, units)
@@ -83,7 +82,7 @@ exhibit_tbl <-
   "frr_performance_size"    , frr_performance_size    , 600 , 8     , 4      , "in"
   ) 
 
-exhibit_tbl %<>% slice(11)
+exhibit_tbl %<>% slice(7)
   
 purrr::pwalk(
   .l = exhibit_tbl,

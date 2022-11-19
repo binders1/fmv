@@ -8,7 +8,6 @@ county_compare_boxplot <- function() {
       res_type = "predictions"
     )
   
-  
   common_parcel_vec <- common_parcels(mod_pred)
   
   filtered_to_common <-
@@ -51,7 +50,11 @@ county_compare_boxplot <- function() {
                      "Mean Squared Error")
     )
   
+  
+  
+  # ====================================================
   # Boxplot VIZ ####
+  # ====================================================
   
   calc_fips_metrics %>%
     
