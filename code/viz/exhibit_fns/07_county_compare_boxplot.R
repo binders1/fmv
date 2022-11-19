@@ -1,5 +1,7 @@
 county_compare_boxplot <- function() {
   
+  require(patchwork)
+  
   # Load sid-level predictions from all models
   mod_pred <-
     map(
@@ -48,15 +50,22 @@ county_compare_boxplot <- function() {
       stat = if_else(stat == "rsq", 
                      "R-Squared", 
                      "Mean Squared Error")
-    )
+    ) %>%
+    
+    dplyr::filter(!is.infinite(value))
   
   
+  calc_fips_metrics %>%
+    group_by(model, stat) %>%
+    summarise(median = median(value, na.rm = T))
   
   # ====================================================
   # Boxplot VIZ ####
   # ====================================================
-  
-  calc_fips_metrics %>%
+
+  mse_plot <-
+    calc_fips_metrics %>%
+    filter(stat == "Mean Squared Error") %>%
     
     ggplot(aes(model, value, fill = model)) +
     
@@ -68,9 +77,48 @@ county_compare_boxplot <- function() {
     
     geom_hline(yintercept = 0, size = 0.4) +
     
-    facet_wrap(~stat) +
+    #facet_wrap(~stat, scales = "free_y") +
     
     scale_y_continuous(limits = c(0, 2)) +
+  
+    scale_fill_manual(
+      values = c(
+        `Full` = brewer.pal(4, "Paired")[1],
+        `Restricted` = brewer.pal(4, "Paired")[3]
+      )
+    ) +
+    
+    labs(
+      y = NULL,
+      x = NULL
+    ) +
+    
+    fmv_theme +
+    
+    theme(
+      legend.title = element_blank(),
+      legend.position = "none"
+    )
+  
+  
+  
+  rsq_plot <-
+    calc_fips_metrics %>%
+    filter(stat == "R-Squared") %>%
+    
+    ggplot(aes(model, value, fill = model)) +
+    
+    stat_boxplot(geom = "errorbar",
+                 size = 0.3, width = 0.05) +
+    geom_boxplot(alpha = 1, size = 0.2, 
+                 width = 0.2, colour = "black", 
+                 outlier.colour = NA) +
+    
+    geom_hline(yintercept = 0, size = 0.4) +
+    
+    #facet_wrap(~stat, scales = "free_y") +
+    
+    scale_y_continuous(limits = c(0, 1)) +
     
     scale_fill_manual(
       values = c(
@@ -90,5 +138,7 @@ county_compare_boxplot <- function() {
       legend.title = element_blank(),
       legend.position = "none"
     )
+  
+  mse_plot + rsq_plot
   
 }

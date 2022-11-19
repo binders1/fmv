@@ -22,9 +22,19 @@ frr_compare_mse_size <- function() {
     map(mods_to_load, 
         ~ loadResults(model = .x, res_type = "predictions"))
   
-  # Subset to only <1000 obs counties ####
+  
+  common_parcel_vec <- common_parcels(frr_predictions)
+  
+  # Subset to only common parcels ####
   frr_size_cat_pred <-
     data.table::rbindlist(frr_predictions, fill = T) %>%
+    
+    select(model, sid, .pred, log_priceadj_ha) %>%
+    
+    mutate(fips = str_sub(sid, 1, 5)) %>%
+    
+    filter(sid %in% common_parcel_vec) %>%
+    
     left_join(ncb_size_cat,
               by = "fips")
   
@@ -36,7 +46,7 @@ frr_compare_mse_size <- function() {
     group_by(model, fips) %>%
     mutate(mse = mean(sq_error)) %>%
     ungroup() %>%
-    select(size_cat, model, id, fips, mse) %>%
+    select(size_cat, model, fips, mse) %>%
     distinct() %>%
     mutate(type = paste0(model, " ", size_cat),
            type = case_when(
@@ -48,7 +58,9 @@ frr_compare_mse_size <- function() {
            )) %>%
     na.omit()
   
-  
+  frr_size_cat_mse %>%
+    group_by(type) %>%
+    summarise(median = median(mse, na.rm = T))
   
   # Plot performance by model ####
   frr_size_cat_mse %>%
