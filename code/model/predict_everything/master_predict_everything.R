@@ -57,5 +57,8 @@ file.path(pred_evry_dir,
 walk2(
   .x = rep(seq(9), 2) %>% sort(),
   .y = rep(c(TRUE, FALSE), 9),
-  predictions_write
-)  
+  import_and_model
+  ) 
+
+
+

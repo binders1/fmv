@@ -46,7 +46,7 @@ frr_import <- function(frr_id, buildings = TRUE) {
   clean_paths <- file.path(clean_dir, clean_to_load)
   
   df_import <- 
-    map_dfr(clean_to_load, read_parquet) %>%
+    map_dfr(clean_paths, read_parquet) %>%
     
     # filter to only current frr counties
     filter(fips %in% counties_to_include) %>%
@@ -66,22 +66,22 @@ frr_import <- function(frr_id, buildings = TRUE) {
   
   ## Replace NA cst_* with 0 for land-locked states
   
-  if (str_detect(imported_vars, "cst_")) {
-    
-    model_df <- 
+  model_df <-
+    if (str_detect(imported_vars, "cst_")) {
       df_import %>%
-      mutate(across(.cols = starts_with("cst"),
-                    .fns = ~ case_when(
-                      state %in% no_cst_states & is.na(.x) ~ 0,
-                      TRUE ~ .x)
-      )
-      )
+        mutate(
+        across(
+          .cols = starts_with("cst"),
+          .fns = ~ if_else(
+                      (state %in% no_cst_states) & is.na(.x),
+                      0,
+                      .x
+                      )
+          )
+        )
   } else {
-    
-    model_df <- 
-      df_import %>%
-      mutate(cst_2500 = 0,
-             cst_50 = 0)
+    df_import %>%
+      mutate(cst_2500 = 0, cst_50 = 0)
   }
   
   out <-
@@ -96,6 +96,5 @@ frr_import <- function(frr_id, buildings = TRUE) {
   )
   
   out
-  
   
 }

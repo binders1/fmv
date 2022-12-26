@@ -1,55 +1,15 @@
-predict_everything <- function(.data) {
-
-    # Model ####
-    if (!is.null(.data)) {
-      cli::cli_h2("Constructing Model")
-    } else {
-      cli::cli_abort("No data passed to predict_everything()")
-    }
+predict_everything <- function(.data, frr_id, buildings) {
+  
+  # Load model
+  get_fit_path(frr_id, buildings) %>%
     
-    ## Construct Model ####
-    
-    # split data
-    set.seed(319)
-    rf_split <- rsample::initial_split(.data, 
-                                       strata = log_priceadj_ha)
-    train <- rsample::training(rf_split)
-    test <- rsample::testing(rf_split)
-    
-    
-    ## Model Workflow ####
-    
-    ### Formula and Preprocessing ####
-    ranger_recipe <- 
-      recipes::recipe(formula = log_priceadj_ha ~ ., 
-                      data = train) %>%
-      update_role(sid, new_role = "id variable")
-    
-    ### Engine, Mode, Method ####
-    ranger_spec <-
-      parsnip::rand_forest(mtry = length(names(train))/3, 
-                           min_n = 3, # increase leaf size to avoid overfitting
-                           trees = 500) %>% # try 250 trees
-      set_mode("regression") %>%
-      set_engine("ranger",
-                 splitrule = "extratrees",
-                 importance = "permutation")
-    
-    
-    ### Build Workflow ####
-    fitted_frr <- 
-      workflow() %>% 
-      add_recipe(ranger_recipe) %>% # the recipe in the formula
-      add_model(ranger_spec) %>% # the parameters, engine, importance methods, etc.
-      fit(train)
+    readr::read_rds() %>%
     
     ### Use model fit to predict every obs in FRR
-    predict(fitted_frr, 
-            .data %>% 
-              select(!log_priceadj_ha)
-            ) %>%
-      
-    ### Bind to original frr dataframe
-    bind_cols(., .data)
-  
+    predict(
+      .data %>% select(!log_priceadj_ha)
+    ) %>%
+    
+    ### Bind to original frr dataframe 
+    bind_cols(.data)
 }
