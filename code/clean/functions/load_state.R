@@ -1,4 +1,4 @@
-load_state <- function(state_index) {
+load_state <- function(state_index, .class) {
   ## Read PCIS pqt into env ####
   pcis_loc <- file.path(pqt_dir, pcis_pqt[[state_index]])
   
@@ -19,5 +19,6 @@ load_state <- function(state_index) {
     salepid_obj = salepid_obj,
     pcis_obj = pcis_obj
   )
+  
   
 }
