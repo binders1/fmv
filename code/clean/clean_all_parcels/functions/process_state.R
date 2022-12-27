@@ -1,5 +1,5 @@
 
-process_state <- function(state_index) {
+process_state.pc <- function(state_index) {
   
   #============================================================
   # 01). Load data, merge, and perform minor cleaning steps
@@ -8,7 +8,7 @@ process_state <- function(state_index) {
   clean_base <-
     
     # Load sales, sale <-> parcel crosswalk, and processed climate/soil vars
-    load_state(state_index = state_index) %>%
+    load_state.pc(state_index = state_index) %>%
     
     # merge all together
     initial_merge() %>% 
