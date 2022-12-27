@@ -5,22 +5,19 @@ process_state.pc <- function(state_index) {
   # 01). Load data, merge, and perform minor cleaning steps
   #============================================================
   
+  # Give the index variable pc class for generic method dispatch
+  state_index <- structure(state_index, class = "pc")
+  
   clean_base <-
     
     # Load sales, sale <-> parcel crosswalk, and processed climate/soil vars
-    load_state.pc(state_index = state_index) %>%
+    load_state(state_index = state_index) %>%
     
     # merge all together
     initial_merge() %>% 
-    
-    # perform inflation adjustments 
-    clean_inflation() %>%
-    
+
     # Add HPI index ####
-    clean_HPI() %>%
-    
-    # Create logged $/ha
-    clean_logprice()
+    clean_HPI.pc() %>%
   
   if (is.null(clean_base)) {
     return(

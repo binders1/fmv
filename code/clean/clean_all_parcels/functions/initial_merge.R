@@ -1,23 +1,18 @@
 initial_merge <- function(imported_data) {
+  UseMethod("initial_merge")
+}
 
-  ## Merge sale and crosswalk ####
-  
-  sample_period <-
-    imported_data[['sale_obj']] %>%
-    mutate(year = lubridate::year(date)) %>%
-    dplyr::filter(year >= 2000 & year <= 2019)
-  
-  if (nrow(sample_period) == 0) {
-    return(NULL)
-  }
-  
-  sample_period %>%
-    left_join(imported_data[['salepid_obj']], by = "sid") %>%
+initial_merge.pc <- function(imported_data) {
+
+  imported_data[['pc_obj']] %>%
     
-    # Merge Sales and PCIS ###
-    inner_join(
+    # Create fips variable
+    mutate(fips = stringr::str_sub(pid, 1, 5)) %>%
+    
+    # Merge parcels and PCIS ###
+    left_join(
       imported_data[['pcis_obj']],
       by = c("fips", "pid")
       )
-  
+
 }

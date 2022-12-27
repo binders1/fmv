@@ -28,28 +28,15 @@ climate_to_mean <-
   read_helper_data("climatevars_to_mean.csv") %>%
   pull(variable_name)
 
-
-## Load CPI data ####
-CPI <- 
-  read_helper_data("CPIAUCSL.csv") %>%
-  rename(CPI = "CPIAUCSL") %>%
-  mutate(year = lubridate::year(DATE),
-                month = lubridate::month(DATE)) %>%
-  dplyr::filter(year >= 2000 & year <= 2020) %>%
-  mutate(
-    CPI = CPI/CPI[year == 2020 & month == 1]
-  )
-
 # Load HPI Index ####
-HPI_county <- 
-  read_helper_data("HPI_county.csv", show_col_types = FALSE) %>%
+HPI_county_pc <- 
+  read_helper_data("HPI_county.csv") %>%
   mutate(across(HPI_2000:HPI_2020, ~ .x/HPI_2020)) %>%
   pivot_longer(
     cols = HPI_2000:HPI_2020,
     names_to = "year",
     values_to = "HPI"
   ) %>%
-  mutate(year = as.numeric(str_remove(year, "HPI_"))) %>%
   group_by(fips) %>%
   summarise(HPI = mean(HPI, na.rm = TRUE))
 
