@@ -5,7 +5,6 @@
 
 irrFilter.pc <- function(data) {
   
-  irr_ever_df <-
     data %>%
     
     dplyr::select(pid, starts_with("Irrigation")) %>%
@@ -32,11 +31,7 @@ irrFilter.pc <- function(data) {
     dplyr::filter(!duplicated(pid)) %>%
     
     dplyr::select(pid, irrEver)
-  
-  # Rejoin to original input data
-  data %>%
-    dplyr::left_join(irr_ever_df, by = "pid")
-  
+
 }
 
 

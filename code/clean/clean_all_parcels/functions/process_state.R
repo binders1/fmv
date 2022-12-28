@@ -36,11 +36,13 @@ process_state.pc <- function(state_index) {
   
   # clean and aggregate soil variables
   clean_agg_soil <-
-    agg_soil.pc(clean_base, state_index = state_index)
+    clean_base %>%
+    agg_soil.pc(state_index = state_index)
   
   # clean and aggregate climate variables 
   clean_agg_climate <-
-    agg_climate(clean_base)
+    clean_base %>%
+    agg_climate.pc()
   
   #================================================================
   # 03). Merge all cleaned/aggregated datasets together 
@@ -49,9 +51,8 @@ process_state.pc <- function(state_index) {
   # Create base dataframe on which to join all others
   base_for_join <- 
     clean_base %>%
-    select(c(sid, fips, HPI, log_priceadj_ha, 
-             date, ha, x, x45, y, y45)) %>%
-    filter(!duplicated(sid))
+    select(pid, fips, HPI, ha, x, x45, y, y45) %>%
+    filter(!duplicated(pid))
   
   # Create list object of all aggregated datasets
   full_data_for_join <-
@@ -59,27 +60,24 @@ process_state.pc <- function(state_index) {
       base_for_join,
       clean_agg_irrigation,
       clean_agg_soil,
-      clean_agg_climate,
-      clean_agg_mean,
-      clean_agg_sum
+      clean_agg_climate
     )
   
-  # Join base data with cleaned/aggregated data
+  
   all_joined <-
+    
+    # Join base data with cleaned/aggregated data
     purrr::reduce(
       .x = full_data_for_join,
       .f = left_join,
-      by = "sid"
-    )
-  
-  # Add median home values by fips-year
-  all_joined %<>%
-    mutate(year = year(date)) %>%
-    left_join(
-      mhv,
-      by = c("fips", "year")
+      by = "pid"
     ) %>%
-    dplyr::select(!year)
+    
+    # Add median home values by fips-year
+    left_join(
+      mhv_mean,
+      by = "fips"
+    )
   
   #================================================================
   # 04). Write to disk
@@ -91,9 +89,9 @@ process_state.pc <- function(state_index) {
       "(?<=_)[A-Z]{2}(?=\\.pqt)"
     )
   
-  clean_file <- paste0("clean_", state, ".pqt")
+  clean_file <- paste0("clean_all_pc_", state, ".pqt")
   
-  path_to_write <- file.path(clean.dir, clean_file)
+  path_to_write <- file.path(pc_clean.dir, clean_file)
   
   arrow::write_parquet(all_joined, 
                        path_to_write)
