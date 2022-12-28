@@ -34,19 +34,8 @@ irrFilter.pc <- function(data) {
     dplyr::select(pid, irrEver)
   
   # Rejoin to original input data
-  out <- 
-    data %>%
+  data %>%
     dplyr::left_join(irr_ever_df, by = "pid")
-  
-  # What purpose does this serve ??
-  out[['irrEver']] <- 
-    ifelse(
-      is.na(out$Irrigation1997), 
-      NA,
-      out[['irrEver']]
-    )
-  
-  out
   
 }
 

@@ -36,8 +36,7 @@ process_state.pc <- function(state_index) {
   
   # clean and aggregate soil variables
   clean_agg_soil <-
-    agg_soil(clean_base, 
-             state_index = state_index)
+    agg_soil.pc(clean_base, state_index = state_index)
   
   # clean and aggregate climate variables 
   clean_agg_climate <-
