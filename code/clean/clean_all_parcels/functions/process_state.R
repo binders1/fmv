@@ -17,7 +17,7 @@ process_state.pc <- function(state_index) {
     initial_merge() %>% 
 
     # Add HPI index ####
-    clean_HPI.pc() %>%
+    clean_HPI.pc()
   
   if (is.null(clean_base)) {
     return(
@@ -31,7 +31,8 @@ process_state.pc <- function(state_index) {
   
   # clean and aggregate irrigation variables
   clean_agg_irrigation <- 
-    agg_irrigation(clean_base)
+    clean_base %>%
+    irrFilter.pc()
   
   # clean and aggregate soil variables
   clean_agg_soil <-

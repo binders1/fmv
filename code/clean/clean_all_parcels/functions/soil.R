@@ -22,8 +22,7 @@ load_soilcodes <- function(state_index) {
   soil_to_drop <- 
     soilcodes %>%
     dplyr::filter(
-      stringr::str_detect(farmlndcl,
-                          pattern_to_drop)
+      stringr::str_detect(farmlndcl, pattern_to_drop)
       ) %>%
     dplyr::pull(Value) %>%
     str_c(., "_prop")
@@ -31,8 +30,7 @@ load_soilcodes <- function(state_index) {
   soil_ref_tbl <- 
     soilcodes %>%
     dplyr::filter(
-      !stringr::str_detect(farmlndcl,
-                           pattern_to_drop)
+      !stringr::str_detect(farmlndcl, pattern_to_drop)
       ) %>%
     group_by(Value) %>%
     summarise(category = paste0(category, collapse = "; ")) %>%
