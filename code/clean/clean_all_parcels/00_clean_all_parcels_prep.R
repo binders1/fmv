@@ -1,6 +1,9 @@
 ## Nolte File Names ####
 
-nolte_files <- data.frame(name = list.files(nolte.dir))
+nolte_files <- 
+  data.frame(
+    name = list.files(nolte.dir, full.names = TRUE)
+    )
 
 ### subset to only parcel data ####
 all_pc <- 
@@ -8,6 +11,11 @@ all_pc <-
   filter(str_detect(name, "_pc\\.pqt$")) %>%
   pull(name) %>%
   sort()
+
+# Create vector of all PCIS parquet files
+pcis_pqt <- 
+  list.files(pqt_dir, full.names = TRUE)
+
 
 ## Retrieve New Soil farmlncl <-> new-category crosswalk ####
 soil_crosswalk <- read_helper_data("soil_crosswalk.csv")

@@ -4,15 +4,13 @@
 
 # Load packages
 library(tidyverse)
-library(arrow)
-library(RColorBrewer)
-library(data.table)
-library(ggplot2)
-library(magrittr)
-library(sf)
-library(ggtext)
 library(googlesheets4)
 library(lubridate)
+library(magrittr)
+library(arrow)
+library(data.table)
+library(sf)
+library(tictoc)
 
 # Set directory paths
 root <- "~/fmv"
@@ -40,13 +38,14 @@ cleaning_fdir <- file.path(pc_cleaning.dir, "functions")
 # Source custom global functions 
 walk(
   list.files(f.dir, full.names = TRUE),
-  source)
+  source
+  )
 
 #=======================================================
 # 02). Load auxiliary datasets and helper vectors/lists 
 #=======================================================
 
-file.path(pc_cleaning.dir, "00_clean_prep.R") %>% source()
+file.path(pc_cleaning.dir, "00_clean_all_parcels_prep.R") %>% source()
 
 #=======================================================
 # 03). Process each state's data 
@@ -59,11 +58,7 @@ walk(
 )
 
 # Map processing function over all state files
-
-state_seq <- 
-  pqt_dir %>% 
-  list.files() %>% 
-  seq_along()
+state_seq <- seq_along(pcis_pqt)
 
 walk(
   .x = state_seq,

@@ -62,7 +62,7 @@ walk(
 
 pcis_pqt <- list.files(pqt_dir)
 
-state_seq <- 29:49 #seq_along(pcis_pqt)
+state_seq <- seq_along(pcis_pqt)
 
 walk(
   .x = state_seq,

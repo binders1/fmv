@@ -5,19 +5,16 @@ process_state.pc <- function(state_index) {
   # 01). Load data, merge, and perform minor cleaning steps
   #============================================================
   
-  # Give the index variable pc class for generic method dispatch
-  state_index <- structure(state_index, class = "pc")
-  
+  tic("clean_base")
   clean_base <-
     
     # Load sales, sale <-> parcel crosswalk, and processed climate/soil vars
-    load_state(state_index = state_index) %>%
-    
+    load_state.pc(state_index) %>%
     # merge all together
     initial_merge() %>% 
-
     # Add HPI index ####
-    clean_HPI.pc()
+    clean_HPI.pc() 
+  toc()
   
   if (is.null(clean_base)) {
     return(
@@ -29,30 +26,39 @@ process_state.pc <- function(state_index) {
   # 02). Clean and aggregate: irrigation, soil, climate, and others
   #================================================================
   
+  tic("irrFilter.pc()")
   # clean and aggregate irrigation variables
   clean_agg_irrigation <- 
     clean_base %>%
     irrFilter.pc()
+  toc()
   
+  tic("agg_soil.pc()")
   # clean and aggregate soil variables
   clean_agg_soil <-
     clean_base %>%
     agg_soil.pc(state_index = state_index)
+  toc()
   
+  tic("agg_climate.pc()")
   # clean and aggregate climate variables 
   clean_agg_climate <-
     clean_base %>%
     agg_climate.pc()
+  toc()
   
   #================================================================
   # 03). Merge all cleaned/aggregated datasets together 
   #================================================================
   
+  tic("base_for_join")
   # Create base dataframe on which to join all others
   base_for_join <- 
     clean_base %>%
     select(pid, fips, HPI, ha, x, x45, y, y45) %>%
     filter(!duplicated(pid))
+  toc()
+  
   
   # Create list object of all aggregated datasets
   full_data_for_join <-
@@ -64,6 +70,7 @@ process_state.pc <- function(state_index) {
     )
   
   
+  tic("all_joined")
   all_joined <-
     
     # Join base data with cleaned/aggregated data
@@ -73,11 +80,12 @@ process_state.pc <- function(state_index) {
       by = "pid"
     ) %>%
     
-    # Add median home values by fips-year
+    # Add average county median home values by fips
     left_join(
       mhv_mean,
       by = "fips"
     )
+  toc()
   
   #================================================================
   # 04). Write to disk
@@ -97,4 +105,5 @@ process_state.pc <- function(state_index) {
                        path_to_write)
   
   message("Saved: ", path_to_write)
+  
 }
