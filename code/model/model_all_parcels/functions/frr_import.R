@@ -44,19 +44,20 @@ frr_import <- function(frr_id, buildings = TRUE, dir = c("cleaned", "all_parcels
     map(~ pull(.x, fips))
   
   clean_to_load <- 
-    paste0(prefix,
-           states_to_load,
-           ".pqt") %>%
+    paste0(prefix, states_to_load, ".pqt") %>%
     sort()
   
   ## Import current FRR dataframe ####
   
   cli::cli_alert_info(
-    paste0(states_to_load, collapse = ", "))
+    paste0(states_to_load, collapse = ", ")
+    )
   
   cli::cli_alert_info(
-    paste0(map_int(counties_to_include, length) %>% sum(), 
-           " counties")
+    paste0(
+      map_int(counties_to_include, length) %>% sum(),
+      " counties"
+      )
   )
   
   clean_paths <- file.path(target_dir, clean_to_load)

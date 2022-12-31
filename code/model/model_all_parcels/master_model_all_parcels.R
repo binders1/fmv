@@ -48,8 +48,8 @@ file.path(mod_pc_dir, "00_model_all_parcels_prep.R") %>%
 
 # =====================================================
 #
-# Run ERT models, with and without buildings,
-# then predict on entire (bldg or no) FRR data and save
+# Model sales-level FMV paper data with no buildings
+# then predict on *entire* PLACES parcel set
 #
 # =====================================================
 

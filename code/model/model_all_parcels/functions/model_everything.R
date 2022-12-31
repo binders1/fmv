@@ -1,10 +1,5 @@
 model_everything <- 
-  function(
-    .data, 
-    frr_id, 
-    buildings, 
-    axe = TRUE
-    ) {
+  function(.data, frr_id, buildings, axe = TRUE) {
 
     # Model ####
     if (!is.null(.data)) {
