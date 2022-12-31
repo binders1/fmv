@@ -55,7 +55,7 @@ file.path(mod_pc_dir, "00_model_all_parcels_prep.R") %>%
 
 walk(
   .x = seq(9),
-  import_and_model
+  predict_all_parcels
   ) 
 
 
