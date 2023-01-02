@@ -10,7 +10,7 @@ ffb_pred_all <- function() {
   all_predictions <-
     map_dfr(
       .x = predict_bldg,
-      .f = load_pred_all
+      .f = ~ load_pred_all(file = .x, .pred, sid, x, y)
     ) %>%
     rowid_to_column(var = "sid_row")
   

@@ -112,11 +112,25 @@ make_us_tessel <- function(state_sf,
 # Load predict_everything parquet file and make spatial
 #========================================================
 
-load_pred_all <- function(file) {
+find_read_fn <- function(file) {
   
-  file %>%
-    read_parquet() %>%
-    select(.pred, sid, x, y) %>%
+  ext <- tools::file_ext(file)
+  
+  fn <-
+    switch(ext,
+           csv = readr::read_csv,
+           parquet = ,
+           pqt = arrow::read_parquet)
+  
+  fn
+}
+
+load_pred_all <- function(file, ...) {
+  
+  .fn <- find_read_fn(file)
+  
+  .fn(file) %>%
+    select(...) %>%
     
     # Create spatial points from XY coords
     st_as_sf(coords = c("x", "y"), crs = st_crs(5070))
