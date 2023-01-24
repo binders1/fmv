@@ -37,11 +37,18 @@ helper_dir <- file.path(ddir, "helper_data")
 
   exhibitfn_dir <- file.path(v.dir, "exhibit_fns") 
 
+  
+  
 # Source custom functions ####
-fns_to_source <- 
-  list.files(f.dir, full.names = TRUE)
+  
+## General custom functions
+list.files(f.dir, full.names = TRUE) %>%
+    purrr::walk(source)
 
-purrr::walk(fns_to_source, source)
+## Plot-specific functions 
+list.files(exhibitfn_dir, full.names = TRUE) %>%
+  purrr::walk(source)
+
 
 # Source exhibit (FRR, spatial, etc.)
 file.path(v.dir, "00_exhibit_prep.R") %>% source()
@@ -50,14 +57,6 @@ file.path(v.dir, "00_exhibit_prep.R") %>% source()
 # =====================================================
 # 02). Generate and save exhibits
 # =====================================================
-
-
-# source all plot fns
-list.files(exhibitfn_dir, full.names = TRUE) %>%
-  purrr::walk(
-    .x = .,
-    .f = source
-  )
 
 # Create dataframe of all plot filenames and generating fns,
 # along with png parameters (resolution (dpi), width, height, units)
@@ -77,12 +76,13 @@ exhibit_tbl <-
   "frr_compare_mse_size"    , frr_compare_mse_size    , 600 , 7     , 4      , "in"  ,
   "ffb_pred_all"            , ffb_pred_all            , 600 , 8     , 4      , "in"  ,
   "ffb_pred_all_nobldg"     , ffb_pred_all_nobldg     , 600 , 8     , 4      , "in"  ,
+  "ffb_pred_all_parcels"    , ffb_pred_all_parcels    , 600 , 8     , 4      , "in"  ,
   "fcb_importance_all"      , fcb_importance_all      , 600 , 7     , 4      , "in"  ,
   "ffb_importance_all"      , ffb_importance_all      , 600 , 7     , 4      , "in"  ,
   "frr_performance_size"    , frr_performance_size    , 600 , 8     , 4      , "in"
   ) 
 
-exhibit_tbl %<>% slice(7)
+exhibit_tbl %<>% slice(12)
   
 purrr::pwalk(
   .l = exhibit_tbl,
