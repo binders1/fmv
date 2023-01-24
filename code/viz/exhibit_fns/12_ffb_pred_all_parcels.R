@@ -1,54 +1,48 @@
 
-
-ffb_pred_all <- function() {
+ffb_pred_all_parcels <- function() {
   
-  predict_bldg <-
-    file.path(m.dir, "predict_everything") %>%
-    list.files(full.names = TRUE) %>%
-    .[!str_detect(., "no")]
+  predict_all_pc <-
+    file.path(m.dir, "model_all_parcels") %>%
+    list.files(full.names = TRUE)
   
   all_predictions <-
     map_dfr(
-      .x = predict_bldg,
-      .f = ~ load_pred_all(file = .x, .pred, sid, x, y)
+      predict_all_pc,
+      ~ load_pred_all(file = .x, pid, .pred, x, y)
     ) %>%
-    rowid_to_column(var = "sid_row")
+    rowid_to_column(var = "pidrow")
+  
+  # EPSG:5070 projection of states
+  state_5070 <- 
+    st_transform(us_states, crs = st_crs(5070))
   
   #================================================================
   # Spatial analysis ####
   #================================================================
   
-  tessel_crop <- make_us_tessel(us_states)
-  
-  tessel_sf <-
-    tibble(geometry = tessel_crop) %>%
-    rowid_to_column(var = "cell_id") %>%
-    st_set_geometry(value = "geometry")
-  
-  
   tessel_pred <-
-    # create df of just tessel cell id's
-    tessel_sf %>% 
+    # create df of just tessellation cell identifiers
+    conus_tessel_sf %>% 
     st_drop_geometry() %>%
     
     # create list-column of all the sid's contained within each cell
     mutate(
-      sid_row = 
+      pidrow = 
         map(
-          st_contains(tessel_crop, all_predictions), 
+          st_contains(conus_tessel_sf, all_predictions), 
           as.character
         ) 
     ) %>%
     
     # unnest sid's contained within each cell
-    unnest(sid_row) %>%
+    unnest(pidrow) %>%
     
-    mutate(sid_row = as.integer(sid_row)) %>%
+    mutate(pidrow = as.integer(pidrow)) %>%
     
     # perform join to attach soil attributes
     left_join(
       all_predictions %>% st_drop_geometry(),
-      by = "sid_row"
+      by = "pidrow"
     ) %>%
     
     # group by tessel cell
@@ -61,7 +55,7 @@ ffb_pred_all <- function() {
     
     # join cell spatial attributes
     right_join(
-      tessel_sf,
+      conus_tessel_sf,
       by = "cell_id"
     ) %>% 
     
@@ -101,7 +95,7 @@ ffb_pred_all <- function() {
     
     labs(
       fill = "$/ha"
-    ) +
+    ) + 
     
     guides(
       fill = guide_colorbar(
@@ -124,9 +118,7 @@ ffb_pred_all <- function() {
       axis.ticks = element_blank(),
       axis.text = element_blank()
     )
+  
 }
-
-
-
 
 

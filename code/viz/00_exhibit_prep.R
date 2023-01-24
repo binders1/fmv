@@ -108,7 +108,7 @@ frr_names <-
   unique()
 
 ## Function to create single polygon for each FRR ####
-frrUnion <- function(data, frr) {
+frr_union <- function(data, frr) {
   
   data %>%
     
@@ -141,8 +141,33 @@ if (!exists("frr_shp")) {
   # ...map the union function across all FRRs
   frr_shp <-
     map_dfr(frr_names, 
-            ~ frrUnion(data = frr_sf, 
-                       frr = .x))
+            ~ frr_union(data = frr_sf, frr = .x)
+            )
+  
+}
+
+# Create tessellation of CONUS to use in mapping prediction values
+if ("conus_tessel.geojson" %in% list.files(helper_dir)) {
+  conus_tessel_sf <- read_sf(file.path(helper_dir, "conus_tessel.geojson"))
+} else {
+  
+  conus_tessel_sf <-
+    # Using the CONUS state-level shapefile...
+    us_states %>%
+    # ...create a custom hex tessellation
+    make_us_tessel() %>%
+    # Convert to tibble
+    tibble(geometry = .) %>%
+    # Create unique identifier for each cell
+    rowid_to_column(var = "cell_id") %>%
+    # Set sf object geometry
+    st_set_geometry(value = "geometry")
+  
+  # Save in file system
+  write_sf(
+    conus_tessel_sf,
+    file.path(helper_dir, "conus_tessel.geojson")
+  )
   
 }
 
