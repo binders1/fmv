@@ -26,7 +26,7 @@ read_state_clean <- function(state) {
 
 
 
-# Generate character vector of model predictors ============================= #
+# Generate character vector of model predictors ============================== #
 predictor_set <- 
   function(
     data,                          # modeling data
