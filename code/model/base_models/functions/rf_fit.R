@@ -1,10 +1,10 @@
-# Given a county dataframe, fits an ERT model =============================== #
-
-# Purpose: low-level nested function within county ERT models. 
-
-# Args ####
+# rf_fit() ==================================================================
+#
+# Given a county dataframe, fits an ERT model
+# Low-level nested function within county ERT models. 
+#
 ## j: integer value of county, indexed within the state_counties vector 
-## ...: variables to be included for modeling (log_priceadj_ha, sid, and fips must be included)
+## ...: variables to be included for modeling
 
 rf_fit <- function(county, ...) {
   
