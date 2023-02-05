@@ -8,28 +8,30 @@
 
 fmv_state_model <- function(state, pred.set = c("full", "nolte"), HPI = TRUE) {
   
+  # Read in data =============================================================
+  
   # Read in current state's data
-  df_import <- read_state_clean(state)
+  state_data <- read_state_clean(state)
   
   # Vector of current state's counties
-  state_counties <- unique(df_import$fips)
+  state_counties <- unique(state_data$fips)
   
-  if (nrow(df_import) == 0) {
+  # If no data, exit function
+  if (nrow(state_data) == 0) {
     message('\nNo obs in `', state, "`. Moving on to next state.", sep = "")
+    return()
   } else {
-    
     # Prep parallel workers
     unregisterCores()
     if (foreach::getDoParWorkers() < 64) doParallel::registerDoParallel(64)
-    
   }
   
   model_predictors <- 
     predictor_set(
-      data = df_import, geo = "county", 
+      data = state_data, geo = "county", 
       pred.set = pred.set, HPI = HPI)
     
-    ## County Models ####
+    # Build models for all counties in state =================================
   
     state_rf_fit <- 
       foreach::foreach(county = state_counties) %dopar% {

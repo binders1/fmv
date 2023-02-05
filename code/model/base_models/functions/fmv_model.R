@@ -41,7 +41,7 @@ fmv_model.county <-
     }
     
     # Placeholder for random-forest model county-level function
-    if (FALSE) rf_fit()
+    if (FALSE) fmv_state_model()
    
 }
 

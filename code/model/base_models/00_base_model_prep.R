@@ -12,5 +12,6 @@ nolte2020vars <-
 county_adjacency <- 
   readr::read_csv(
     "https://data.nber.org/census/geo/county-adjacency/2010/county_adjacency2010.csv",
-    show_col_types = FALSE)
+    show_col_types = FALSE) %>%
+  filter(fipscounty != fipsneighbor)
 

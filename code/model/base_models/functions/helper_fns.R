@@ -1,6 +1,6 @@
 
 
-# Read in cleaned FMV data by state ========================================= #
+# Read in cleaned FMV data by state ========================================= 
 
 read_state_clean <- function(state) {
   
@@ -12,7 +12,7 @@ read_state_clean <- function(state) {
       pattern = "\\.pqt$")
   
   # Current state file path
-  state_to_read <- clean_path[grepl(state, clean_path)]
+  state_to_read <- all_clean[grepl(state, all_clean)]
   
   message('\nTrying: ', state)
   
@@ -26,7 +26,7 @@ read_state_clean <- function(state) {
 
 
 
-# Generate character vector of model predictors ============================== #
+# Generate character vector of model predictors ==============================
 predictor_set <- 
   function(
     data,                          # modeling data
@@ -73,10 +73,11 @@ predictor_set <-
     
   }
 
-predictor_set(df_import, geo = "county", pred.set = "full")
-predictor_set(df_import, geo = "county", pred.set = "nolte", HPI = FALSE)
-predictor_set(df_import, geo = "county", pred.set = "nolte", HPI = TRUE)
+state_data <- read_state_clean("AL")
+predictor_set(state_data, geo = "county", pred.set = "full")
+predictor_set(state_data, geo = "county", pred.set = "nolte", HPI = FALSE)
+predictor_set(state_data, geo = "county", pred.set = "nolte")
 
-predictor_set(df_import, geo = "frr", pred.set = "full")
-predictor_set(df_import, geo = "frr", pred.set = "nolte")
+predictor_set(state_data, geo = "frr", pred.set = "full")
+predictor_set(state_data, geo = "frr", pred.set = "nolte")
 

@@ -1,164 +1,172 @@
-# rf_fit() ==================================================================
-#
-# Given a county dataframe, fits an ERT model
-# Low-level nested function within county ERT models. 
-#
-## j: integer value of county, indexed within the state_counties vector 
-## ...: variables to be included for modeling
 
 rf_fit <- function(county, ...) {
+
+  county_data <-
+    state_data %>%
+    filter(fips == county)
   
-  HPI_na <- sum(is.na(df_import$HPI))
+  HPI_na <- sum(is.na(state_data$HPI))
+  nrow_county <- sum(state_data$fips==county)
+  if (HPI_na >= nrow_county) county_data %<>% select(!HPI)
   
-  nrow_county <- sum(df_import$fips==county)
+  # Check that county has 1000 obs; if not, take neighbor donations ===========
+  pre_prep_data <-
+    county_check_nrow(county_data, ...)
   
-  if (HPI_na >= nrow_county) {
+  # If even neighbor donations couldn't get county to 1000, exit
+  if (nrow(pre_prep_data) < 1000) return()
+  # Otherwise, prep data for modeling =========================================
+  
+  # Remove fips variable (isn't modeled) and all rows with NA values
+  rf_data <-
+    pre_prep_data %>%
+    select(!fips) %>%
+    na.omit()
     
-    ### Subset to current county ####
+  # Set seed to ensure replicability
+  set.seed(2366132)
     
-    county_df <- df_import %>%
-      dplyr::filter(fips==county) %>%
-      select(!HPI)
+  # Split data into training and test sets, stratified on sale price
+  rf_split <- initial_split(rf_data, strata = log_priceadj_ha)
+  train <- training(rf_split)
+  test <- testing(rf_split)
     
-  } else {
+  # Model specification =======================================================
     
-    county_df <- df_import %>%
-      dplyr::filter(fips==county)
+  # Build formula and give sales id a non-predictor role as id variable
+  rf_recipe <-
+    recipe(formula = log_priceadj_ha ~ .,
+           data = train) %>%
+    update_role(sid, new_role = "id")
+  
+  # Specify model, parameters, mode, model engine, and model rules
+  rf_model_spec <- 
+    rand_forest(mtry = length(names(train))/3,
+                min_n = 3,
+                trees = 500) %>%
+    set_mode("regression") %>%
+    set_engine(
+      "ranger", 
+      splitrule = "extratrees",
+      importance = "permutation"
+    )
+  
+  # Join formula and model specification to create a workflow object,
+  # which can be passed to fitting functions
+  rf_workflow <-
+    workflow(rf_recipe, rf_model_spec)
+  
+  # Fit and predict manually to allow for predictions on ALL sids =============
+  
+  # ------------------------------------------------------------------------- #
+  # NB: this manual process and last_fit() produce nearly identical predictions
+  # ------------------------------------------------------------------------- #
+  
+  # Fit model using training data
+  rf_train_fit <- fit(rf_workflow, train)
+  
+  # Predict ALL parcels (training + test)
+  predict_all <- 
+    predict(rf_train_fit, rf_data) %>%
+    bind_cols(
+      rf_data %>% select(sid), .
+    )
+  
+  # Use tidymodels built-in model evalution to train -> test ==================
+  rf_last_fit <- last_fit(rf_workflow, rf_split)
+  
+  # Record sample size from county and neighbors
+  county_stats <-
+    tibble(
+      fips = county,
+      n_obs = nrow(rf_data),
+      n_county = pre_prep_data %>% filter(fips == county) %>% nrow(),
+      n_neighbor = pre_prep_data %>% filter(fips != county) %>% nrow()
+      )
+  
+  # Return the following:
+  list(
     
+    # 1. Predictions for all sales records
+    "predict_all" = predict_all,
+    
+    # 2. Model evaluation object (including metrics and predictions)
+    "rf_last_list" = rf_last_fit,
+    
+    # 3. n observations in model, observations in county and neighbor
+    "county_stats" = county_stats
+  )
+}
+
+
+# Checks county has >= 1000 obs; if not, attempts padding with neighbors ======
+county_check_nrow <- function(county_data, ...) {
+  
+  county_nrow <- nrow(county_data)
+  county <- unique(county_data$fips)
+  
+  county_data <-
+    county_data %>%
+    select(any_of(...))
+  
+  model_data <-
+    # If county has sufficient observations...
+    if (county_nrow >= 1000) {
+      # ...return as-is
+      county_data %>%
+        select(any_of(...))
+      } else {
+        # If county has less than 1000 observations, attempt to 
+        # reach 1000 observations by taking from neighbors
+        neighbor_donate(county, county_data) %>%
+          select(any_of(...))
+      }
+  
+  model_data
   }
+
+
+# Attempts to pad county data to 1000 observations with neighbors' data =======
+neighbor_donate <- function(county, county_data) {
   
-  ### Vector of neighbors ####
-  neighbor_vec <- 
-    county_adjacency %>%
-    dplyr::filter(countyname != neighborname) %>%  
+  rows_needed <- 1000 - county_nrow
+  
+  # ...create dataset of observations in neighboring counties
+  neighbor_data <-
+    find_neighbors(county) %>%
+    dplyr::select(dplyr::any_of(names(county_data)))
+  
+  # If neighboring counties can provide all needed rows...
+  if (nrow(neighbor_data) >= rows_needed) {
+    
+    # 1) sample neighbor data down to only rows needed to reach 1000 obs
+    neighbor_rows_needed <-
+      neighbor_data %>%
+      slice_sample(n = rows_needed)
+    
+    # 2) bind neighbor sample to focal county data
+    bind_rows(
+      county_data,
+      neighbor_data
+    )
+  } else {
+    # If neighbors cannot provide all needed rows, return as-is
+    county_data
+    }
+  }
+
+
+# Filters state dataset to only neighbors of specified county ================
+find_neighbors <- function(county) {
+  
+  neighbors <- 
+    county_adjacency %>% 
     dplyr::filter(fipscounty == county) %>%
     dplyr::pull(fipsneighbor)
-  
-  
-  ### Specify df for modeling
 
-  if (nrow(county_df) < 1000) {
-    
-    rows_needed <- 1000 - nrow(county_df)
-    
-    neighbor_df <- df_import %>%
-      dplyr::filter(fips %in% neighbor_vec) %>%
-      dplyr::select(dplyr::any_of(names(county_df)))
-    
-    if(rows_needed <= nrow(neighbor_df)) {
-      
-      model_df <- dplyr::bind_rows(county_df,
-                                   neighbor_df %>% 
-                                     slice_sample(n = rows_needed)) %>%
-        dplyr::select(...) %>%
-        stats::na.omit()
-      
-      mod_nrow <- dplyr::bind_rows(county_df,
-                                        neighbor_df %>% 
-                                          slice_sample(n = rows_needed)) %>%
-                         dplyr::select(...) %>%
-        nrow()
-      
-    } else {
-      
-      model_df <- county_df %>%
-        dplyr::select(...) %>%
-        stats::na.omit()
-      
-      mod_nrow <- nrow(
-        county_df %>%
-          dplyr::select(...)
-      )
-      
-    } 
-    
-  } else {
-    
-    model_df <- county_df %>%
-      dplyr::select(...) %>%
-      stats::na.omit()
-    
-    
-    mod_nrow <- 
-      nrow(
-        county_df %>%
-          dplyr::select(...)
-        )
-    
-  }
-  
-  # Don't model if neighbors couldn't get county to 1000 obs
-  if(mod_nrow < 1000) return()
-    
-    ## Modeling ####
-    
-    rf_data <- model_df %>%
-      dplyr::select(!fips) 
-    
-    
-    ### Construct Model ####
-    
-    # split data
-    set.seed(319)
-    
-    tryCatch(
-      
-      rf_split <- rsample::initial_split(rf_data, 
-                                         strata = log_priceadj_ha),
-      
-      error = function(e)
-        message('Model split error in: ',county)
-      
-    )
-    
-    
-    train <- rsample::training(rf_split)
-    test <- rsample::testing(rf_split)
-    
-    ### Model Workflow ####
-    
-    #### Formula and Preprocessing ####
-    ranger_recipe <- 
-      recipes::recipe(formula = log_priceadj_ha ~ ., 
-                      data = train) %>%
-      recipes::update_role(sid, new_role = "id")
-    
-    #### Engine, Mode, Method ####
-    ranger_spec <-
-      parsnip::rand_forest(mtry = length(names(train))/3, 
-                           min_n = 3, # increase required sample leaf size to avoid overfitting
-                           trees = 500) %>% # try 250 trees
-      parsnip::set_mode("regression") %>%
-      parsnip::set_engine("ranger",
-                          splitrule = "extratrees",
-                          importance = "permutation")
-    
-    #### Build Workflow ####
-    ranger_workflow <- 
-      workflows::workflow() %>% 
-      workflows::add_recipe(ranger_recipe) %>% # the recipe in the formula
-      workflows::add_model(ranger_spec) # the parameters, engine, importance methods, etc.
-    
-    ### Model Fitting ####
-    
-    tryCatch(
-      rf_fit <- 
-        tune::last_fit(ranger_workflow, rf_split) %>%
-        dplyr::mutate(
-          fips = county,
-          n_obs = nrow(rf_data),
-          n_county = nrow(model_df %>% dplyr::filter(fips == county)),
-                      n_neighbor = nrow(model_df %>% 
-                                          dplyr::filter(fips != county))),
-      
-      error = function(e)
-        warning('Model fit error in county ', county)
-    )
-      
-    # Return testing set and model fit
-    list(
-        "test_set" = test,
-        "rf_fit" = rf_fit
-      )
-  
+  state_data %>%
+    dplyr::filter(fips %in% neighbors)
 }
+
+
+
