@@ -12,3 +12,9 @@ m_dir <- file.path(cdir, "model")
 clean_dir <- file.path(ddir, "cleaned")
 helper_dir <- file.path(ddir, "helper_data")
 model_ddir <- file.path(ddir, "model")
+
+base.mdir <- file.path(m_dir, "base_models")
+
+file.path(base.mdir, "functions") %>%
+  list.files(full.names = TRUE) %>%
+  walk(source)

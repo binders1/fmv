@@ -5,7 +5,7 @@
 # Date: 29 Jan 2023
 # ===================================================================
 
-# General wrapper function for dispatching methods varying by geo level
+# General wrapper function for dispatching to methods by geo level
 fmv_model <- 
   function(
     geo = c("county", "frr"),      # geographic level at which to model
@@ -28,9 +28,8 @@ fmv_model <-
     
 }
 
-
+# County modeling method ======================================================
 fmv_model.county <- 
-  # County modeling method
   function(
     pred.set,    # predictor set 
     HPI = TRUE   # Include HPI in predictor set?
@@ -41,13 +40,13 @@ fmv_model.county <-
     }
     
     # Placeholder for random-forest model county-level function
+    # TODO: Loop through fmv_state_model() for all states
     if (FALSE) fmv_state_model()
    
 }
 
-
+# FRR modeling method =========================================================
 fmv_model.frr <-
-  # FRR modeling method
   function(
     pred.set,                   # Predictor set
     only.nolte.counties = FALSE # Restricts sample to only counties in Nolte's county model

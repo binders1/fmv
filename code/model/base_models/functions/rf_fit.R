@@ -17,7 +17,7 @@ rf_fit <- function(county, ...) {
   if (nrow(pre_prep_data) < 1000) return()
   # Otherwise, prep data for modeling =========================================
   
-  # Remove fips variable (isn't modeled) and all rows with NA values
+  # Remove fips variable (it's not modeled) and all rows with NA values
   rf_data <-
     pre_prep_data %>%
     select(!fips) %>%
@@ -59,7 +59,7 @@ rf_fit <- function(county, ...) {
   # Fit and predict manually to allow for predictions on ALL sids =============
   
   # ------------------------------------------------------------------------- #
-  # NB: this manual process and last_fit() produce nearly identical predictions
+  # NB: this manual process and last_fit() produce **mostly** similar pred values
   # ------------------------------------------------------------------------- #
   
   # Fit model using training data
@@ -69,17 +69,28 @@ rf_fit <- function(county, ...) {
   predict_all <- 
     predict(rf_train_fit, rf_data) %>%
     bind_cols(
-      rf_data %>% select(sid), .
+      rf_data %>% select(sid, log_priceadj_ha), .
     )
   
   # Use tidymodels built-in model evalution to train -> test ==================
   rf_last_fit <- last_fit(rf_workflow, rf_split)
   
+  # Bind sale record IDs to predictions so they can be identified later
+  rf_last_fit$.predictions[[1]] <-
+    bind_sid_to_pred(
+      .pred = rf_last_fit$.predictions[[1]],
+      test_set = test)
+  
+  
   # Record sample size from county and neighbors
   county_stats <-
     tibble(
       fips = county,
+      
       n_obs = nrow(rf_data),
+      n_train = nrow(train),
+      n_test = n_obs - n_train,
+      
       n_county = pre_prep_data %>% filter(fips == county) %>% nrow(),
       n_neighbor = pre_prep_data %>% filter(fips != county) %>% nrow()
       )
@@ -91,7 +102,7 @@ rf_fit <- function(county, ...) {
     "predict_all" = predict_all,
     
     # 2. Model evaluation object (including metrics and predictions)
-    "rf_last_list" = rf_last_fit,
+    "rf_last_fit" = rf_last_fit,
     
     # 3. n observations in model, observations in county and neighbor
     "county_stats" = county_stats
@@ -123,13 +134,14 @@ county_check_nrow <- function(county_data, ...) {
       }
   
   model_data
+  
   }
 
 
 # Attempts to pad county data to 1000 observations with neighbors' data =======
 neighbor_donate <- function(county, county_data) {
   
-  rows_needed <- 1000 - county_nrow
+  rows_needed <- 1000 - nrow(county_data)
   
   # ...create dataset of observations in neighboring counties
   neighbor_data <-
@@ -168,5 +180,18 @@ find_neighbors <- function(county) {
     dplyr::filter(fips %in% neighbors)
 }
 
+
+# Bind sale record IDs to rf_fit test set predicted values ====================
+bind_sid_to_pred <- function(.pred, test_set) {
+  
+  test_with_rowid <-
+    test_set %>%
+    rowid_to_column(var = ".row") %>%
+    select(.row, sid)
+  
+  .pred %>%
+    left_join(test_with_rowid, by = ".row")
+  
+}
 
 

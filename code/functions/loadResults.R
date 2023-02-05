@@ -9,7 +9,7 @@ loadResults <-
   function(
     model        = c("fcb", "ffb", "ffr", "ncb", 
                      "nch", "nfb", "nfr"),
-    res_type     = c("importance", "performance", "predictions"),
+    res_type     = c("metrics", "performance", "predictions"),
     include_mod  = TRUE,
     include_type = TRUE
     ) {
@@ -78,12 +78,12 @@ resultList <- function(model) {
   outlist <-
     purrr::map2(
       .x = model,
-      .y = c("importance", "performance", 
+      .y = c("metrics", "performance", 
              "predictions"),
       loadResults
     )
   
-  names(outlist) <- c("importance", "performance", "predictions") 
+  names(outlist) <- c("metrics", "performance", "predictions") 
   
   outlist
   

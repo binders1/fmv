@@ -73,11 +73,10 @@ predictor_set <-
     
   }
 
-state_data <- read_state_clean("AL")
-predictor_set(state_data, geo = "county", pred.set = "full")
-predictor_set(state_data, geo = "county", pred.set = "nolte", HPI = FALSE)
-predictor_set(state_data, geo = "county", pred.set = "nolte")
+# predictor_set(state_data, geo = "county", pred.set = "full")
+# predictor_set(state_data, geo = "county", pred.set = "nolte", HPI = FALSE)
+# predictor_set(state_data, geo = "county", pred.set = "nolte")
 
-predictor_set(state_data, geo = "frr", pred.set = "full")
-predictor_set(state_data, geo = "frr", pred.set = "nolte")
+# predictor_set(state_data, geo = "frr", pred.set = "full")
+# predictor_set(state_data, geo = "frr", pred.set = "nolte")
 
