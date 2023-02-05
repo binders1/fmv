@@ -5,9 +5,9 @@ rf_fit <- function(county, ...) {
     state_data %>%
     filter(fips == county)
   
-  HPI_na <- sum(is.na(state_data$HPI))
-  nrow_county <- sum(state_data$fips==county)
-  if (HPI_na >= nrow_county) county_data %<>% select(!HPI)
+  # Remove HPI column in counties with no HPI data ============================
+  no_HPI_data <- all(is.na(county_data$HPI))
+  if (no_HPI_data) county_data %<>% select(!HPI)
   
   # Check that county has 1000 obs; if not, take neighbor donations ===========
   pre_prep_data <-
