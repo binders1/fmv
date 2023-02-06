@@ -15,3 +15,9 @@ county_adjacency <-
     show_col_types = FALSE) %>%
   filter(fipscounty != fipsneighbor)
 
+# Vector of all state abbreviations
+all_states <-
+  list.files(clean_dir) %>%
+  str_extract("[A-Z]{2}(?=\\.pqt$)") %>%
+  sort()
+

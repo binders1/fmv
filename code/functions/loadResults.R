@@ -7,8 +7,7 @@
 
 loadResults <- 
   function(
-    model        = c("fcb", "ffb", "ffr", "ncb", 
-                     "nch", "nfb", "nfr"),
+    model        = c("fcb", "ffb", "ffr", "ncb", "nch", "nfb", "nfr"),
     res_type     = c("metrics", "performance", "predictions"),
     include_mod  = TRUE,
     include_type = TRUE
@@ -17,10 +16,6 @@ loadResults <-
     # check args
     model <- match.arg(model)
     res_type <- match.arg(res_type)
-    
-    if (length(res_type) > 1) stop("res_type must be character string of length 1")
-    if (length(model) > 1) stop("model must be character string of length 1")
-    
     
     # Specify directory containing desired results type 
     model_dir <- "~/fmv/data/model"
@@ -48,26 +43,22 @@ loadResults <-
     files_to_load <- 
       list.files(target_dir, full.names = TRUE)
     
-    res_list <-
+    result_list <-
       lapply(files_to_load, 
              arrow::read_parquet)
     
-    out <-
-      data.table::rbindlist(res_list,
+    result_data <-
+      data.table::rbindlist(result_list,
                             fill = TRUE)
     
-    if (include_mod) {
-      out$model <- model
-    }
+    if (include_mod) result_data$model <- model
     
-    if (include_type) {
-      out$type <- res_type
-    }
+    if (include_type) result_data$type <- res_type
     
     # return tibble dataframe
-    dplyr::tibble(out) %>%
+    result_data %>%
+      dplyr::tibble() %>%
       dplyr::relocate(c(model, type))
-    
   }
 
 
@@ -75,15 +66,16 @@ loadResults <-
 
 resultList <- function(model) {
   
+  result_types <- c("metrics", "performance", "predictions")
+  
   outlist <-
     purrr::map2(
       .x = model,
-      .y = c("metrics", "performance", 
-             "predictions"),
+      .y = result_types,
       loadResults
     )
   
-  names(outlist) <- c("metrics", "performance", "predictions") 
+  names(outlist) <- result_types 
   
   outlist
   

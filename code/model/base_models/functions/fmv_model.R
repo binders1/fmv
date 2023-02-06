@@ -35,14 +35,13 @@ fmv_model.county <-
     HPI = TRUE   # Include HPI in predictor set?
     ) {
     
-    if (!is.logical(HPI)) {
-      stop("Argument `HPI` must be logical")
-    }
+    if (!is.logical(HPI)) stop("Argument `HPI` must be logical, not ", class(HPI))
     
-    # Placeholder for random-forest model county-level function
-    # TODO: Loop through fmv_state_model() for all states
-    if (FALSE) fmv_state_model()
-   
+    # Model all counties, one state at a time
+    walk(
+      all_states,
+      fmv_state_model
+    )
 }
 
 # FRR modeling method =========================================================
