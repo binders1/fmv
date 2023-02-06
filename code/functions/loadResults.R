@@ -8,7 +8,7 @@
 loadResults <- 
   function(
     model        = c("fcb", "ffb", "ffr", "ncb", "nch", "nfb", "nfr"),
-    res_type     = c("metrics", "performance", "predictions"),
+    res_type     = c("importance", "metrics", "predictions"),
     include_mod  = TRUE,
     include_type = TRUE
     ) {
