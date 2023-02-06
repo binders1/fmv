@@ -30,7 +30,7 @@ process_mhv <- function() {
   # ======================================================
   medhomeval <-
     read_parquet(
-      file.path(mhv_dir, "medhomeval.pqt")
+      file.path(mhv.dir, "medhomeval.pqt")
     )
   
   medhomeval %<>%
@@ -55,7 +55,8 @@ process_mhv <- function() {
   # ======================================================
   all_clean <- 
     list.files(clean.dir,
-               full.names = TRUE)
+               full.names = TRUE,
+               pattern = "pqt$")
   
   all_study_counties <- 
     map_dfr(all_clean, read_parquet) %>%
@@ -89,12 +90,12 @@ process_mhv <- function() {
   # Load buffers
   buffer_neighbors <-
     read_parquet(
-      file.path(mhv_dir, "hpi_buffer.pqt")
+      file.path(mhv.dir, "hpi_buffer.pqt")
     )
   
-  ## Calculate ISD
+  ## Calculate Inverse Squared Distance from focal centroid
   buffer_neighbors %<>%
-    filter(fips != buffer_fips) %>%
+    filter(fips != neighbor_fips) %>%
     mutate(inv_dist_sq = 1/(dist_m^2))
   
   # ======================================================

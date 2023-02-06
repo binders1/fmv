@@ -1,4 +1,4 @@
-# fmv_state_model() =========================================================
+# model_state_counties() =========================================================
 #
 # Runs all county models within a given state 
 # 
@@ -6,7 +6,7 @@
 ## pred.set: which predictor set to use
 ## HPI: whether to include HPI in the Nolte predictor set
 
-fmv_state_model <- function(state, pred.set = c("full", "nolte"), HPI = TRUE) {
+model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRUE) {
   
   # Read in data =============================================================
   

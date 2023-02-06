@@ -40,7 +40,7 @@ fmv_model.county <-
     # Model all counties, one state at a time
     walk(
       all_states,
-      fmv_state_model
+      model_state_counties
     )
 }
 
