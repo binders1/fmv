@@ -1,5 +1,95 @@
 
-rf_fit <- function(county, ...) {
+# Generic function that dispatches to county and frr methods ==================
+rf_fit <- function(geo = c("county", "frr"), ...) {
+  geo <- match.arg(geo)
+  
+  fit_fn <- switch(geo,
+                   county = rf_fit.county,
+                   frr = rf_fit.frr)
+  fit_fn(...)
+}
+
+# FRR method ==================================================================
+rf_fit.frr <- function(frr, model_data) {
+  
+  # Split data ================================================================
+  set.seed(60615)
+  rf_split <- rsample::initial_split(model_data, strata = log_priceadj_ha)
+  train <- rsample::training(rf_split)
+  test <- rsample::testing(rf_split)
+
+  # Model Workflow ============================================================
+  # Formula
+  rf_recipe <- 
+    recipes::recipe(formula = log_priceadj_ha ~ ., data = train) %>%
+    update_role(sid, new_role = "id variable")
+  
+  # Engine, Mode, Method
+  rf_spec <-
+    parsnip::rand_forest(mtry = length(names(train))/3, 
+                         min_n = 3,
+                         trees = 500) %>%
+    set_mode("regression") %>%
+    set_engine("ranger",
+               splitrule = "extratrees",
+               importance = "permutation")
+  
+  # Workflow object
+  rf_workflow <- workflow(rf_recipe, rf_spec)
+  
+  # Fit model =================================================================
+  
+  # Fit model using training data
+  rf_train_fit <- fit(rf_workflow, train)
+  
+  # Predict ALL parcels (training + test)
+  predict_all <- 
+    predict(rf_train_fit, model_data) %>%
+    bind_cols(
+      model_data[c('sid', 'log_priceadj_ha')], .
+    )
+  
+  # Use tidymodels built-in model evalution to train -> test ==================
+  rf_last_fit <- last_fit(rf_workflow, rf_split)
+  
+  # Bind sale record IDs to predictions so they can be identified later
+  rf_last_fit$.predictions[[1]] <-
+    bind_sid_to_pred(
+      .pred = rf_last_fit$.predictions[[1]],
+      test_set = test)
+  
+  frr_stats <- 
+    tibble(
+      frr = frr,
+      n_obs = nrow(data),
+      n_train = nrow(train),
+      n_test = nrow(test)
+    )
+    
+  # Return the following:
+  list(
+    
+    # 1. Predictions for all sales records in FRR
+    "predict_all" = predict_all,
+    
+    # 2. Model evaluation object (including metrics and predictions)
+    "rf_last_fit" = rf_last_fit,
+    
+    # 3. n observations in model, observations in county and neighbor
+    "frr_stats" = frr_stats
+  )
+  
+  }
+
+
+
+
+
+
+
+
+# County method ===============================================================
+rf_fit.county <- function(county, ...) {
 
   county_data <-
     state_data %>%
@@ -109,6 +199,9 @@ rf_fit <- function(county, ...) {
   )
 }
 
+# ============================================================================ #
+# Helper functions                                                        ====
+# ============================================================================ #
 
 # Checks county has >= 1000 obs; if not, attempts padding with neighbors ======
 county_check_nrow <- function(county_data, ...) {

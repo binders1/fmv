@@ -40,7 +40,7 @@ fmv_model.county <-
     # Model all counties, one state at a time
     walk(
       all_states,
-      model_state_counties
+      ~ model_state_counties(.x, pred.set, HPI)
     )
 }
 
@@ -52,7 +52,12 @@ fmv_model.frr <-
     ) {
     
     if (!is.logical(only.nolte.counties)) {
-      stop("Argument `only.nolte.counties` must be logical")
+      stop("Argument `only.nolte.counties` must be logical, not", class(only.nolte.counties))
     }
+    
+    walk(
+      frr_key$frr_name,
+      ~ frr_model(.x, pred.set, only.nolte.counties)
+    )
 }
 

@@ -5,7 +5,7 @@ soil_vars <-
   pull(soil_type)
 
 ## State abbr-to-number ref table ####
-state_ref_tbl <- read_helper_data("state_ref_tbl.csv")
+state_ref_tbl <- read_helper_data("state_name_to_abbr.csv")
 
 ## Build FRR-county reference table ####
 frr_key <- read_helper_data("frr_key.csv")

@@ -85,3 +85,10 @@ predictor_set <-
 # predictor_set(state_data, geo = "frr", pred.set = "full")
 # predictor_set(state_data, geo = "frr", pred.set = "nolte")
 
+
+
+# Display path parquet was saved to ===========================================
+write_parquet_verbose <- function(x, sink) {
+  write_parquet(x, sink)
+  message("\nWrote to:\n", sink)
+}

@@ -35,7 +35,7 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRU
     
   state_rf_fit <-
     foreach::foreach(county = state_counties) %dopar% {
-      rf_fit(county, model_predictors)
+      rf_fit(geo = "county", county, model_predictors)
       }
   
     unregisterCores()
@@ -54,8 +54,7 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRU
     #   3. performance metrics
     #   4. variable importance
     state_results <-
-      state_rf_fit %>%
-      extract_state_results() %>%
+      extract_results(geo = "county", state_rf_fit) %>%
       sort_list()
      
     # Save state-level county model results ===================================
@@ -75,9 +74,3 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRU
 
 # Helper functions ============================================================
 sort_list <- function(list) list[c(sort(names(list)))]
-
-write_parquet_verbose <- function(x, sink) {
-  write_parquet(x, sink)
-  message("\nWrote to:\n", sink)
-}
-
