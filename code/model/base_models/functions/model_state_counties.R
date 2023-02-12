@@ -6,8 +6,8 @@
 ## pred.set: which predictor set to use
 ## HPI: logical, whether to include HPI in the Nolte predictor set
 
-model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI) {
-  
+model_state_counties <- function(state, pred.set, HPI) {
+
   tic(state)
   
   # Read in data =============================================================
@@ -15,8 +15,20 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI) {
   # Read in current state's data
   state_data <- read_state_clean(state)
   
-  # Vector of current state's counties
-  state_counties <- unique(state_data$fips)
+  # Split state data into list where each element is a county's dataset
+  counties_data_list <-
+    state_data %>%
+    split(.$fips)
+  
+  # Split state data into list where each element is a county's NEIGHBORS' data
+  neighbors_data_list <-
+    find_neighbors(state_data)
+
+  # Define model predictors
+  model_predictors <- 
+    predictor_set(
+      data = state_data, geo = "county", 
+      pred.set = pred.set, HPI = HPI)
   
   # If no data, exit function
   if (nrow(state_data) == 0) {
@@ -27,26 +39,19 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI) {
     unregisterCores()
     if (foreach::getDoParWorkers() < 64) doParallel::registerDoParallel(64)
   }
-  
-  model_predictors <- 
-    predictor_set(
-      data = state_data, geo = "county", 
-      pred.set = pred.set, HPI = HPI)
     
-  # Build models for all counties in state =================================
-  dopar_packages <- c("tidyverse", "arrow", "tidymodels", "magrittr")
+  # Build models for all counties in state ====================================
   
   state_rf_fit <-
     foreach::foreach(
-      county = state_counties, .packages = dopar_packages
-      ) %dopar% {
-        
-        # Fix env search issue where workers couldn't find state_data
-        .GlobalEnv$state_data <- state_data
+      county_data = counties_data_list,
+      neighbor_data = neighbors_data_list) %dopar% {
         
         # Fit model
-        rf_fit(geo = "county", county = county, 
-               state_data = state_data, model_predictors)
+        rf_fit(geo = "county", 
+               county_data = county_data, 
+               neighbor_data = neighbor_data, 
+               model_predictors)
         
         }
   
@@ -88,4 +93,24 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI) {
 }
 
 # Helper functions ============================================================
-sort_list <- function(list) list[c(sort(names(list)))]
+
+
+# Creates list of each county's neighbor datasets ================
+find_neighbors <- function(state_data) {
+  
+  focal_counties <- unique(state_data$fips)
+  
+  neighbor_list <-
+    focal_counties %>%
+    map(
+      ~ filter(state_data, fips %in% county_neighbors[[.x]])
+    ) %>%
+    set_names(focal_counties)
+  
+  neighbor_list
+  
+}
+
+# Sort list alphabetically by names
+sort_list <- function(list) list[sort(names(list))]
+

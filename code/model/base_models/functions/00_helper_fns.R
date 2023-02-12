@@ -19,7 +19,7 @@ read_state_clean <- function(state) {
   # Current state file path
   state_to_read <- all_clean[grepl(state, all_clean)]
   
-  message(state)
+  message("Loading: ", state)
   
   # Read in current state data safely
   tryCatch(

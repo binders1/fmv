@@ -86,11 +86,7 @@ rf_fit.frr <- function(frr, model_data) {
 
 
 # County method ===============================================================
-rf_fit.county <- function(county, state_data, ...) {
-
-  county_data <-
-    state_data %>%
-    filter(fips == county)
+rf_fit.county <- function(county_data, neighbor_data, ...) {
   
   # Remove HPI column in counties with no HPI data ============================
   no_HPI_data <- all(is.na(county_data$HPI))
@@ -98,7 +94,7 @@ rf_fit.county <- function(county, state_data, ...) {
   
   # Check that county has 1000 obs; if not, take neighbor donations ===========
   pre_prep_data <-
-    county_check_nrow(county_data, ...)
+    county_check_nrow(county_data, neighbor_data, ...)
   
   # If even neighbor donations couldn't get county to 1000, exit
   if (nrow(pre_prep_data) < 1000) return()
@@ -170,6 +166,7 @@ rf_fit.county <- function(county, state_data, ...) {
   
   
   # Record sample size from county and neighbors
+  county <- unique(county_data$fips)
   county_stats <-
     tibble(
       fips = county,
@@ -201,14 +198,10 @@ rf_fit.county <- function(county, state_data, ...) {
 # ============================================================================ #
 
 # Checks county has >= 1000 obs; if not, attempts padding with neighbors ======
-county_check_nrow <- function(county_data, ...) {
+county_check_nrow <- function(county_data, neighbor_data, ...) {
   
   county_nrow <- nrow(county_data)
   county <- unique(county_data$fips)
-  
-  county_data <-
-    county_data %>%
-    select(any_of(...))
   
   model_data <-
     # If county has sufficient observations...
@@ -219,7 +212,7 @@ county_check_nrow <- function(county_data, ...) {
       } else {
         # If county has less than 1000 observations, attempt to 
         # reach 1000 observations by taking from neighbors
-        neighbor_donate(county, county_data) %>%
+        neighbor_donate(county_data, neighbor_data) %>%
           select(any_of(...))
       }
   
@@ -229,46 +222,33 @@ county_check_nrow <- function(county_data, ...) {
 
 
 # Attempts to pad county data to 1000 observations with neighbors' data =======
-neighbor_donate <- function(county, county_data) {
+neighbor_donate <- function(county_data, neighbor_data) {
   
   rows_needed <- 1000 - nrow(county_data)
+  stopifnot(rows_needed >= 0)
   
-  # ...create dataset of observations in neighboring counties
-  neighbor_data <-
-    find_neighbors(county) %>%
+  # Dataset of observations in neighboring counties
+  neighbor_data <- 
+    neighbor_data %>%
     dplyr::select(dplyr::any_of(names(county_data)))
   
-  # If neighboring counties can provide all needed rows...
-  if (nrow(neighbor_data) >= rows_needed) {
-    
-    # 1) sample neighbor data down to only rows needed to reach 1000 obs
-    neighbor_rows_needed <-
-      neighbor_data %>%
-      slice_sample(n = rows_needed)
+  # If neighbors cannot provide all needed rows, return county as-is
+  if (nrow(neighbor_data) < rows_needed) return(county_data)
+  
+  # Otherwise, donate neighbor data ---
+  
+  # 1) sample neighbor data down to only rows needed to reach 1000 obs
+  neighbor_rows_needed <-
+    neighbor_data %>%
+    slice_sample(n = rows_needed)
     
     # 2) bind neighbor sample to focal county data
     bind_rows(
       county_data,
-      neighbor_data
+      neighbor_rows_needed
     )
-  } else {
-    # If neighbors cannot provide all needed rows, return as-is
-    county_data
+    
     }
-  }
-
-
-# Filters state dataset to only neighbors of specified county ================
-find_neighbors <- function(county) {
-  
-  neighbors <- 
-    county_adjacency %>% 
-    dplyr::filter(fipscounty == county) %>%
-    dplyr::pull(fipsneighbor)
-
-  state_data %>%
-    dplyr::filter(fips %in% neighbors)
-}
 
 
 # Bind sale record IDs to rf_fit test set predicted values ====================

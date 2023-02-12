@@ -11,8 +11,14 @@ nolte2020vars <-
   pull()
 
 # County adjacencies ==========================================================
+# -- source: https://www.nber.org/research/data/county-adjacency -- #
 county_adjacency <-
   read_helper_data("county_adjacency.csv")
+
+county_neighbors <-
+  county_adjacency %>%
+  split(.$fipscounty) %>%
+  map("fipsneighbor")
 
 # Nolte counties (counties modeled by Nolte's base county model) ==============
 nolte_counties <-

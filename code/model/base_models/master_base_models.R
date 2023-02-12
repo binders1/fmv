@@ -54,6 +54,8 @@ tic("nch")
 fmv_model(geo = "county", pred.set = "nolte", HPI = TRUE)
 toc()
 
+# TODO: Save vector of counties modeled by Nolte's base county model ("nolte.counties")
+
 
 # FRR models ==================================================================
 
