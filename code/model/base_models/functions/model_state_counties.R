@@ -4,9 +4,11 @@
 # 
 ## state: character vector, uppercase two-letter abbreviation
 ## pred.set: which predictor set to use
-## HPI: whether to include HPI in the Nolte predictor set
+## HPI: logical, whether to include HPI in the Nolte predictor set
 
-model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRUE) {
+model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI) {
+  
+  tic(state)
   
   # Read in data =============================================================
   
@@ -31,12 +33,22 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRU
       data = state_data, geo = "county", 
       pred.set = pred.set, HPI = HPI)
     
-    # Build models for all counties in state =================================
-    
+  # Build models for all counties in state =================================
+  dopar_packages <- c("tidyverse", "arrow", "tidymodels", "magrittr")
+  
   state_rf_fit <-
-    foreach::foreach(county = state_counties) %dopar% {
-      rf_fit(geo = "county", county, model_predictors)
-      }
+    foreach::foreach(
+      county = state_counties, .packages = dopar_packages
+      ) %dopar% {
+        
+        # Fix env search issue where workers couldn't find state_data
+        .GlobalEnv$state_data <- state_data
+        
+        # Fit model
+        rf_fit(geo = "county", county = county, 
+               state_data = state_data, model_predictors)
+        
+        }
   
     unregisterCores()
     
@@ -59,9 +71,10 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRU
      
     # Save state-level county model results ===================================
     result_paths <-
-      make_results_path.state(
+      make_results_path(
+        geo = "county",
         state = state,
-        model_abbr = make_model_abbr(pred.set, HPI)
+        model_abbr = make_model_abbr(geo = "county", pred.set, HPI)
         ) %>%
       sort_list()
     
@@ -70,6 +83,8 @@ model_state_counties <- function(state, pred.set = c("full", "nolte"), HPI = TRU
       .y = result_paths,
       .f = ~write_parquet_verbose(.x, .y)
     )
+    
+    toc()
 }
 
 # Helper functions ============================================================

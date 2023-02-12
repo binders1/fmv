@@ -45,9 +45,7 @@ rf_fit.frr <- function(frr, model_data) {
   # Predict ALL parcels (training + test)
   predict_all <- 
     predict(rf_train_fit, model_data) %>%
-    bind_cols(
-      model_data[c('sid', 'log_priceadj_ha')], .
-    )
+    bind_cols(model_data[c('sid', 'log_priceadj_ha')], .)
   
   # Use tidymodels built-in model evalution to train -> test ==================
   rf_last_fit <- last_fit(rf_workflow, rf_split)
@@ -58,6 +56,7 @@ rf_fit.frr <- function(frr, model_data) {
       .pred = rf_last_fit$.predictions[[1]],
       test_set = test)
   
+  # Collect FRR-level sample-size statistics
   frr_stats <- 
     tibble(
       frr = frr,
@@ -86,10 +85,8 @@ rf_fit.frr <- function(frr, model_data) {
 
 
 
-
-
 # County method ===============================================================
-rf_fit.county <- function(county, ...) {
+rf_fit.county <- function(county, state_data, ...) {
 
   county_data <-
     state_data %>%
@@ -97,7 +94,7 @@ rf_fit.county <- function(county, ...) {
   
   # Remove HPI column in counties with no HPI data ============================
   no_HPI_data <- all(is.na(county_data$HPI))
-  if (no_HPI_data) county_data %<>% select(!HPI)
+  if (no_HPI_data) county_data <- county_data %>% select(!HPI)
   
   # Check that county has 1000 obs; if not, take neighbor donations ===========
   pre_prep_data <-
@@ -159,7 +156,7 @@ rf_fit.county <- function(county, ...) {
   predict_all <- 
     predict(rf_train_fit, rf_data) %>%
     bind_cols(
-      rf_data %>% select(sid, log_priceadj_ha), .
+      rf_data[c('sid', 'log_priceadj_ha')], .
     )
   
   # Use tidymodels built-in model evalution to train -> test ==================
@@ -286,5 +283,3 @@ bind_sid_to_pred <- function(.pred, test_set) {
     left_join(test_with_rowid, by = ".row")
   
 }
-
-

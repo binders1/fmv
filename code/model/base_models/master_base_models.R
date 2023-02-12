@@ -1,16 +1,16 @@
 
-# =====================================================
-# Set up
-# =====================================================
+# Set up ======================================================================
 
-## Load Packages ####
+# Load Packages
 library(tidyverse)
 library(arrow)
 library(tidymodels)
+library(foreach)
+library(tictoc)
 
 tidymodels_prefer()
 
-## Set directory paths ####
+# Set directory paths
 
 root <- "~/fmv"
 
@@ -37,3 +37,34 @@ file.path(base.mdir, "functions") %>%
 
 # Source constants
 source(file.path(base.mdir, "00_base_model_prep.R"))
+
+
+
+# County models ===============================================================
+
+tic("fcb")
+fmv_model(geo = "county", pred.set = "full", HPI = TRUE)
+toc()
+
+tic("ncb")
+fmv_model(geo = "county", pred.set = "nolte", HPI = FALSE)
+toc()
+
+tic("nch")
+fmv_model(geo = "county", pred.set = "nolte", HPI = TRUE)
+toc()
+
+
+# FRR models ==================================================================
+
+# ffb
+fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
+
+# ffr
+fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
+
+# nfb
+fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = FALSE)
+
+# nfr
+fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = TRUE)

@@ -31,8 +31,8 @@ fmv_model <-
 # County modeling method ======================================================
 fmv_model.county <- 
   function(
-    pred.set,    # predictor set 
-    HPI = TRUE   # Include HPI in predictor set?
+    pred.set,  # predictor set 
+    HPI        # Include HPI in predictor set?
     ) {
     
     if (!is.logical(HPI)) stop("Argument `HPI` must be logical, not ", class(HPI))
@@ -47,8 +47,8 @@ fmv_model.county <-
 # FRR modeling method =========================================================
 fmv_model.frr <-
   function(
-    pred.set,                   # Predictor set
-    only.nolte.counties = FALSE # Restricts sample to only counties in Nolte's county model
+    pred.set,           # Predictor set
+    only.nolte.counties # Restricts sample to only counties in Nolte's county model
     ) {
     
     if (!is.logical(only.nolte.counties)) {
