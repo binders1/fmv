@@ -42,17 +42,17 @@ source(file.path(base.mdir, "00_base_model_prep.R"))
 
 # County models ===============================================================
 
-tic("fcb")
-fmv_model(geo = "county", pred.set = "full", HPI = TRUE)
-toc()
+#tic("fcb")
+#fmv_model(geo = "county", pred.set = "full", HPI = TRUE)
+#toc()
 
-tic("ncb")
-fmv_model(geo = "county", pred.set = "nolte", HPI = FALSE)
-toc()
+#tic("ncb")
+#fmv_model(geo = "county", pred.set = "nolte", HPI = FALSE)
+#toc()
 
-tic("nch")
-fmv_model(geo = "county", pred.set = "nolte", HPI = TRUE)
-toc()
+#tic("nch")
+#fmv_model(geo = "county", pred.set = "nolte", HPI = TRUE)
+#toc()
 
 # TODO: Save vector of counties modeled by Nolte's base county model ("nolte.counties")
 

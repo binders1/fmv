@@ -55,9 +55,24 @@ fmv_model.frr <-
       stop("Argument `only.nolte.counties` must be logical, not", class(only.nolte.counties))
     }
     
-    walk(
-      frr_key$frr_name,
-      ~ frr_model(.x, pred.set, only.nolte.counties)
-    )
+    # Prep parallel workers
+    unregisterCores()
+    if (foreach::getDoParWorkers() < 32) doParallel::registerDoParallel(32)
+    
+    n_iters <- length(frr_key$frr_name)
+    
+    state_rf_fit <-
+      foreach::foreach(
+        frr = frr_key$frr_name,
+        pred.set = rep(pred.set, n_iters),
+        only.nolte.counties = rep(only.nolte.counties, n_iters)) %dopar% {
+          
+          frr_model(frr = frr, 
+                    pred.set = pred.set,
+                    only.nolte.counties = only.nolte.counties)
+        }
+    
+    unregisterCores()
+
 }
 

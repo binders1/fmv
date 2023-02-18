@@ -37,7 +37,7 @@ model_state_counties <- function(state, pred.set, HPI) {
   } else {
     # Prep parallel workers
     unregisterCores()
-    if (foreach::getDoParWorkers() < 64) doParallel::registerDoParallel(64)
+    if (foreach::getDoParWorkers() < 32) doParallel::registerDoParallel(32)
   }
     
   # Build models for all counties in state ====================================
@@ -52,7 +52,6 @@ model_state_counties <- function(state, pred.set, HPI) {
                county_data = county_data, 
                neighbor_data = neighbor_data, 
                model_predictors)
-        
         }
   
     unregisterCores()
