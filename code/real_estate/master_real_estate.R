@@ -9,6 +9,7 @@ library(tidyverse)
 library(lubridate)
 library(arrow)
 library(sf)
+`%<>%` <- magrittr::`%<>%`
 
 # Set directory paths
 root <- "~/fmv"
@@ -28,7 +29,13 @@ helper_dir <- file.path(ddir, "helper_data")
 state_dir <- file.path(s.dir, "state_shp")
 county_dir <- file.path(s.dir, "county_shp")
 
+# Source functions
+file.path(cdir, "functions") %>%
+  list.files(full.names = TRUE) %>%
+  walk(source)
 
+file.path(cdir, "real_estate", "functions") %>%
+  source_dir()
 
 # ==========================================================
 # 01). Retrieve county-level HPI values from FRED
@@ -49,7 +56,7 @@ fred_hpi() %>%
 
 clean_realtor() %>%
   write_parquet(
-    file.path(mhv_dir, "medhomeval.pqt")
+    file.path(mhv.dir, "medhomeval.pqt")
     )
 
 # =========================================================
@@ -58,7 +65,7 @@ clean_realtor() %>%
 
 county_buffer(buffer_km = 150) %>%
   write_parquet(
-    file.path(mhv_dir, "hpi_buffer.pqt")
+    file.path(mhv.dir, "hpi_buffer.pqt")
   )
 
 # =========================================================

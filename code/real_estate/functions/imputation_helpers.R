@@ -1,3 +1,17 @@
+
+# Combine distance generation and imputation into single function
+impute_pipeline <- function(focal_fips) {
+  
+  impute_complete <-
+    neighborhood_distance(focal_fips) %>%
+    mhv_impute(focal_fips)
+  
+  message("Completed: ", focal_fips, "\n")
+  
+  impute_complete
+  
+}
+
 # Generates distances between focal county and all buffer neighbors
 neighborhood_distance <- function(focal_fips) {
   
@@ -5,15 +19,15 @@ neighborhood_distance <- function(focal_fips) {
   current_neighbors <- 
     buffer_neighbors %>%
     filter(fips == focal_fips,
-           buffer_fips != focal_fips) %>%
-    pull(buffer_fips)
+           neighbor_fips != focal_fips) %>%
+    pull(neighbor_fips)
   
   neighbor_distances <-
     buffer_neighbors %>%
     filter(fips == focal_fips,
-           buffer_fips != focal_fips) %>%
+           neighbor_fips != focal_fips) %>%
     select(
-      fips = "buffer_fips",
+      fips = "neighbor_fips",
       inv_dist_sq
     )
   
@@ -40,18 +54,5 @@ mhv_impute <- function(distance_data, focal_fips) {
     mutate(fips = focal_fips) %>%
     
     relocate(fips)
-  
-}
-
-# Combine distance generation and imputation into single function
-impute_pipeline <- function(focal_fips) {
-  
-  impute_complete <-
-    neighborhood_distance(focal_fips) %>%
-    mhv_impute(focal_fips)
-  
-  message("Completed: ", focal_fips, "\n")
-  
-  impute_complete
   
 }
