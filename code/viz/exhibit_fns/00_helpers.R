@@ -19,7 +19,7 @@ png_wrapper <- function(filename, ...) {
   filepath <- 
     file.path(e.dir, filename_png)
   
-  png(filepath, ...)
+  png(filepath, ..., units = "in", res = 600)
   
 }
 
