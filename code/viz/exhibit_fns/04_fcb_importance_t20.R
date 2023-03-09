@@ -40,7 +40,7 @@ fcb_importance_t20 <- function() {
     mutate(
       
       group = case_when(
-        group %in% nolte2020vars ~ 
+        group %in% c(nolte2020vars, "ha", "x45", "y45") ~ 
           paste0("<span style='color:Grey;'>",
                  group,
                  "</span>"),

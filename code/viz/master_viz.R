@@ -4,6 +4,7 @@
 # =====================================================
 
 # Load packages
+library(geofacet)
 library(tidyverse)
 library(arrow)
 library(RColorBrewer)
@@ -66,25 +67,27 @@ exhibit_tbl <-
   dplyr::tribble(
   ~filename                 , ~.fn                    , ~width, ~height,
   
-  "compare_county_nobs_perf", compare_county_nobs_perf, 7     , 4      ,
-  "FRR_map"                 , FRR_map                 , 7     , 4      ,
-  "clean_obs_density"       , clean_obs_density       , 7     , 4      ,
-  "fcb_importance_t20"      , fcb_importance_t20      , 7     , 4      ,
-  "ffb_importance_t20"      , ffb_importance_t20      , 7     , 4      ,
-  "nolte_resid_time"        , nolte_resid_time        , 7     , 4      ,
-  "county_compare_boxplot"  , county_compare_boxplot  , 7     , 4      ,
-  "compare_ffb_fcb_mse"     , compare_ffb_fcb_mse     , 8     , 3.5    ,
-  "frr_compare_mse_size"    , frr_compare_mse_size    , 7     , 4      ,
-  "ffb_pred_all"            , ffb_pred_all            , 8     , 4      ,
-  "ffb_pred_all_nobldg"     , ffb_pred_all_nobldg     , 8     , 4      ,
-  "ffb_pred_all_parcels"    , ffb_pred_all_parcels    , 8     , 4      ,
-  "fcb_importance_all"      , fcb_importance_all      , 7     , 4      ,
-  "ffb_importance_all"      , ffb_importance_all      , 7     , 4      ,
-  "frr_performance_size"    , frr_performance_size    , 8     , 4      ,
-  "cost_effective_30by30"   , cost_effective_30by30   , 8     , 4      ,
+  "compare_county_nobs_perf"   , compare_county_nobs_perf, 7     , 4  ,
+  "FRR_map"                    , FRR_map                 , 7     , 4  ,
+  "clean_obs_density"          , clean_obs_density       , 7     , 4  ,
+  "fcb_importance_t20"         , fcb_importance_t20      , 7     , 4  ,
+  "ffb_importance_t20"         , ffb_importance_t20      , 7     , 4  ,
+  "nolte_resid_time"           , nolte_resid_time        , 7     , 4  ,
+  "county_compare_boxplot"     , county_compare_boxplot  , 7     , 4  ,
+  "compare_ffb_fcb_mse"        , compare_ffb_fcb_mse     , 8     , 3.5,
+  "frr_compare_mse_size"       , frr_compare_mse_size    , 7     , 4  ,
+  "ffb_pred_all"               , ffb_pred_all            , 8     , 4  ,
+  "ffb_pred_all_nobldg"        , ffb_pred_all_nobldg     , 8     , 4  ,
+  "ffb_pred_all_parcels"       , ffb_pred_all_parcels    , 8     , 4  ,
+  "fcb_importance_all"         , fcb_importance_all      , 7     , 4  ,
+  "ffb_importance_all"         , ffb_importance_all      , 7     , 4  ,
+  "frr_performance_size"       , frr_performance_size    , 8     , 4  ,
+  "cost_effective_30by30"      , cost_effective_30by30   , 7     , 4  ,
+  "average_error_by_model"     , average_error_by_model  , 9     , 5  ,
+  "model_error_by_decile"      , model_error_by_decile   , 7     , 4
   ) 
 
-exhibit_tbl %<>% slice(16)
+exhibit_tbl %<>% slice(12)
   
 purrr::pwalk(
   .l = exhibit_tbl,

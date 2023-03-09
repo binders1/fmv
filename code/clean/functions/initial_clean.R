@@ -9,7 +9,7 @@ clean_inflation <- function(data) {
     relocate(month, .after = "date") %>%
     left_join(CPI, by = c("year", "month")) %>%
     relocate(CPI, .after = "price") %>%
-    mutate(price_adj = price * (CPI / 100)) %>%
+    mutate(price_adj = price * CPI) %>%
     relocate(price_adj, .after = "CPI")
   
 }

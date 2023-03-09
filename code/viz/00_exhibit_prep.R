@@ -2,11 +2,6 @@
 # =====================================================
 # 01). Load FRR region crosswalk
 # =====================================================
-
-ag_regions <-
-  read_sheet(ss = ss, 
-             skip = 2)
-
 frr_key <- 
   read_helper_data("frr_key.csv")
 
@@ -64,7 +59,7 @@ us_counties %<>%
 
 # Create FRR spatial object ####
 frr_sf <- 
-  ag_regions_ref %>%
+  county_frr_crosswalk %>%
   # update old South Dakota county FIPS
   mutate(
     fips = if_else(fips == "46113", "46102", fips)
