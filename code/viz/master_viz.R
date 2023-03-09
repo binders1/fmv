@@ -65,7 +65,7 @@ file.path(v.dir, "00_exhibit_prep.R") %>% source()
 
 exhibit_tbl <-
   dplyr::tribble(
-  ~filename                 , ~.fn                    , ~width, ~height,
+  ~filename                    , ~.fn                    , ~width, ~height,
   
   "compare_county_nobs_perf"   , compare_county_nobs_perf, 7     , 4  ,
   "FRR_map"                    , FRR_map                 , 7     , 4  ,
@@ -87,7 +87,7 @@ exhibit_tbl <-
   "model_error_by_decile"      , model_error_by_decile   , 7     , 4
   ) 
 
-exhibit_tbl %<>% slice(12)
+exhibit_tbl %<>% slice(18)
   
 purrr::pwalk(
   .l = exhibit_tbl,
