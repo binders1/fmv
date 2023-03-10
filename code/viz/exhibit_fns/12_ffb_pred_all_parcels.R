@@ -50,7 +50,7 @@ ffb_pred_all_parcels <- function() {
     
     # average predicted FMV within each cell
     summarise(
-      mean_log_priceadj_ha = mean(.pred, na.rm = TRUE)
+      mean_priceadj_ha = mean(exp(.pred), na.rm = TRUE)
     ) %>%
     
     # join cell spatial attributes
@@ -78,7 +78,7 @@ ffb_pred_all_parcels <- function() {
             size = 0.3) +
     
     geom_sf(data = tessel_pred, 
-            aes(fill = exp(mean_log_priceadj_ha)), 
+            aes(fill = mean_priceadj_ha), 
             colour = NA) +
     
     geom_sf(data = state_5070, 
@@ -89,8 +89,8 @@ ffb_pred_all_parcels <- function() {
       colours = brewer.pal(9, "RdYlGn") %>% rev(),
       na.value = NA,
       trans = "log10",
-      labels = c("1", "10", "100", "1k", "10k", "100k"),
-      breaks = 10^(0:5)
+    #labels = c("1", "10", "100", "1k", "10k", "100k"),
+    #breaks = 10^(0:5)
     ) +
     
     labs(

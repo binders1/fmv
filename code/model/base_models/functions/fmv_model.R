@@ -57,12 +57,11 @@ fmv_model.frr <-
     
     # Prep parallel workers
     unregisterCores()
-    if (foreach::getDoParWorkers() < 32) doParallel::registerDoParallel(32)
+    if (foreach::getDoParWorkers() < 20) doParallel::registerDoParallel(20)
     
     n_iters <- length(frr_key$frr_name)
     
-    state_rf_fit <-
-      foreach::foreach(
+    foreach::foreach(
         frr = frr_key$frr_name,
         pred.set = rep(pred.set, n_iters),
         only.nolte.counties = rep(only.nolte.counties, n_iters)) %dopar% {

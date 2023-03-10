@@ -7,6 +7,8 @@
 library(tidyverse)
 library(arrow)
 library(tidymodels)
+library(foreach)
+library(doParallel)
 
 tidymodels_prefer()
 
@@ -52,11 +54,18 @@ file.path(mod_pc_dir, "00_model_all_parcels_prep.R") %>%
 # then predict on *entire* PLACES parcel set
 #
 # =====================================================
+# Prep parallel workers
+unregisterCores()
+if (foreach::getDoParWorkers() < 20) doParallel::registerDoParallel(20)
 
-walk(
-  .x = seq(9),
-  predict_all_parcels
-  ) 
+n_iters <- length(frr_key$frr_name)
+
+foreach::foreach(
+    frr_id = seq(9)) %dopar% {
+      predict_all_parcels(frr_id = frr_id)
+    }
+
+unregisterCores()
 
 
 

@@ -60,7 +60,7 @@ source(file.path(base.mdir, "00_base_model_prep.R"))
 # FRR models ==================================================================
 
 # ffb
-fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
+#fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
 
 # ffr
 fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
