@@ -32,10 +32,24 @@ conserve_by_mech <-
   dplyr::filter(!str_detect(fips, "~~")) %>%
   split(.$protmech)
 
+# Fed and Tribal land areas
+fed_tribal_area <-
+  s.dir %>%
+  list.files(
+    full.names = TRUE,
+    pattern = "^FedTribal"
+  ) %>%
+  readxl::read_xls() %>%
+  select(fips = GEOID, 
+         ALAND, AWATER, 
+         fed_tribal_km2 = sum_Area_SQUAREKILOMETERS) %>%
+  
+
+
 # Merge with county shapefile
 conserve_counties_sf <-
   reduce(
-    .x = list(us_counties, ffb_counties, conserve_by_mech$f),
+    .x = list(fed_tribal_area, ffb_counties, conserve_by_mech$f),
     .f = full_join,
     by = "fips"
   )
@@ -46,11 +60,12 @@ normalize_conserve_measures <-
   conserve_counties_sf %>%
   mutate(
     county_area_km2 = (ALAND + AWATER)/1e+06,
+    fed_tribal_prop = fed_tribal_km2 / county_area_km2,
     state = str_sub(fips, 1, 2),
     across(
       .cols = c(acreage, spending, count),
-      .fns = ~ .x / county_area_km2,
-      .names = "{.col}_per_km2"
+      .fns = ~ .x / fed_tribal_km2,
+      .names = "{.col}_per_public_km2"
     )
   ) %>%
   na.omit()
@@ -61,14 +76,14 @@ normalize_conserve_measures <-
 # - FEs: state
 
 outcome_vars <- 
-  c("acreage_per_km2",
-    "spending_per_km2",
-    "count_per_km2") %>%
+  c("acreage",
+    "spending",
+    "count") %>%
   purrr::set_names(nm = c("(1)", "(2)", "(3)"))
 
 conservation_regression <- function(outcome_var) {
   
-  fml <- paste0(outcome_var, " ~ left_out_nolte")
+  fml <- paste0(outcome_var, " ~ left_out_nolte + fed_tribal_prop")
   
   fixest::feols(
     fml = as.formula(fml),
