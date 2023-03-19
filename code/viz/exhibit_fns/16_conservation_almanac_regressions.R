@@ -42,7 +42,7 @@ fed_tribal_area <-
   readxl::read_xls() %>%
   select(fips = GEOID, 
          ALAND, AWATER, 
-         fed_tribal_km2 = sum_Area_SQUAREKILOMETERS) %>%
+         fed_tribal_km2 = sum_Area_SQUAREKILOMETERS)
   
 
 
@@ -60,13 +60,16 @@ normalize_conserve_measures <-
   conserve_counties_sf %>%
   mutate(
     county_area_km2 = (ALAND + AWATER)/1e+06,
-    fed_tribal_prop = fed_tribal_km2 / county_area_km2,
+    private_area_km2 = county_area_km2 - fed_tribal_km2,
     state = str_sub(fips, 1, 2),
     across(
       .cols = c(acreage, spending, count),
-      .fns = ~ .x / fed_tribal_km2,
-      .names = "{.col}_per_public_km2"
+      .fns = ~ .x / private_area_km2,
+      .names = "{.col}_per_private_km2"
     )
+  ) %>%
+  filter(
+    private_area_km2 > 0
   ) %>%
   na.omit()
 
@@ -76,14 +79,14 @@ normalize_conserve_measures <-
 # - FEs: state
 
 outcome_vars <- 
-  c("acreage",
-    "spending",
-    "count") %>%
+  c("acreage_per_private_km2",
+    "spending_per_private_km2",
+    "count_per_private_km2") %>%
   purrr::set_names(nm = c("(1)", "(2)", "(3)"))
 
 conservation_regression <- function(outcome_var) {
   
-  fml <- paste0(outcome_var, " ~ left_out_nolte + fed_tribal_prop")
+  fml <- paste0(outcome_var, " ~ left_out_nolte")
   
   fixest::feols(
     fml = as.formula(fml),
