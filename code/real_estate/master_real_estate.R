@@ -54,7 +54,7 @@ fred_hpi() %>%
 # 02). Process and save Realtor.com median home value data
 # =========================================================
 
-clean_realtor(method = "only_2017") %>%
+clean_realtor(2017) %>%
   write_parquet(
     file.path(mhv.dir, "medhomeval.pqt")
     )
@@ -68,10 +68,10 @@ clean_realtor(method = "only_2017") %>%
 # many NAs, owing to the county limitations of the HPI-assisted calculation.
 # See issue #59 on Github for more discussion
 
-# medhomeval_allyearmean.pqt will be used in the data cleaning for pred_all_parcels
-clean_realtor(method = "all_year_mean") %>%
+# 2020 values will be used for pred_all_parcels
+clean_realtor(2020) %>%
   write_parquet(
-    file.path(helper_dir, "medhomeval_allyearmean.pqt")
+    file.path(helper_dir, "medhomeval_2020.pqt")
   )
 
 # =========================================================

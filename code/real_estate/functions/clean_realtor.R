@@ -1,9 +1,10 @@
 
 # source: https://www.realtor.com/research/data/
 
-clean_realtor <- function(method = c("all_year_mean", "only_2017")) {
+clean_realtor <- function(mhv_year) {
   
-  method <- match.arg(method)
+  stopifnot(is.numeric(mhv_year))
+  stopifnot(mhv_year %in% seq(2016, 2022))
   
   # Load data ####
   realtor_data <- 
@@ -48,22 +49,14 @@ clean_realtor <- function(method = c("all_year_mean", "only_2017")) {
   realtor_data %<>%
     mutate(quality_flag = replace_na(quality_flag, 0))
   
-  
-  if (method == "only_2017") {
-    # Summarise county-level median_listing_price from 2017,
-    # year with best quality_flag good:bad ratio
-    realtor_data %>%
-      filter(year == 2017) %>%
-      group_by(fips) %>%
-      summarise(
-        median_listing_price = mean(median_listing_price)
-      ) %>%
-      mutate(year = 2017)
-  } else {
-    realtor_data %>% 
-      group_by(fips) %>% 
-      summarise(median_listing_price = mean(median_listing_price)) %>%
-      ungroup()
-  }
-  
+  # Summarise county-level median_listing_price from a given year,
+  # 2017 in the original, as it is the year with best quality_flag good:bad ratio
+  # 2020 for pred_all_parcels
+  realtor_data %>%
+    filter(year == mhv_year) %>%
+    group_by(fips) %>%
+    summarise(
+      median_listing_price = mean(median_listing_price),
+      year = unique(year)
+      ) 
 }
