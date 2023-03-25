@@ -88,6 +88,8 @@ rf_fit.frr <- function(frr, model_data) {
 # County method ===============================================================
 rf_fit.county <- function(county_data, neighbor_data, ...) {
   
+  county <- unique(county_data$fips)
+  
   # Remove HPI column in counties with no HPI data ============================
   no_HPI_data <- all(is.na(county_data$HPI))
   if (no_HPI_data) county_data <- county_data %>% select(!HPI)
@@ -153,7 +155,8 @@ rf_fit.county <- function(county_data, neighbor_data, ...) {
     predict(rf_train_fit, rf_data) %>%
     bind_cols(
       rf_data[c('sid', 'log_priceadj_ha')], .
-    )
+    ) %>%
+    mutate(fips = county)
   
   # Use tidymodels built-in model evalution to train -> test ==================
   rf_last_fit <- last_fit(rf_workflow, rf_split)
@@ -166,7 +169,6 @@ rf_fit.county <- function(county_data, neighbor_data, ...) {
   
   
   # Record sample size from county and neighbors
-  county <- unique(county_data$fips)
   county_stats <-
     tibble(
       fips = county,

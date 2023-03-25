@@ -64,6 +64,7 @@ frr_compare_mse_size <- function() {
   
   # Plot performance by model ####
   frr_size_cat_mse %>%
+    #filter(mse >= 0) %>%
     ggplot(aes(mse, type, fill = type)) +
     
     geom_vline(xintercept = 0) +
@@ -74,8 +75,8 @@ frr_compare_mse_size <- function() {
                  outlier.colour = NA,
                  colour = "black") +
     
-    scale_x_continuous(limits = c(0,2.5),
-                       expand = c(0,NA)) +
+    scale_x_continuous(limits = c(0, 2.5),
+                       expand = c(0.01, 0)) +
     
     scale_fill_manual(
       values = brewer.pal(4, "Paired")

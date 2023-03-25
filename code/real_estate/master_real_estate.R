@@ -54,10 +54,25 @@ fred_hpi() %>%
 # 02). Process and save Realtor.com median home value data
 # =========================================================
 
-clean_realtor() %>%
+clean_realtor(method = "only_2017") %>%
   write_parquet(
     file.path(mhv.dir, "medhomeval.pqt")
     )
+
+# Also make version of realtor MHV data for the pred_all_parcels, which is the 
+# mean of the median listing price by county. Since pred_all_parcels does not 
+# have years attached to observations, we do not need to perform the HPI-assisted
+# year-by-year calculation of MHV, allowing us to preserve many more counties.
+# This, in turn, fixes the issue Christoph noted in our pred_all_parcels map,
+# which contained ~3mil fewer observations than Nolte's version, since we had so
+# many NAs, owing to the county limitations of the HPI-assisted calculation.
+# See issue #59 on Github for more discussion
+
+# medhomeval_allyearmean.pqt will be used in the data cleaning for pred_all_parcels
+clean_realtor(method = "all_year_mean") %>%
+  write_parquet(
+    file.path(helper_dir, "medhomeval_allyearmean.pqt")
+  )
 
 # =========================================================
 # 03). Compute imputation buffer zones around missing-HPI counties

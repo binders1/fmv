@@ -1,7 +1,9 @@
 
 # source: https://www.realtor.com/research/data/
 
-clean_realtor <- function() {
+clean_realtor <- function(method = c("all_year_mean", "only_2017")) {
+  
+  method <- match.arg(method)
   
   # Load data ####
   realtor_data <- 
@@ -47,14 +49,21 @@ clean_realtor <- function() {
     mutate(quality_flag = replace_na(quality_flag, 0))
   
   
-  # Summarise county-level median_listing_price from 2017,
-  # year with best quality_flag good:bad ratio
-  realtor_data %>%
-    filter(year == 2017) %>%
-    group_by(fips) %>%
-    summarise(
-      median_listing_price = mean(median_listing_price)
-    ) %>%
-    mutate(year = 2017)
+  if (method == "only_2017") {
+    # Summarise county-level median_listing_price from 2017,
+    # year with best quality_flag good:bad ratio
+    realtor_data %>%
+      filter(year == 2017) %>%
+      group_by(fips) %>%
+      summarise(
+        median_listing_price = mean(median_listing_price)
+      ) %>%
+      mutate(year = 2017)
+  } else {
+    realtor_data %>% 
+      group_by(fips) %>% 
+      summarise(median_listing_price = mean(median_listing_price)) %>%
+      ungroup()
+  }
   
 }

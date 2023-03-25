@@ -80,7 +80,7 @@ process_state.pc <- function(state_index) {
       by = "pid"
     ) %>%
     
-    # Add average county median home values by fips
+    # Add average county median home values by fips (no time dimension for pred_all_parcels)
     left_join(
       mhv_mean,
       by = "fips"

@@ -49,10 +49,5 @@ HPI_county_pc <-
   summarise(HPI = mean(HPI, na.rm = TRUE))
 
 # Load imputed median home values by fips-year
-mhv <- read_helper_data("mhv_impute_complete.pqt")
-
 mhv_mean <-
-  mhv %>%
-  group_by(fips) %>%
-  summarise(MedianHomeValue = mean(MedianHomeValue, na.rm = TRUE)) %>%
-  ungroup()
+  read_helper_data("medhomeval_allyearmean.pqt")

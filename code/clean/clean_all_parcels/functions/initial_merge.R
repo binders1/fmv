@@ -13,12 +13,12 @@ initial_merge <- function(imported_data) {
 
 initial_merge.pc <- function(imported_data) {
   
-  # Ensure fips is present in each dataset
+  # Add FIPs variable to each dataset
   data_with_fips <-
     map(
       imported_data,
-    fips_extract
-  )
+      fips_extract
+      )
   
   # Merge parcel with PCIS data
   data_with_fips[['pc_obj']] %>%
