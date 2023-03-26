@@ -38,9 +38,8 @@ walk(
   )
 
 ## Load predict_everything-related functions ####
-file.path(mod_pc_dir, "functions") %>%
-  list.files(full.names = TRUE) %>%
-  walk(source)
+file.path(mod_pc_dir, "functions") %>% 
+  source_dir()
 
 ## Source data prep ####
 
@@ -54,6 +53,7 @@ file.path(mod_pc_dir, "00_model_all_parcels_prep.R") %>%
 # then predict on *entire* PLACES parcel set
 #
 # =====================================================
+
 # Prep parallel workers
 unregisterCores()
 if (foreach::getDoParWorkers() < 20) doParallel::registerDoParallel(20)
