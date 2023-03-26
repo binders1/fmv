@@ -31,11 +31,12 @@ frr_feature_selection <- function(frr_data, model_predictors) {
           mutate(cst_2500 = 0, cst_50 = 0)
       }
 
-  # Join median home values by fips-year ======================================
   frr_coast_imputed %>%
     mutate(year = lubridate::year(date)) %>%
-    left_join(medhomeval, by = c("fips", "year")) %>%
-    # Remove non-predictor helper columns
+    # Remove non-predictor helper columns ====================
     select(-c(fips, year, state))
+    # UNECESSARY ---> Join median home values by fips-year 
+    # UNECESSARY ---> left_join(medhomeval, by = c("fips", "year")) %>%
+    
   
   }

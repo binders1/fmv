@@ -129,7 +129,7 @@ for(k in seq_len(nrow(ag_regions_key))) {
   clean_paths <- file.path(clean_dir, clean_to_load)
   
   df_import <- 
-    map_dfr(clean_to_load, ~ read_parquet(.x)) %>%
+    map_dfr(clean_paths, ~ read_parquet(.x)) %>%
     # filter to only current frr counties
     filter(fips %in% counties_to_include) %>%
     mutate(across(.cols = any_of(soil_vars),

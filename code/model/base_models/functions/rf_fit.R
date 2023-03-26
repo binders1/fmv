@@ -13,7 +13,7 @@ rf_fit <- function(geo = c("county", "frr"), ...) {
 rf_fit.frr <- function(frr, model_data) {
   
   # Split data ================================================================
-  set.seed(60615)
+  set.seed(319)
   rf_split <- rsample::initial_split(model_data, strata = log_priceadj_ha)
   train <- rsample::training(rf_split)
   test <- rsample::testing(rf_split)
@@ -51,10 +51,13 @@ rf_fit.frr <- function(frr, model_data) {
   rf_last_fit <- last_fit(rf_workflow, rf_split)
   
   # Bind sale record IDs to predictions so they can be identified later
-  rf_last_fit$.predictions[[1]] <-
-    bind_sid_to_pred(
-      .pred = rf_last_fit$.predictions[[1]],
-      test_set = test)
+  #' @deprecated Using .row was producing NAs in sid variable
+  if (FALSE) {
+    rf_last_fit$.predictions[[1]] <-
+      bind_sid_to_pred(
+        .pred = rf_last_fit$.predictions[[1]],
+        test_set = test)
+  }
   
   # Collect FRR-level sample-size statistics
   frr_stats <- 
@@ -253,6 +256,7 @@ neighbor_donate <- function(county_data, neighbor_data) {
     }
 
 
+#' @deprecated
 # Bind sale record IDs to rf_fit test set predicted values ====================
 bind_sid_to_pred <- function(.pred, test_set) {
   

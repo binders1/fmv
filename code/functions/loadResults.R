@@ -8,17 +8,23 @@
 loadResults <- 
   function(
     model        = c("fcb", "ffb", "ffr", "ncb", "nch", "nfb", "nfr"),
-    res_type     = c("importance", "metrics", "predictions", "predict_all"),
+    res_type     = c("importance", "metrics", "predictions", "predict_all", "performance"),
     include_mod  = TRUE,
-    include_type = TRUE
+    include_type = TRUE,
+    archive = FALSE
     ) {
     
     # check args
     model <- match.arg(model)
     res_type <- match.arg(res_type)
     
-    # Specify directory containing desired results type 
-    model_dir <- "~/fmv/data/model"
+    # Specify directory containing desired results type
+    model_dir <-
+      if (archive) {
+        "~/fmv/data/model/archive"
+      } else {
+        "~/fmv/data/model"
+      }
     
     full_dir <- file.path(model_dir, "full")
     nolte_dir <- file.path(model_dir, "nolte")

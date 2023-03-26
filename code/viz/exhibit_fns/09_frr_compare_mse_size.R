@@ -3,7 +3,8 @@ frr_compare_mse_size <- function() {
   
   # Get vector of <1000 obs counties ####
   ncb_size_cat <-
-    loadResults(model = "ncb", res_type = "performance") %>%
+    loadResults(model = "ncb", res_type = "performance",
+                archive = TRUE) %>%
     dplyr::mutate(
       size_cat = if_else((n_obs - n_neighbor) <= 1000,
                          "u1k",
@@ -20,7 +21,7 @@ frr_compare_mse_size <- function() {
   
   frr_predictions <-
     map(mods_to_load, 
-        ~ loadResults(model = .x, res_type = "predictions"))
+        ~ loadResults(model = .x, res_type = "predictions", archive = TRUE))
   
   
   common_parcel_vec <- common_parcels(frr_predictions)
