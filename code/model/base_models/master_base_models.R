@@ -63,10 +63,10 @@ source(file.path(base.mdir, "00_base_model_prep.R"))
 fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
 
 # ffr
-#fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
+fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
 
 # nfb
-#fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = FALSE)
+fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = FALSE)
 
 # nfr
-#fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = TRUE)
+fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = TRUE)

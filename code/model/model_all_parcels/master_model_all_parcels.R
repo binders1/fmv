@@ -60,10 +60,9 @@ if (foreach::getDoParWorkers() < 20) doParallel::registerDoParallel(20)
 
 n_iters <- length(frr_key$frr_name)
 
-foreach::foreach(
-    frr_id = seq(9)) %dopar% {
-      predict_all_parcels(frr_id = frr_id)
-    }
+foreach::foreach(frr_id = seq(9)) %dopar% {
+  predict_all_parcels(frr_id = frr_id)
+  }
 
 unregisterCores()
 
