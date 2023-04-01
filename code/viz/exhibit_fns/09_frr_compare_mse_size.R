@@ -97,39 +97,42 @@ frr_compare_mse_size <- function() {
 }
 
 
-
-
-# MSE at FRR, Full vs. Restricted 
-frr_size_cat_pred %>%
-  mutate(sq_error = (log_priceadj_ha - .pred)^2,
-         model = if_else(model == "ffb", "Full", "Restricted")) %>%
-  group_by(model) %>%
-  summarise(mse = mean(sq_error))
+if (basename(rstudioapi::getActiveDocumentContext()$path) == "09_frr_compare_mse_size.R") {
   
-
-# MSE at county, Full vs. Restricted
-fcb_ffb_mods <- c("fcb" = "fcb", 
-                  "ffb" = "ffb")
-
-fcb_ffb_predictions <-
-  map(fcb_ffb_mods, 
-      ~ loadResults(model = .x, res_type = "predictions"))
-
-
-fcb_ffb_common_parcel <- common_parcels(fcb_ffb_predictions)
-
-data.table::rbindlist(fcb_ffb_predictions, fill = T) %>%
+  # MSE at FRR, Full vs. Restricted 
+  frr_size_cat_pred %>%
+    mutate(sq_error = (log_priceadj_ha - .pred)^2,
+           model = if_else(model == "ffb", "Full", "Restricted")) %>%
+    group_by(model) %>%
+    summarise(mse = mean(sq_error))
   
-  select(model, sid, .pred, log_priceadj_ha) %>%
   
-  mutate(fips = str_sub(sid, 1, 5)) %>%
+  # MSE at county, Full vs. Restricted
+  fcb_ffb_mods <- c("fcb" = "fcb", 
+                    "ffb" = "ffb")
   
-  filter(sid %in% fcb_ffb_common_parcel) %>%
+  fcb_ffb_predictions <-
+    map(fcb_ffb_mods, 
+        ~ loadResults(model = .x, res_type = "predictions"))
   
-  left_join(ncb_size_cat,
-            by = "fips") %>%
-  mutate(sq_error = (log_priceadj_ha - .pred)^2,
-         model = if_else(model == "ffb", "FRR", "County")) %>%
-  group_by(model, size_cat) %>%
-  summarise(mse = mean(sq_error)) %>%
-  na.omit()
+  
+  fcb_ffb_common_parcel <- common_parcels(fcb_ffb_predictions)
+  
+  data.table::rbindlist(fcb_ffb_predictions, fill = T) %>%
+    
+    select(model, sid, .pred, log_priceadj_ha) %>%
+    
+    mutate(fips = str_sub(sid, 1, 5)) %>%
+    
+    filter(sid %in% fcb_ffb_common_parcel) %>%
+    
+    left_join(ncb_size_cat,
+              by = "fips") %>%
+    mutate(sq_error = (log_priceadj_ha - .pred)^2,
+           model = if_else(model == "ffb", "FRR", "County")) %>%
+    group_by(model, size_cat) %>%
+    summarise(mse = mean(sq_error)) %>%
+    na.omit()
+  
+}
+
