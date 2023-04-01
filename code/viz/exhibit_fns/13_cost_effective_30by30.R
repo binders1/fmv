@@ -79,7 +79,7 @@ cost_effective_30by30 <- function() {
 
 land_purchase_cost <- 
   function(
-    model = c("ground_truth", "ncb", "ffr", "ffb"),
+    model = c("ground_truth", "ncb", "ffb"),
     sid_ha_data) {
     
     model <- match.arg(model)  

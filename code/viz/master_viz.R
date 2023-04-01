@@ -8,6 +8,7 @@ library(geofacet)
 library(tidyverse)
 library(arrow)
 library(RColorBrewer)
+library(scales)
 library(data.table)
 library(ggplot2)
 library(magrittr)
@@ -87,7 +88,7 @@ exhibit_tbl <-
   "model_error_by_decile"      , model_error_by_decile   , 7     , 4
   ) 
 
-exhibit_tbl %<>% slice(18)
+exhibit_tbl %<>% slice(12)
   
 purrr::pwalk(
   .l = exhibit_tbl,

@@ -159,17 +159,27 @@ rf_fit.county <- function(county_data, neighbor_data, ...) {
     bind_cols(
       rf_data[c('sid', 'log_priceadj_ha')], .
     ) %>%
+    # Indicate the modeled county so neighboring parcels can be flagged
     mutate(fips = county)
   
   # Use tidymodels built-in model evalution to train -> test ==================
   rf_last_fit <- last_fit(rf_workflow, rf_split)
   
   # Bind sale record IDs to predictions so they can be identified later
-  rf_last_fit$.predictions[[1]] <-
-    bind_sid_to_pred(
-      .pred = rf_last_fit$.predictions[[1]],
-      test_set = test)
+  #' @deprecated Using .row was producing NAs in sid variable
+  if (FALSE) {
+    rf_last_fit$.predictions[[1]] <-
+      bind_sid_to_pred(
+        .pred = rf_last_fit$.predictions[[1]],
+        test_set = test)
+  }
   
+  #' @note New approach, same as in extract_results.frr()
+  rf_last_fit$.predictions[[1]] <-
+    augment(rf_last_fit) %>%
+    select(sid, .pred, log_priceadj_ha) %>%
+    # Indicate the modeled county so neighboring parcels can be flagged
+    mutate(fips = county)
   
   # Record sample size from county and neighbors
   county_stats <-

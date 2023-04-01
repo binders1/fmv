@@ -17,9 +17,8 @@ extract_results.frr <- function(rf_results_list, frr) {
   
   # Extract test predictions
   frr_predictions <-
-    #' @note now use augment to avoid weird row issue 
+    #' @note now use augment to avoid .row var failing to match 
     augment(rf_results_list$rf_last_fit) %>%
-    #collect_predictions(rf_results_list$rf_last_fit) %>%
     select(sid, .pred, log_priceadj_ha)
 
   # Extract variable importance
