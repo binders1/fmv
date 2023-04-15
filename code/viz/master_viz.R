@@ -88,7 +88,7 @@ exhibit_tbl <-
   "model_error_by_decile"      , model_error_by_decile   , 7     , 4
   ) 
 
-exhibit_tbl %<>% slice(12)
+exhibit_tbl %<>% slice(3)
   
 purrr::pwalk(
   .l = exhibit_tbl,

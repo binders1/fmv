@@ -1,16 +1,16 @@
 
-# =====================================================
-# 01). Load FRR region crosswalk
-# =====================================================
+# ===================================================== #
+# 01). Load FRR region crosswalk ======================
+# ===================================================== #
 frr_key <- 
   read_helper_data("frr_key.csv")
 
 county_frr_crosswalk <- 
   read_helper_data("county_frr_crosswalk.csv")
 
-# =====================================================
-# 02). Load state, county, and FRR spatial data
-# =====================================================
+# ===================================================== #
+# 02). Load state, county, and FRR spatial data =======
+# ===================================================== #
 
 # Load spatial files ####
 
@@ -53,8 +53,6 @@ us_counties %<>%
     fips = "GEOID",
     ALAND, AWATER
   )
-
-
 
 
 # Create FRR spatial object ####
@@ -106,7 +104,6 @@ frr_union <- function(data, frr) {
   
 }
 
-
 # If frr_shp doesn't yet exist...
 if (!exists("frr_shp")) {
   
@@ -143,9 +140,9 @@ if ("conus_tessel.geojson" %in% list.files(helper_dir)) {
   
 }
 
-# =====================================================
-# 03). Read in Nolte (2020) Variables
-# =====================================================
+# ===================================================== #
+# 03). Read in Nolte (2020) Variables =================
+# ===================================================== #
 nolte2020vars <- 
   read_helper_data("nolte2020vars.csv", show_col_types = FALSE) %>%
   dplyr::filter(!is.na(matched_to_gold2022)) %>%
@@ -154,9 +151,9 @@ nolte2020vars <-
 
 
 
-# =====================================================
-# 04). Set custom colors and theme
-# =====================================================
+# ===================================================== #
+# 04). Set custom colors and theme ====================
+# ===================================================== #
 
 # Set FRR Colors ####
 frr_colors <- c(`Southern Seaboard` = "#A8D3F2", 
@@ -182,3 +179,39 @@ fmv_theme <-
     axis.ticks = element_blank()
   )
 
+# ================================================================= #
+# 05). Non-duplicated parcels in Nolte's base county model (ncb) ====
+# ================================================================= #
+
+ncb_dedup <-
+  # Evaluate in temporary environment to reduce active memory burden
+  local(
+    {
+      ncb_pred_all <-
+        # Read in ncb complete predictions dataset
+        loadResults(model = "ncb", res_type = "predict_all")
+      
+      # Convert to data.table for faster processing
+      setDT(ncb_pred_all)
+      
+      # Determine how many times each parcel appears
+      ncb_pred_all[, sid_appearances := .N, by = sid]
+      # Extract parcel's home county from sid hash
+      ncb_pred_all[, sid_fips := str_sub(sid, 1, 5)]
+      
+      ncb_pred_all <-
+        # We allow a parcel obs to be kept if either:
+        # a) that parcel only appears once (whether in its own county or not), or
+        # b) that parcel obs is in its own county.
+        # In effect, this retains all non-duplicated parcels, and
+        # for duplicated parcels, it retains the obs from their home county (if possible)
+        ncb_pred_all[sid_appearances == 1 | sid_fips == fips]
+      
+      ncb_pred_all[, sidfips := paste0(sid, fips)]
+      
+      # Deduplicated parcels from nolte county base model
+      ## These will be used to filter the True Info and FRR candidate sets in the 30by30
+      ## purchasing exercise, to create comparisons between those approaches and ncb
+        return(ncb_pred_all[, c("sid", "sidfips")])
+        }
+    )

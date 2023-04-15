@@ -55,7 +55,7 @@ frr_compare_mse_size <- function() {
              str_detect(type, "^F.+u") ~ "Full, n < 1,000",
              str_detect(type, "^F.+g") ~ "Full, n > 1,000",
              TRUE ~ as.character(type)
-           )) %>% map(~sum(is.na(.x)))
+           )) %>% 
     na.omit()
   
   frr_size_cat_mse %>%
