@@ -11,6 +11,13 @@ nolte_resid_time <- function() {
                       res_type = "predictions")
     )
   
+  all_clean <-
+    list.files(clean_dir,
+               full.names = TRUE,
+               pattern = "pqt$") %>%
+    map_dfr(read_parquet) %>%
+    select(sid, date)
+  
   # Clean ####
   
   set.seed(1345)
@@ -19,6 +26,10 @@ nolte_resid_time <- function() {
     data.table::rbindlist(nolte_pred,
                           fill = TRUE) %>%
     slice_sample(n = 3e+05) %>%
+    left_join(
+      all_clean,
+      by = "sid"
+    ) %>%
     mutate(error = .pred - log_priceadj_ha,
            year = lubridate::year(date)) %>%
     group_by(model, year) %>%

@@ -64,7 +64,7 @@ loadResults <-
     # return tibble dataframe
     result_data %>%
       dplyr::tibble() %>%
-      dplyr::relocate(c(model, type))
+      dplyr::relocate(any_of(c("model", "type")))
   }
 
 

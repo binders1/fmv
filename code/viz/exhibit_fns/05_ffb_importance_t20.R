@@ -5,17 +5,7 @@ ffb_importance_t20 <- function() {
   
   ffb_imp_clean <-
     
-    loadResults("ffb", "importance") %>%
-    
-    # merge with frr names 
-    left_join(
-      ag_regions_key,
-      by = "id"
-    ) %>%
-    
-    rename(frr = "frr_name") %>%
-    
-    select(!c(type, id)) %>%
+    loadResults("ffb", "importance", include_type = FALSE) %>%
     
     pivot_longer(
       cols = !c(frr, model),
