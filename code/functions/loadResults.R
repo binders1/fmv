@@ -66,25 +66,3 @@ loadResults <-
       dplyr::tibble() %>%
       dplyr::relocate(any_of(c("model", "type")))
   }
-
-
-
-
-resultList <- function(model) {
-  
-  result_types <- c("metrics", "performance", "predictions")
-  
-  outlist <-
-    purrr::map2(
-      .x = model,
-      .y = result_types,
-      loadResults
-    )
-  
-  names(outlist) <- result_types 
-  
-  outlist
-  
-}
-
-
