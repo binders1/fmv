@@ -104,14 +104,16 @@ process_mhv <- function() {
   
   # Map imputation over all HPI-missing counties
   collect_imputed <-
+    fips_missing_hpi %>%
     map_dfr(
-      .x = fips_missing_hpi,
-      impute_pipeline
+      ~ impute_pipeline(focal_fips = .x, 
+                        buffer_neighbors = buffer_neighbors,
+                        all_study_with_missing = all_study_with_missing)
     )
   
   # Merge with all study counties and fill in missing values
   # and return dataframe
-    all_study_with_missing %>%
+  all_study_with_missing %>%
     left_join(collect_imputed,
               by = c("fips", "year")) %>%
     transmute(

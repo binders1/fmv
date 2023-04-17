@@ -1,9 +1,11 @@
 
 # Combine distance generation and imputation into single function
-impute_pipeline <- function(focal_fips) {
+impute_pipeline <- function(focal_fips, 
+                            buffer_neighbors, 
+                            all_study_with_missing) {
   
   impute_complete <-
-    neighborhood_distance(focal_fips) %>%
+    neighborhood_distance(focal_fips, buffer_neighbors, all_study_with_missing) %>%
     mhv_impute(focal_fips)
   
   message("Completed: ", focal_fips, "\n")
@@ -13,7 +15,9 @@ impute_pipeline <- function(focal_fips) {
 }
 
 # Generates distances between focal county and all buffer neighbors
-neighborhood_distance <- function(focal_fips) {
+neighborhood_distance <- function(focal_fips, 
+                                  buffer_neighbors, 
+                                  all_study_with_missing) {
   
   ### Grab counties within 150km buffer neighborhood ####
   current_neighbors <- 
