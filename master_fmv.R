@@ -63,5 +63,6 @@ mod_pc_dir %>%
 # 06). Generate paper exhibits
 # ==============================================================================
 v.dir %>%
-  file.path("master_viz.R")
+  file.path("master_viz.R") %>%
+  source()
 
