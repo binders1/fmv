@@ -8,26 +8,48 @@ cost_effective_30by30 <- function() {
     )
   
   purchase_costs_by_model <-
-    c("ground_truth", "ncb", "ffr", "ffb") %>%
-    map_dfr(land_purchase_cost,
-            sid_ha_data = sid_ha_data) 
+    expand_grid(
+      model = c("ground_truth", "ncb", "ffb"),
+      ncb_subset = c(TRUE, FALSE)
+    ) %>%
+    pmap_dfr(
+      ~ land_purchase_cost(
+        model = .x,
+        ncb_subset = .y,
+        sid_ha_data = sid_ha_data
+      )
+    ) 
   
-  purchase_costs_by_model %>%
+  purchase_costs_by_model_formatted <-
+    purchase_costs_by_model %>%
     mutate(
-      source = case_when(
-        source == "ground_truth" ~ "True Information",
-        source == "ncb" ~ "Restricted County Model",
-        source == "ffr" ~ "Full FRR Model*",
-        source == "ffb" ~ "Full FRR Model"),
-      source = fct_relevel(
-        source,
-        c("True Information", "Full FRR Model", 
-          "Full FRR Model*","Restricted County Model")
-        )
-      ) %>%
-    
+      total_cost = total_cost/1e+09,
+      total_cost = round(total_cost, 1),
+      source = paste(source, ncb_subset, sep = "_"),
+      source = fct_reorder(source, total_cost)
+      )
+  
+  model_plot_labels <-
+    c(
+      "ground_truth_TRUE" = "True Information*",
+      "ground_truth_FALSE" = "True Information",
+      "ffb_TRUE" = "Full FRR Model*",
+      "ffb_FALSE" = "Full FRR Model",
+      "ncb_TRUE" = "Restricted County Model"
+    )
+  
+  model_plot_colors <-
+    c(
+      "ground_truth_TRUE" = "lightgrey",
+      "ground_truth_FALSE" = "grey40",
+      "ffb_TRUE" = brewer.pal(4, "Paired")[1],
+      "ffb_FALSE" = brewer.pal(4, "Paired")[2],
+      "ncb_TRUE" = brewer.pal(4, "Paired")[4]
+    )
+  
     # Plot =========================
     
+  purchase_costs_by_model_formatted %>%
     ggplot(aes(source, total_cost, fill = source)) +
     
     
@@ -37,32 +59,29 @@ cost_effective_30by30 <- function() {
     geom_text(
       aes(
         label =
-          label_dollar(scale = 1e-06, suffix = " mil")(total_cost)
+          label_number(prefix = "$", suffix = "B")(total_cost)
         ),
       fontface = "bold",
       vjust = -0.5
       ) +
     
     scale_y_continuous(
-      labels = label_number(scale = 1e-06),
-      limits = c(0, 150e+06)
+      labels = label_number(),
+      limits = c(0, 15)
+    ) +
+    
+    scale_x_discrete(
+      labels = model_plot_labels
     ) +
     
     scale_fill_manual(
-      values = 
-        c(
-          `True Information` = "grey30",
-          `Full FRR Model` = brewer.pal(4, "Paired")[1],
-          `Full FRR Model*` = brewer.pal(4, "Paired")[2],
-          `Restricted County Model` = brewer.pal(4, "Paired")[3]
-          )
-      ) +
-    
+      values = model_plot_colors
+    ) +
     labs(
       x = NULL,
-      y = "Total Cost (millions USD)",
-      caption = "*Specified using only counties\nmodeled by Restricted County Model",
-      ) +
+      y = "Total Cost (billions USD)",
+      caption = "\n*Candidate set included only parcels available to the Restricted County Model"
+      ) + 
     
     fmv_theme +
     theme(
@@ -74,40 +93,53 @@ cost_effective_30by30 <- function() {
 
 
 
-
-
-
+# Helper functions =============================================================
 land_purchase_cost <- 
   function(
-    model = c("ground_truth", "ncb", "ffr", "ffb"),
-    sid_ha_data) {
+    model = c("ground_truth", "ncb", "ffb"),
+    sid_ha_data,
+    ncb_subset = FALSE # Filters parcels down to ncb_dedup[['sid']] (created in 00_exhibit_prep.R)
+    ) {
     
     model <- match.arg(model)  
+
+    # We don't allow ncb to have its full original candidate set
+    # we always must filter to ncb_dedup_sid
+    if (model == "ncb" & !ncb_subset) return()
     
     price_variable <-
-      if (model == "ground_truth") {
-        "log_priceadj_ha"
-      } else {
-        ".pred"
-      }
+      switch(model,
+             ground_truth = "log_priceadj_ha",
+             ".pred")
     
   # Set 30% (of all CONUS data hectares) target for conservation purchasing
   target_ha <- 
     sum(sid_ha_data$ha) * 0.30
   
   purchase_data <-
-    if (model != "ground_truth") {
-      
+    if (model == "ground_truth") {
+      sid_ha_data
+    } else {
       # Join with original data to get hectare measures
       loadResults(model = model, res_type = "predict_all") %>%
         select(-log_priceadj_ha) %>%
         left_join(sid_ha_data, by = "sid")
-      } else {
-        sid_ha_data
-        }
-    
+    }
+
+  # Subset data to ncb_dedup
+  if (ncb_subset) {
+    if (model == "ncb") {
+      purchase_data <-
+        purchase_data %>%
+        filter(paste0(sid, fips) %in% ncb_dedup[['sidfips']])
+    } else {
+      purchase_data <-
+        purchase_data %>%
+        filter(sid %in% ncb_dedup[['sid']])
+    }
+  }
+  
   purchase_data %>%
-    
     # Arrange sales by ascending price
     arrange(.data[[price_variable]]) %>%
     
@@ -127,12 +159,18 @@ land_purchase_cost <-
     ) %>%
     summarise(total_cost = sum(actual_cost)) %>%
     
-    # Add variable identifying the source of the total purchase price 
-    mutate(source = model)
+    mutate(
+      # Identify source of the total purchase price 
+      source = model,
+      # Whether purchasing occured with out "neighbor_parcels"
+      ncb_subset = ncb_subset
+      )
 }
 
 
-
+# Detect first appearance of value in vector
+# Returns index (int) 
 first_appearance <- function(vec, value) {
+  stopifnot(typeof(vec) == typeof(value))
   min(which(vec == value))
 }

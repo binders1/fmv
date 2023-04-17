@@ -1,6 +1,4 @@
-
-
-# Read in cleaned FMV data by state ========================================= 
+# Read in cleaned FMV data from a single state 
 
 read_state_clean <- function(state) {
   
@@ -12,6 +10,7 @@ read_state_clean <- function(state) {
       clean_dir, 
       full.names = TRUE,
       pattern = "\\.pqt$")
+  
   if (all(!grepl(state, all_clean))) {
     stop("`", state, "` not found in cleaned state data")
   }

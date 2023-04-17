@@ -80,9 +80,10 @@ process_state.pc <- function(state_index) {
       by = "pid"
     ) %>%
     
-    # Add average county median home values by fips
+    # Add average county median home values by fips (no time dimension for pred_all_parcels)
+    # County mean = 2016-2022 MHV mean from Realtor.com (See issue #59 and commit 86e1b98) 
     left_join(
-      mhv_mean,
+      mhv_2020,
       by = "fips"
     )
   toc()

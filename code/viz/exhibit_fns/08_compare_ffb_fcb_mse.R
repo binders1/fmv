@@ -17,7 +17,18 @@ compare_ffb_fcb_mse <- function() {
     select(fips, model, .pred, log_priceadj_ha)
   
   full_predictions$ffb %<>%
+    mutate(fips = str_sub(sid, 1, 5)) %>%
     select(fips, model, .pred, log_priceadj_ha)
+  
+  full_predictions$ffb %>%
+    filter(! fips %in% full_predictions$fcb$fips) %>%
+    mutate(sq_error = (log_priceadj_ha - .pred)^2) %>%
+    group_by(fips) %>%
+    summarise(mse = mean(sq_error)) %>%
+    summarise(
+      mean_mse = mean(mse),
+      median_mse = median(mse)
+    )
   
   
   full_predictions %<>%
@@ -109,10 +120,3 @@ compare_ffb_fcb_mse <- function() {
           legend.position = "bottom")
   
 }
-
-
-
-
-
-
-

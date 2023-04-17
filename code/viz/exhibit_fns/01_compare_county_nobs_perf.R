@@ -2,9 +2,8 @@ compare_county_nobs_perf <- function() {
   
   # Load results ####
   perform_density <-
-    map("ncb", 
-        ~ loadResults(model = .x, res_type = "performance")) %>%
-    data.table::rbindlist(., fill = T) %>%
+    loadResults(model = "ncb", res_type = "metrics") %>%
+    #data.table::rbindlist(., fill = T) %>%
     select(fips, model, rsq, mse, n_obs) %>%
     pivot_longer(
       cols = c(rsq, mse),

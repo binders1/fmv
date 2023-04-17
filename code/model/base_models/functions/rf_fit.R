@@ -13,7 +13,7 @@ rf_fit <- function(geo = c("county", "frr"), ...) {
 rf_fit.frr <- function(frr, model_data) {
   
   # Split data ================================================================
-  set.seed(60615)
+  set.seed(319)
   rf_split <- rsample::initial_split(model_data, strata = log_priceadj_ha)
   train <- rsample::training(rf_split)
   test <- rsample::testing(rf_split)
@@ -51,10 +51,13 @@ rf_fit.frr <- function(frr, model_data) {
   rf_last_fit <- last_fit(rf_workflow, rf_split)
   
   # Bind sale record IDs to predictions so they can be identified later
-  rf_last_fit$.predictions[[1]] <-
-    bind_sid_to_pred(
-      .pred = rf_last_fit$.predictions[[1]],
-      test_set = test)
+  #' @deprecated Using .row was producing NAs in sid variable
+  if (FALSE) {
+    rf_last_fit$.predictions[[1]] <-
+      bind_sid_to_pred(
+        .pred = rf_last_fit$.predictions[[1]],
+        test_set = test)
+  }
   
   # Collect FRR-level sample-size statistics
   frr_stats <- 
@@ -87,6 +90,8 @@ rf_fit.frr <- function(frr, model_data) {
 
 # County method ===============================================================
 rf_fit.county <- function(county_data, neighbor_data, ...) {
+  
+  county <- unique(county_data$fips)
   
   # Remove HPI column in counties with no HPI data ============================
   no_HPI_data <- all(is.na(county_data$HPI))
@@ -153,20 +158,30 @@ rf_fit.county <- function(county_data, neighbor_data, ...) {
     predict(rf_train_fit, rf_data) %>%
     bind_cols(
       rf_data[c('sid', 'log_priceadj_ha')], .
-    )
+    ) %>%
+    # Indicate the modeled county so neighboring parcels can be flagged
+    mutate(fips = county)
   
   # Use tidymodels built-in model evalution to train -> test ==================
   rf_last_fit <- last_fit(rf_workflow, rf_split)
   
   # Bind sale record IDs to predictions so they can be identified later
-  rf_last_fit$.predictions[[1]] <-
-    bind_sid_to_pred(
-      .pred = rf_last_fit$.predictions[[1]],
-      test_set = test)
+  #' @deprecated Using .row was producing NAs in sid variable
+  if (FALSE) {
+    rf_last_fit$.predictions[[1]] <-
+      bind_sid_to_pred(
+        .pred = rf_last_fit$.predictions[[1]],
+        test_set = test)
+  }
   
+  #' @note New approach, same as in extract_results.frr()
+  rf_last_fit$.predictions[[1]] <-
+    augment(rf_last_fit) %>%
+    select(sid, .pred, log_priceadj_ha) %>%
+    # Indicate the modeled county so neighboring parcels can be flagged
+    mutate(fips = county)
   
   # Record sample size from county and neighbors
-  county <- unique(county_data$fips)
   county_stats <-
     tibble(
       fips = county,
@@ -251,6 +266,7 @@ neighbor_donate <- function(county_data, neighbor_data) {
     }
 
 
+#' @deprecated
 # Bind sale record IDs to rf_fit test set predicted values ====================
 bind_sid_to_pred <- function(.pred, test_set) {
   

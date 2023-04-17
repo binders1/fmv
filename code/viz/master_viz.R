@@ -8,6 +8,7 @@ library(geofacet)
 library(tidyverse)
 library(arrow)
 library(RColorBrewer)
+library(scales)
 library(data.table)
 library(ggplot2)
 library(magrittr)
@@ -76,18 +77,18 @@ exhibit_tbl <-
   "county_compare_boxplot"     , county_compare_boxplot  , 7     , 4  ,
   "compare_ffb_fcb_mse"        , compare_ffb_fcb_mse     , 8     , 3.5,
   "frr_compare_mse_size"       , frr_compare_mse_size    , 7     , 4  ,
-  "ffb_pred_all"               , ffb_pred_all            , 8     , 4  ,
-  "ffb_pred_all_nobldg"        , ffb_pred_all_nobldg     , 8     , 4  ,
+  #"ffb_pred_all"               , ffb_pred_all            , 8     , 4  ,
+  #"ffb_pred_all_nobldg"        , ffb_pred_all_nobldg     , 8     , 4  ,
   "ffb_pred_all_parcels"       , ffb_pred_all_parcels    , 8     , 4  ,
   "fcb_importance_all"         , fcb_importance_all      , 7     , 4  ,
   "ffb_importance_all"         , ffb_importance_all      , 7     , 4  ,
   "frr_performance_size"       , frr_performance_size    , 8     , 4  ,
   "cost_effective_30by30"      , cost_effective_30by30   , 7     , 4  ,
-  "average_error_by_model"     , average_error_by_model  , 9     , 5  ,
-  "model_error_by_decile"      , model_error_by_decile   , 7     , 4
+  #"average_error_by_model"     , average_error_by_model  , 9     , 5  ,
+  #"model_error_by_decile"      , model_error_by_decile   , 7     , 4
   ) 
 
-exhibit_tbl %<>% slice(18)
+#exhibit_tbl %<>% slice(6)
   
 purrr::pwalk(
   .l = exhibit_tbl,

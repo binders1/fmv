@@ -45,17 +45,15 @@ walk(
 # 02). Load auxiliary datasets and helper vectors/lists 
 #=======================================================
 
-file.path(pc_cleaning.dir, "00_clean_all_parcels_prep.R") %>% source()
+file.path(pc_cleaning.dir, "00_clean_all_parcels_prep.R") %>% 
+  source()
 
 #=======================================================
 # 03). Process each state's data 
 #=======================================================
 
 # Source cleaning functions 
-walk(
-  .x = list.files(cleaning_fdir, full.names = TRUE),
-  .f = source
-)
+source_dir(cleaning_fdir)
 
 # Map processing function over all state files
 state_seq <- seq_along(pcis_pqt)

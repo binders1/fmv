@@ -16,6 +16,5 @@ county_frr_crosswalk <- read_helper_data("county_frr_crosswalk.csv")
 no_cst_states <- read_helper_data("no_coast_states.csv") %>%
   pull(state_fips)
 
-
 ## Load (imputed) median home value #### 
 medhomeval <- read_helper_data("mhv_impute_complete.pqt")

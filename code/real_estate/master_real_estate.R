@@ -41,8 +41,7 @@ file.path(cdir, "real_estate", "functions") %>%
 # 01). Retrieve county-level HPI values from FRED
 # ==========================================================
 
-# Set API key ####
-Sys.setenv(FRED_API_KEY = "db828b951775e7f2dc8cc3c88541a117")
+# Set API key as variable `FRED_API_KEY` in .Renviron file
 
 # Get and save county HPI, 2000-2020
 fred_hpi() %>%
@@ -54,10 +53,25 @@ fred_hpi() %>%
 # 02). Process and save Realtor.com median home value data
 # =========================================================
 
-clean_realtor() %>%
+clean_realtor(2017) %>%
   write_parquet(
     file.path(mhv.dir, "medhomeval.pqt")
     )
+
+# Also make version of realtor MHV data for the pred_all_parcels, which is the 
+# mean of the median listing price by county. Since pred_all_parcels does not 
+# have years attached to observations, we do not need to perform the HPI-assisted
+# year-by-year calculation of MHV, allowing us to preserve many more counties.
+# This, in turn, fixes the issue Christoph noted in our pred_all_parcels map,
+# which contained ~3mil fewer observations than Nolte's version, since we had so
+# many NAs, owing to the county limitations of the HPI-assisted calculation.
+# See issue #59 on Github for more discussion
+
+# 2020 values will be used for pred_all_parcels
+clean_realtor(2020) %>%
+  write_parquet(
+    file.path(helper_dir, "medhomeval_2020.pqt")
+  )
 
 # =========================================================
 # 03). Compute imputation buffer zones around missing-HPI counties

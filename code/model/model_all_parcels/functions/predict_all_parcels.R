@@ -7,7 +7,8 @@ predict_all_parcels <- function(frr_id) {
   
   # Load in data of all parcels
   data_to_predict <- 
-    frr_import(frr_id, buildings = TRUE, dir = "all_parcels")
+    frr_import(frr_id, buildings = TRUE, dir = "all_parcels") %>%
+    rename(MedianHomeValue = "median_listing_price")
   
   # Subset modeling data to only variables that 
   # appear in both datasets, + price and sid (id var for model)

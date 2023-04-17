@@ -86,34 +86,44 @@ ffb_pred_all_parcels <- function() {
             size = 0.3) +
     
     scale_fill_gradientn(
-      colours = brewer.pal(9, "RdYlGn") %>% rev(),
+      colours = rev(brewer.pal(9, "RdYlGn")),
       na.value = NA,
       trans = "log10",
-    #labels = c("1", "10", "100", "1k", "10k", "100k"),
-    #breaks = 10^(0:5)
+      breaks = log_breaks(7),
+      labels = label_number(scale_cut = cut_short_scale())
     ) +
     
     labs(
       fill = "$/ha"
     ) + 
-    
     guides(
       fill = guide_colorbar(
-        barwidth = 17,
-        barheight = 0.6,
+        barwidth = 0.4,
+        barheight = 8,
         frame.colour = "black",
         ticks.colour = "black",
         title.hjust = 0.5,
         title.position = "top"
       )
     ) +
+    #guides(
+    #  fill = guide_colorbar(
+    #    barwidth = 17,
+    #    barheight = 0.6,
+    #    frame.colour = "black",
+    #    ticks.colour = "black",
+    #    title.hjust = 0.5,
+    #    title.position = "top"
+    #  )
+    #) +
     
     coord_sf(crs = st_crs(2163)) +
     
     theme(
       legend.title = element_text(size = 18),
       legend.text = element_text(size = 18),
-      legend.position = "bottom",
+      legend.position = c(1, 0.4),
+      legend.background = element_blank(),
       panel.background = element_blank(),
       axis.ticks = element_blank(),
       axis.text = element_blank()

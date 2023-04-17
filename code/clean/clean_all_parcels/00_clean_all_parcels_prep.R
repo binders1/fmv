@@ -48,11 +48,6 @@ HPI_county_pc <-
   group_by(fips) %>%
   summarise(HPI = mean(HPI, na.rm = TRUE))
 
-# Load imputed median home values by fips-year
-mhv <- read_helper_data("mhv_impute_complete.pqt")
-
-mhv_mean <-
-  mhv %>%
-  group_by(fips) %>%
-  summarise(MedianHomeValue = mean(MedianHomeValue, na.rm = TRUE)) %>%
-  ungroup()
+# Load imputed median home values at the FIPs level (all-sample mean)
+mhv_2020 <-
+  read_helper_data("medhomeval_2020.pqt")
