@@ -1,3 +1,4 @@
+# Source all scripts within a directory
 
 source_dir <- function(dir) {
   

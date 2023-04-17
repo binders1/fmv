@@ -1,3 +1,6 @@
+# Read in file from data/helper_dir
+# Supports csv and parquet files
+
 read_helper_data <- function(filename, ...) {
   
   ext <- str_extract(filename, "(?<=\\.).+$")
