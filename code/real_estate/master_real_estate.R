@@ -41,8 +41,7 @@ file.path(cdir, "real_estate", "functions") %>%
 # 01). Retrieve county-level HPI values from FRED
 # ==========================================================
 
-# Set API key ####
-Sys.setenv(FRED_API_KEY = "db828b951775e7f2dc8cc3c88541a117")
+# Set API key as variable `FRED_API_KEY` in .Renviron file
 
 # Get and save county HPI, 2000-2020
 fred_hpi() %>%
