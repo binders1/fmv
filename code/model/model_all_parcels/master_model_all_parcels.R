@@ -58,9 +58,9 @@ file.path(mod_pc_dir, "00_model_all_parcels_prep.R") %>%
 unregisterCores()
 if (foreach::getDoParWorkers() < 20) doParallel::registerDoParallel(20)
 
-n_iters <- length(frr_key$frr_name)
+n_iters <- seq_along(frr_key$frr_name)
 
-foreach::foreach(frr_id = seq(9)) %dopar% {
+foreach::foreach(frr_id = n_iters) %dopar% {
   predict_all_parcels(frr_id = frr_id)
   }
 

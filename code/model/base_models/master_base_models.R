@@ -42,31 +42,33 @@ source(file.path(base.mdir, "00_base_model_prep.R"))
 
 # County models ===============================================================
 
-#tic("fcb")
+tic("fcb")
 fmv_model(geo = "county", pred.set = "full", HPI = TRUE)
-#toc()
+toc()
 
-#tic("ncb")
+tic("ncb")
 fmv_model(geo = "county", pred.set = "nolte", HPI = FALSE)
-#toc()
+toc()
 
-#tic("nch")
+tic("nch")
 fmv_model(geo = "county", pred.set = "nolte", HPI = TRUE)
-#toc()
-
-# TODO: Save vector of counties modeled by Nolte's base county model ("nolte.counties")
+toc()
 
 
 # FRR models ==================================================================
 
-# ffb
-#fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
+tic("ffb")
+fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
+toc()
 
-# ffr
-#fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
+tic("ffr")
+toc()
+fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
 
-# nfb
-#fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = FALSE)
+tic("nfb")
+fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = FALSE)
+toc()
 
-# nfr
-#fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = TRUE)
+tic("nfr")
+fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = TRUE)
+toc()
