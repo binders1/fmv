@@ -1,27 +1,5 @@
-
-compare_ffb_fcb_mse <- function() {
-  
-  # Load FRR predictions (ffb) ####
-  
-  mods_to_load <- c("ffb" = "ffb", "fcb" = "fcb")
-  
-  full_predictions <-
-    map(
-      mods_to_load,
-      loadResults,
-      res_type = "predictions"
-    )
-  
-  full_predictions$fcb %<>%
-    mutate(fips = str_sub(sid, 1, 5)) %>%
-    select(fips, model, .pred, log_priceadj_ha)
-  
-  full_predictions$ffb %<>%
-    mutate(fips = str_sub(sid, 1, 5)) %>%
-    select(fips, model, .pred, log_priceadj_ha)
-  
-  full_predictions$ffb %>%
-    filter(! fips %in% full_predictions$fcb$fips) %>%
+calc_mse <- function(data) {
+  data %>%
     mutate(sq_error = (log_priceadj_ha - .pred)^2) %>%
     group_by(fips) %>%
     summarise(mse = mean(sq_error)) %>%
@@ -29,7 +7,76 @@ compare_ffb_fcb_mse <- function() {
       mean_mse = mean(mse),
       median_mse = median(mse)
     )
+}
+
+percent_change <- function(x1, x2) {
+  (x2 - x1) / x2
+}
+
+compare_ffb_fcb_mse <- function() {
   
+  # Load FRR predictions (ffb) ####
+  
+  mods_to_load <- 
+    c("ffb", "fcb", "ncb") %>%
+    purrr::set_names()
+  
+  full_predictions <-
+    map(
+      mods_to_load,
+      loadResults,
+      res_type = "predictions"
+    ) %>%
+    map(
+      ~ .x %>%
+      mutate(fips = str_sub(sid, 1, 5)) %>%
+        select(fips, model, sid, .pred, log_priceadj_ha)
+    )
+  
+  # MSE in added counties
+  full_predictions$ffb %>%
+    filter(! fips %in% full_predictions$fcb$fips) %>%
+    calc_mse()
+
+  
+  # Compare fcb to ffb MSE across common parcels
+  ffb_ncb_common_parcels <-
+    common_parcels(full_predictions[c("ffb", "ncb")])
+  
+  mse_across_common_parcels <-
+    full_predictions[c("ffb", "ncb")] %>%
+    map(
+      ~ .x %>%
+        filter(sid %in% ffb_ncb_common_parcels)
+    ) %>%
+    map(calc_mse) %>%
+    map("mean_mse")
+  
+  # 15 percent change referenced in abstract and end of results section
+    percent_change(x1 = mse_across_common_parcels$ncb, 
+                   x2 = mse_across_common_parcels$ffb)
+    
+  # Accuracy improvement in $/ha
+    full_predictions[c("ffb", "ncb")] %>%
+      map(
+        ~ .x %>%
+          filter(sid %in% ffb_ncb_common_parcels) %>%
+          mutate(
+            across(
+              # Exponentiate to turn logged dollar values into dollar values
+              c(.pred, log_priceadj_ha),
+              exp
+              )
+            )
+        ) %>%
+      map(calc_mse) %>%
+      map("mean_mse") %>%
+      do.call(`-`, .) %>%
+      sqrt() %>%
+      label_dollar(scale = 1e-06, suffix = " million")(.)
+      
+      
+      
   
   full_predictions %<>%
     data.table::rbindlist(., fill = T) %>%
