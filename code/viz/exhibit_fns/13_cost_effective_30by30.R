@@ -47,10 +47,26 @@ cost_effective_30by30 <- function() {
       "ncb_TRUE" = brewer.pal(4, "Paired")[4]
     )
   
+  
+  # 30by30 total cost simulation
+  simmons_2021_km2 <- 1723452
+  simmons_2021_ha <- simmons_2021_km2 * 100
+  purchase_costs_by_model_formatted %>%
+    mutate(
+      simmons_2021_ha = simmons_2021_ha,
+      total_30by30_cost = average_cost * simmons_2021_ha,
+      total_30by30_cost = label_comma(scale = 1e-09,
+                                      prefix = "$",
+                                      suffix = " B",
+                                      accuracy = 1)(total_30by30_cost)
+    )
+  
     # Plot =========================
     
   purchase_costs_by_model_formatted %>%
-    ggplot(aes(source, total_cost, fill = source)) +
+    ggplot(aes(source, 
+               average_cost,# total_cost, 
+               fill = source)) +
     
     
     geom_bar(stat = "identity", width = 0.6) + 
@@ -59,15 +75,15 @@ cost_effective_30by30 <- function() {
     geom_text(
       aes(
         label =
-          label_number(prefix = "$", suffix = "B")(total_cost)
+          label_dollar(prefix = "$", accuracy = 1)(average_cost)
         ),
       fontface = "bold",
       vjust = -0.5
       ) +
     
     scale_y_continuous(
-      labels = label_number(),
-      limits = c(0, 15)
+      labels = label_dollar(),
+      limits = c(0, 1750)
     ) +
     
     scale_x_discrete(
@@ -79,7 +95,7 @@ cost_effective_30by30 <- function() {
     ) +
     labs(
       x = NULL,
-      y = "Total Cost (billions USD)",
+      y = "Average Cost per Hectare",
       caption = "\n*Candidate set included only parcels available to the Restricted County Model"
       ) + 
     
@@ -90,6 +106,11 @@ cost_effective_30by30 <- function() {
       )
   
 }
+
+
+  
+  
+
 
 
 
@@ -139,6 +160,9 @@ land_purchase_cost <-
     }
   }
   
+  # Check how much total ha is available to the model
+  sum(purchase_data$ha) %>% label_comma()(.)
+  
   purchase_data %>%
     # Arrange sales by ascending price
     arrange(.data[[price_variable]]) %>%
@@ -163,7 +187,9 @@ land_purchase_cost <-
       # Identify source of the total purchase price 
       source = model,
       # Whether purchasing occured with out "neighbor_parcels"
-      ncb_subset = ncb_subset
+      ncb_subset = ncb_subset,
+      # Divide by total land area to get avg cost per ha
+      average_cost = total_cost / target_ha
       )
 }
 
