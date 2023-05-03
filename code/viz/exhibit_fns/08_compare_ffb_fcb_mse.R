@@ -56,49 +56,29 @@ compare_ffb_fcb_mse <- function() {
     percent_change(x1 = mse_across_common_parcels$ncb, 
                    x2 = mse_across_common_parcels$ffb)
     
-  # Accuracy improvement in $/ha
-    full_predictions[c("ffb", "ncb")] %>%
-      map(
-        ~ .x %>%
-          filter(sid %in% ffb_ncb_common_parcels) %>%
-          mutate(
-            across(
-              # Exponentiate to turn logged dollar values into dollar values
-              c(.pred, log_priceadj_ha),
-              exp
-              )
-            )
-        ) %>%
-      map(calc_mse) %>%
-      map("mean_mse") %>%
-      do.call(`-`, .) %>%
-      sqrt() %>%
-      label_dollar(scale = 1e-06, suffix = " million")(.)
-      
-      
-      
-  
-  full_predictions %<>%
-    data.table::rbindlist(., fill = T) %>%
-    mutate(sq_error = (.pred - log_priceadj_ha)^2) %>%
-    group_by(fips, model) %>%
-    mutate(mse = mean(sq_error)) %>%
-    ungroup() %>%
-    select(model, fips, mse) %>%
-    mutate(model = if_else(model=="ffb", "Full FRR", "Full County")) %>%
-    distinct()
-  
-  frr_missing_obs <-
-    full_predictions %>%
-    pivot_wider(
-      names_from = model,
-      values_from = mse
-    ) %>%
-    filter(is.na(`Full FRR`)) %>%
-    select(fips) %>%
-    left_join(us_counties,
-              by = "fips") %>%
-    st_as_sf()
+    
+    full_predictions <-
+      full_predictions[c("ffb", "fcb")] %>%
+      data.table::rbindlist(fill = TRUE) %>%
+      mutate(sq_error = (.pred - log_priceadj_ha)^2) %>%
+      group_by(fips, model) %>%
+      mutate(mse = mean(sq_error)) %>%
+      ungroup() %>%
+      select(model, fips, mse) %>%
+      mutate(model = if_else(model=="ffb", "Full FRR", "Full County")) %>%
+      distinct()
+    
+    frr_missing_obs <-
+      full_predictions %>%
+      pivot_wider(
+        names_from = model,
+        values_from = mse
+      ) %>%
+      filter(is.na(`Full FRR`)) %>%
+      select(fips) %>%
+      left_join(us_counties,
+                by = "fips") %>%
+      st_as_sf()
   
   frr_mse_spatial <-
     us_counties %>%
@@ -147,13 +127,13 @@ compare_ffb_fcb_mse <- function() {
     coord_sf(crs = st_crs(2163)) +
     
     labs(    
-      fill = "Mean Sq. Error"
+      fill = "MSE"
     ) +
     
     guides(
       fill = guide_colorbar(
-        barheight = 0.5,
-        barwidth = 8,
+        barheight = 5,
+        barwidth = 0.3,
         frame.colour = "black",
         ticks.colour = "black",
         title.position = "top",
@@ -164,6 +144,6 @@ compare_ffb_fcb_mse <- function() {
     fmv_theme +
     
     theme(axis.text = element_blank(),
-          legend.position = "bottom")
+          legend.position = "right")
   
 }

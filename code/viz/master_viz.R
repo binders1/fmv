@@ -4,7 +4,6 @@
 # =====================================================
 
 # Load packages
-library(geofacet)
 library(tidyverse)
 library(arrow)
 library(RColorBrewer)
@@ -85,7 +84,7 @@ exhibit_tbl <-
   "frr_performance_size"       , frr_performance_size    , 8     , 4  ,
   ) 
 
-exhibit_tbl %<>% slice(11)
+exhibit_tbl %<>% slice(8)
   
 purrr::pwalk(
   .l = exhibit_tbl,
