@@ -55,15 +55,45 @@ list.files(exhibitfn_dir, full.names = TRUE) %>%
 # Source exhibit (FRR, spatial, etc.)
 file.path(v.dir, "00_exhibit_prep.R") %>% source()
 
+# =====================================================
+# 02). Generate and save exhibits (working paper)
+# =====================================================
+
+exhibit_tbl_wp <-
+  dplyr::tribble(
+    ~filename                    , ~.fn                    , ~device, ~width, ~height,
+    "compare_county_nobs_perf"   , compare_county_nobs_perf, "png"  , 7     , 4      ,
+    "FRR_map"                    , FRR_map                 , "png"  , 7     , 4      ,
+    "clean_obs_density"          , clean_obs_density       , "png"  , 7     , 4      ,
+    "fcb_importance_t20"         , fcb_importance_t20      , "png"  , 7     , 4      ,
+    "ffb_importance_t20"         , ffb_importance_t20      , "png"  , 7     , 4      ,
+    "nolte_resid_time"           , nolte_resid_time        , "png"  , 7     , 4      ,
+    "county_compare_boxplot"     , county_compare_boxplot  , "png"  , 7     , 4      ,
+    "compare_ffb_fcb_mse"        , compare_ffb_fcb_mse     , "png"  , 8     , 3.5    ,
+    "frr_compare_mse_size"       , frr_compare_mse_size    , "png"  , 7     , 4      ,
+    "ffb_pred_all_parcels"       , ffb_pred_all_parcels    , "png"  , 8     , 4      ,
+    "cost_effective_30by30"      , cost_effective_30by30   , "png"  , 8     , 4      ,
+    "fcb_importance_all"         , fcb_importance_all      , "png"  , 7     , 4      ,
+    "ffb_importance_all"         , ffb_importance_all      , "png"  , 7     , 4      ,
+    "frr_performance_size"       , frr_performance_size    , "png"  , 8     , 4      ,
+  ) 
+
+#exhibit_tbl_wp %<>% slice(11)
+
+purrr::pwalk(
+  .l = exhibit_tbl_wp,
+  .f = save_image_custom
+)
+
 
 # =====================================================
-# 02). Generate and save exhibits
+# 02). Generate and save exhibits (PLOS One submission)
 # =====================================================
 
 # Create dataframe of all plot filenames and generating fns,
 # along with image parameters (resolution (dpi), width, height, units)
 
-exhibit_tbl <-
+exhibit_tbl_plos_one <-
   dplyr::tribble(
   ~filename, ~.fn                    , ~device, ~width, ~height, ~compression,
   "Fig1"   , compare_county_nobs_perf, "tiff" , 7     , 4      , "lzw",
@@ -82,10 +112,10 @@ exhibit_tbl <-
   "S3"     , frr_performance_size    , "tiff" , 8     , 4      , "lzw"
   ) 
 
-#exhibit_tbl %<>% slice(2)
+#exhibit_tbl_plos_one %<>% slice(2)
   
 purrr::pwalk(
-  .l = exhibit_tbl,
+  .l = exhibit_tbl_plos_one,
   .f = save_image_custom
 )
 
