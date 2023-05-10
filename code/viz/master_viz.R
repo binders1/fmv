@@ -61,34 +61,32 @@ file.path(v.dir, "00_exhibit_prep.R") %>% source()
 # =====================================================
 
 # Create dataframe of all plot filenames and generating fns,
-# along with png parameters (resolution (dpi), width, height, units)
+# along with image parameters (resolution (dpi), width, height, units)
 
 exhibit_tbl <-
   dplyr::tribble(
-  ~filename                    , ~.fn                    , ~width, ~height,
-  
-  "compare_county_nobs_perf"   , compare_county_nobs_perf, 7     , 4  ,
-  "FRR_map"                    , FRR_map                 , 7     , 4  ,
-  "clean_obs_density"          , clean_obs_density       , 7     , 4  ,
-  "fcb_importance_t20"         , fcb_importance_t20      , 7     , 4  ,
-  "ffb_importance_t20"         , ffb_importance_t20      , 7     , 4  ,
-  "nolte_resid_time"           , nolte_resid_time        , 7     , 4  ,
-  "county_compare_boxplot"     , county_compare_boxplot  , 7     , 4  ,
-  "compare_ffb_fcb_mse"        , compare_ffb_fcb_mse     , 8     , 3.5,
-  "frr_compare_mse_size"       , frr_compare_mse_size    , 7     , 4  ,
-  "ffb_pred_all_parcels"       , ffb_pred_all_parcels    , 8     , 4  ,
-  "cost_effective_30by30"      , cost_effective_30by30   , 8     , 4  ,
-  
-  "fcb_importance_all"         , fcb_importance_all      , 7     , 4  ,
-  "ffb_importance_all"         , ffb_importance_all      , 7     , 4  ,
-  "frr_performance_size"       , frr_performance_size    , 8     , 4  ,
+  ~filename, ~.fn                    , ~device, ~width, ~height, ~compression,
+  "Fig1"   , compare_county_nobs_perf, "tiff" , 7     , 4      , "lzw",
+  "Fig2"   , FRR_map                 , "tiff" , 7     , 4      , "lzw",
+  "Fig3"   , clean_obs_density       , "tiff" , 7     , 4      , "lzw",
+  "Fig4"   , ffb_pred_all_parcels    , "tiff" , 8     , 4      , "lzw",
+  "Fig5"   , fcb_importance_t20      , "tiff" , 7     , 4      , "lzw",
+  "Fig6"   , ffb_importance_t20      , "tiff" , 7     , 4      , "lzw",
+  "Fig7"   , nolte_resid_time        , "tiff" , 7     , 4      , "lzw",
+  "Fig8"   , county_compare_boxplot  , "tiff" , 7     , 4      , "lzw",
+  "Fig9"   , compare_ffb_fcb_mse     , "tiff" , 8     , 3.5    , "lzw",
+  "Fig10"  , frr_compare_mse_size    , "tiff" , 7     , 4      , "lzw",
+  "Fig11"  , cost_effective_30by30   , "tiff" , 8     , 4      , "lzw",
+  "S1"     , fcb_importance_all      , "tiff" , 7     , 4      , "lzw",
+  "S2"     , ffb_importance_all      , "tiff" , 7     , 4      , "lzw",
+  "S3"     , frr_performance_size    , "tiff" , 8     , 4      , "lzw"
   ) 
 
-exhibit_tbl %<>% slice(8)
+#exhibit_tbl %<>% slice(2)
   
 purrr::pwalk(
   .l = exhibit_tbl,
-  .f = save_png_custom
+  .f = save_image_custom
 )
 
 

@@ -12,6 +12,9 @@ clean_obs_density <- function() {
     select(sid, x, y) %>%
     st_as_sf(coords = c("x", "y"), crs = st_crs(5070))
   
+  # EPSG:5070 projection of states
+  state_5070 <- 
+    st_transform(us_states, crs = st_crs(5070))
   
   # Combine obs and hex tessellation ####
   

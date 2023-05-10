@@ -1,32 +1,42 @@
 
 # =================================================
-# png_wrapper and save_png_custom
+# image_wrapper and save_image_custom
 #
-# Save plots using png graphics device
+# Save plots using chosen image graphics device
 #
 # filename = char string; name to save image as
 # .fn = function that generates the image
-# ... = additional parameters to send to png()
+# device = graphics device to use for image generation.
+# ... = additional parameters to send to graphics device function
 # =================================================
 
 
 # Wrapper around png generation function
 
-png_wrapper <- function(filename, ...) {
+image_wrapper <- function(filename, 
+                          device = c("tiff", "png"),
+                          ...) {
   
-  filename_png <- paste0(filename, ".png")
+  image_fn <- match.fun(device)
+  
+  image_ext <- switch (device,
+    tiff = ".tif",
+    png = ".png"
+  )
+  
+  image_name <- paste0(filename, image_ext)
   
   filepath <- 
-    file.path(e.dir, filename_png)
+    file.path(e.dir, image_name)
   
-  png(filepath, ..., units = "in", res = 600)
+  image_fn(filepath, ..., units = "in", res = 600)
   
 }
 
 
-# Generate and save png plot image
+# Generate and save plot image
 
-save_png_custom <- function(filename, .fn, ...) {
+save_image_custom <- function(filename, .fn, device, ...) {
   
   on.exit(
     utils::capture.output({
@@ -34,7 +44,7 @@ save_png_custom <- function(filename, .fn, ...) {
     })
   )
   
-  png_wrapper(filename, ...)
+  image_wrapper(filename, device, ...)
   
   p <- .fn()
   
