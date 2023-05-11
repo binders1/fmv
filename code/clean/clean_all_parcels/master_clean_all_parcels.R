@@ -13,7 +13,7 @@ library(sf)
 library(tictoc)
 
 # Set directory paths
-root <- "~/fmv"
+root <- here::here()
 
 ## first level
 ddir <- file.path(root, "data")

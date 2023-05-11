@@ -7,7 +7,7 @@ library(magrittr)
 library(fs)
 
 # Set directory paths
-root <- "~/fmv"
+root <- here::here()
 cdir <- file.path(root, "code")
 
 real_estate_dir <- file.path(cdir, "real_estate")
@@ -25,12 +25,11 @@ v.dir <- file.path(cdir, "viz")
 file.path(cdir, "functions") %>%
   list.files(full.names = TRUE)
 
-
+# Create empty data directory, which should then be filled with 
+# the data_dirs below (as saved in some data repository)
 fs::dir_create("~/fmv/data")
 
-#' @TODO: Discuss data repository/data sharing of the data contained in 
-#' Nolte/
-
+#' @TODO: Discuss data repository/data sharing of the data contained in Nolte/
 
 data_dirs <-
     c("Nolte", "ArcResults", "mhv_impute",
@@ -43,9 +42,21 @@ if (!all(data_dirs %in% list.files(ddir))) {
   }
 
 readr::read_lines(
-  file.path(helper_dir, "model_dirs.txt")
+  file.path(root, "data", "helper_data", "model_dirs.txt")
 ) %>%
   fs::dir_create()
+
+fs::dir_create(
+  file.path(
+    root, "data", "cleaned"
+  )
+)
+
+fs::dir_create(
+  file.path(
+    root, "data", "cleaned", "cleaned_all_parcels"
+  )
+)
 
 # ==============================================================================
 # 01). Download and process real estate indicators (HPI and Median Home Value)

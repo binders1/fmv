@@ -15,7 +15,7 @@ library(googlesheets4)
 library(lubridate)
 
 # Set directory paths
-root <- "~/fmv"
+root <- here::here()
 
 ddir <- file.path(root, "data")
 cdir <- file.path(root, "code")
