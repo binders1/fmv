@@ -24,7 +24,8 @@ v.dir <- file.path(cdir, "viz")
 
 # Source general functions used throughout project 
 file.path(cdir, "functions") %>%
-  list.files(full.names = TRUE)
+  list.files(full.names = TRUE) %>%
+  walk(source)
 
 # ==============================================================================
 # 01). Download and process real estate indicators (HPI and Median Home Value)

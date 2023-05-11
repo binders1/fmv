@@ -5,6 +5,7 @@
 library(tidyverse)
 library(arrow)
 library(tidymodels)
+library(ranger)
 library(foreach)
 library(tictoc)
 

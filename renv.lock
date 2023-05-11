@@ -151,6 +151,20 @@
       ],
       "Hash": "411952f0aca6398392dad34f225753b9"
     },
+    "RcppEigen": {
+      "Package": "RcppEigen",
+      "Version": "0.3.3.9.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "Rcpp",
+        "stats",
+        "utils"
+      ],
+      "Hash": "1e035db628cefb315c571202d70202fe"
+    },
     "SQUAREM": {
       "Package": "SQUAREM",
       "Version": "2021.1",
@@ -1819,6 +1833,19 @@
         "rlang"
       ],
       "Hash": "97def703420c8ab10d8f0e6c72101e02"
+    },
+    "ranger": {
+      "Package": "ranger",
+      "Version": "0.15.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "R",
+        "Rcpp",
+        "RcppEigen"
+      ],
+      "Hash": "ec74161e5a464623b0cdfc435f9926ed"
     },
     "rappdirs": {
       "Package": "rappdirs",
