@@ -5,6 +5,7 @@
 # Load libraries 
 library(magrittr)
 library(fs)
+library(here)
 
 # Set directory paths
 root <- here::here()
