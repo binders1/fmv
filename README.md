@@ -54,3 +54,26 @@ The figure generation approach can look intimidating at first. The `exhibit_tbl`
 * Set FRED API key: `Sys.setenv(FRED_API_KEY = <API-KEY>)`. Generate one [here](https://fred.stlouisfed.org/docs/api/api_key.html).
 * Source `master_fmv.R`
 * Follow instructions as they appear in the console.
+
+## Data Availability
+
+As Zillow has [ended](https://www.zillow.com/research/ztrax/) academic access to its proprietary ZTRAX database, the parcel- and sale-level data upon which the analysis is built will not be available in full to readers. A data sample may be accessed [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/00WMEO).
+
+## Description of data directory
+
+Within the codebase, scripts often reference folders and files contained within `fmv/data/`. Below is a brief summary of the the data directory's contents.
+
+- `ArcResults/`
+   - `parquet/` _parcel-level climate, irrigation, and soil variables by CONUS state_
+   - `soilcodes/` _SSURGO farmland suitability classifications present in each CONUS state_
+
+- `Nolte/` _parcel and sale records, curated by [PLACES](https://placeslab.org/), along with crosswalks that link sale IDs to parcel IDs. Organized by CONUS state_
+  
+- `mhv_impute/`
+   - `realtor/` _[Realtor.com](https://www.realtor.com/research/data/) median home value data_
+
+- `helper_data/` _miscellaneous collection of reference tables, crosswalks, housing indicator, and other data_
+
+- `spatial/` _county and state shapefiles_
+
+
