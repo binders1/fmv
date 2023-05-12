@@ -3,7 +3,6 @@
 # =====================================================
 
 # Load packages
-library(tidyverse)
 library(lubridate)
 library(magrittr)
 library(arrow)

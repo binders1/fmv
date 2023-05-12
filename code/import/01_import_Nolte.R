@@ -7,7 +7,6 @@
 #=========================
 
 ## load packages ####
-library(tidyverse)
 library(googledrive)
 library(arrow)
 

@@ -3,7 +3,6 @@
 # =====================================================
 
 # Load packages
-library(tidyverse)
 library(arrow)
 library(RColorBrewer)
 library(data.table)

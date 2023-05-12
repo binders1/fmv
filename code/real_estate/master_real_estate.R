@@ -5,7 +5,6 @@
 
 # Load packages
 library(fredr)
-library(tidyverse)
 library(lubridate)
 library(arrow)
 library(sf)

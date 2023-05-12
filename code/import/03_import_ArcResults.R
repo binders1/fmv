@@ -6,7 +6,6 @@
 #====================
 
 # load packages
-library(tidyverse)
 library(googledrive)
 
 # Drive Auth ####

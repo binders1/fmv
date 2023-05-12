@@ -4,7 +4,6 @@
 # =====================================================
 
 # Load packages
-library(tidyverse)
 library(arrow)
 library(RColorBrewer)
 library(scales)
