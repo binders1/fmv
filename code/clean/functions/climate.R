@@ -1,7 +1,6 @@
 agg_climate <- function(data) {
   data %>%
     select(sid, pid, ha, any_of(climate_to_mean)) %>%
-    # slice_sample(n = 1000) %>%
     pivot_longer(
       cols = !c(sid, pid, ha),
       names_to = "var",

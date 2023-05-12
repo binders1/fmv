@@ -53,10 +53,7 @@ file.path(cleaning.dir, "00_clean_prep.R") %>% source()
 #=======================================================
 
 # Source cleaning functions 
-walk(
-  .x = list.files(cleaning_fdir, full.names = TRUE),
-  .f = source
-)
+source_dir(cleaning_fdir)
 
 # Map processing function over all state files
 

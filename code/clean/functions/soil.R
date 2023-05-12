@@ -2,8 +2,7 @@
 load_soilcodes <- function(state_index) {
 
   code_to_load <- 
-    list.files(soil_dir)[state_index] %>%
-    file.path(soil_dir, .)
+    list.files(soil_dir, full.names = TRUE)[state_index]
   
   soilcodes <- 
     readr::read_csv(
@@ -22,11 +21,10 @@ load_soilcodes <- function(state_index) {
   soil_to_drop <- 
     soilcodes %>%
     dplyr::filter(
-      stringr::str_detect(farmlndcl,
-                          pattern_to_drop)
+      stringr::str_detect(farmlndcl, pattern_to_drop)
       ) %>%
     dplyr::pull(Value) %>%
-    str_c(., "_prop")
+    str_c("_prop")
   
   soil_ref_tbl <- 
     soilcodes %>%
@@ -50,7 +48,8 @@ load_soilcodes <- function(state_index) {
 
 agg_soil <- function(data, state_index) {
   
-  # unpack soilcodes
+  # unpack state-level soil codes: which variables to drop, and a lookup table
+  # for the plain English names of the ones we wish to preserve
   soilcodes <- load_soilcodes(state_index)
   soil_to_drop <- soilcodes[['soil_to_drop']]
   soil_ref_tbl <- soilcodes[['soil_ref_tbl']]

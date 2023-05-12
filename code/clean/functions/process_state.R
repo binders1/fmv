@@ -1,4 +1,20 @@
 
+# Parent cleaning function. Processes a given state's data:
+# 
+#' 1) Merge sales and parcel observations into a single dataframe,
+#' 2) Convert inflation metrics to base year 2020 and scaling the 
+#'    sale price indicator accordingly
+#' 3) Merge HPI panel 
+#' 4) Convert sale price to log($/ha)
+#' 5) Create parcel-level irrigation indicators: ever irrigated, and irrigated in
+#'    past 3 years
+#' 6) Determine proportion of sales area taken up by each soil type
+#' 7) Aggregate climate variables by meterological season at the parcel level, then
+#'    aggregate to sale-level using the ha-weighted average across all parcels 
+#'    within the sale
+#' 8) Aggregate parcel-level variables from Nolte (2020) to the sale level, 
+#'    either averaging or summing depending on what was determined appropriate
+
 process_state <- function(state_index) {
   
   #============================================================
@@ -12,6 +28,8 @@ process_state <- function(state_index) {
     
     # merge all together
     initial_merge() %>% 
+    
+    # Note: see functions/intial_clean.R for all cleaning_*() functions
     
     # perform inflation adjustments 
     clean_inflation() %>%

@@ -1,32 +1,34 @@
-## Nolte File Names ####
+## Nolte File Names ========
 
 nolte_files <- data.frame(name = list.files(nolte.dir))
 
-### subset to only sales data ####
+### subset to only sales data ========
 all_sale <- 
   nolte_files %>%
   filter(str_detect(name, "_sale\\.pqt$")) %>%
   pull(name)
 
-### subset to only sale_pids crosswalk files ####
+### subset to only sale_pids crosswalk files ========
 all_sale_pids <- 
   nolte_files %>%
   filter(str_detect(name, "sale_pids")) %>%
   pull(name)
 
-## Retrieve New Soil farmlncl <-> new-category crosswalk ####
+## Retrieve New Soil farmlncl <-> new-category crosswalk ========
 soil_crosswalk <- read_helper_data("soil_crosswalk.csv")
 
-## Retrieve vars used in Nolte (2020) ####
+## Retrieve vars used in Nolte (2020) ========
 nolte2020vars_df <- 
   read_helper_data("nolte2020vars.csv")
 
 nolte2020vars <-
   nolte2020vars_df %>%
+  # Remove NAs (unmatched in our data) and any observation containing a plus 
+  # sign (an indication of multiple matching)
   dplyr::filter(!stringr::str_detect(matched_to_gold2022, "\\+")) %>%
   pull(matched_to_gold2022)
 
-### Specify variables for aggregation ####
+### Specify variables for aggregation ========
 
 extract_for_agg <- function(.method) {
   nolte2020vars_df %>%
@@ -46,7 +48,7 @@ climate_to_mean <-
   pull(variable_name)
 
 
-## Load CPI data ####
+## Load CPI data ========
 CPI <- 
   read_helper_data("CPIAUCSL.csv") %>%
   rename(CPI = "CPIAUCSL") %>%
@@ -57,7 +59,7 @@ CPI <-
     CPI = CPI/CPI[year == 2020 & month == 1]
   )
 
-# Load HPI Index ####
+# Load HPI Index ========
 HPI_county <- 
   read_helper_data("HPI_county.csv") %>%
   mutate(across(HPI_2000:HPI_2020, ~ .x/HPI_2020)) %>%
