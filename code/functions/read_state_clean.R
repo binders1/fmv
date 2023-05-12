@@ -2,6 +2,11 @@
 
 read_state_clean <- function(state) {
   
+  stopifnot(
+    is.character(state),
+    nchar(state) == 2
+  )
+  
   state <- toupper(state)
   
   # Vector of all state pqt files

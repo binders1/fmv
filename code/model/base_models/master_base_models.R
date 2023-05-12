@@ -1,4 +1,16 @@
 
+# Main suite of 7 models reported in paper ============
+#' The models vary by predictor set (full vs. nolte), modeling geography (county
+#' vs. FRR), and additional geographic-specific adjustments. 
+#'  - At the county level, one Nolte predictor set model includes HPI. 
+#'  - At the FRR level, both predictor set models are run with a sample that 
+#'    includes only observations in counties that were modeled by the Nolte 
+#'    county model (i.e., they met the 1000-observation minimum, either on 
+#'    their own or with neighbor donations)
+#'    
+#' For more, read https://github.com/AMGold99/fmv/issues/51 and its 
+#' associated PR: https://github.com/AMGold99/fmv/pull/52. 
+
 # Set up ======================================================================
 
 # Load Packages
@@ -42,33 +54,33 @@ source(file.path(base.mdir, "00_base_model_prep.R"))
 
 # County models ===============================================================
 
-tic("fcb")
+tic("fcb") # Full County Base
 fmv_model(geo = "county", pred.set = "full", HPI = TRUE)
 toc()
 
-tic("ncb")
+tic("ncb") # Nolte County Base
 fmv_model(geo = "county", pred.set = "nolte", HPI = FALSE)
 toc()
 
-tic("nch")
+tic("nch") # Nolte County HPI
 fmv_model(geo = "county", pred.set = "nolte", HPI = TRUE)
 toc()
 
 
 # FRR models ==================================================================
 
-tic("ffb")
+tic("ffb") # Full FRR Base
 fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = FALSE)
 toc()
 
-tic("ffr")
-toc()
+tic("ffr") # Full FRR Restricted
 fmv_model(geo = "frr", pred.set = "full", only.nolte.counties = TRUE)
+toc()
 
-tic("nfb")
+tic("nfb") # Nolte FRR Base
 fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = FALSE)
 toc()
 
-tic("nfr")
+tic("nfr") # Nolte FRR Restricted
 fmv_model(geo = "frr", pred.set = "nolte", only.nolte.counties = TRUE)
 toc()

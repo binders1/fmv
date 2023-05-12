@@ -1,3 +1,18 @@
+# Clean parcel-level PLACES data. ====
+# 
+#' Unlike the basic cleaning performed in clean/master_clean.R,
+#' this pipeline does not join parcels with sales, and thus does not aggregate
+#' variables to the sale level. These parcel observations (~31million) are used
+#' to generate Fig 4 (ffb_pred_all_parcels), where estimated costs are predicted
+#' using a building-free FRR full-predictor set model specified in 
+#' model/model_all_parcels
+#' 
+#' For more, read https://github.com/AMGold99/fmv/issues/42 and its associated
+#' PR: https://github.com/AMGold99/fmv/pull/46. The issue/PR/commit messages
+#' explain the approach to the broader project of "replicating" Nolte (2020)'s 
+#' Fig 1 using the data we possess
+
+
 # =====================================================
 # 01). Set up
 # =====================================================

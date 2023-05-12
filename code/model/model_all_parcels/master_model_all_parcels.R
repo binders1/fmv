@@ -1,3 +1,13 @@
+# Specify models for parcel-level prediction ========
+
+#' As described in clean/clean_all_parcels/master_clean_all_parcels.R,
+#' this modeling pipeline builds FRR-specific models at the parcel level
+#' using only parcels with no building footprint (in order to estimate the pure 
+#' land value, sans built improvements). These models are then used to predict
+#' the value of the all-parcel dataset of ~31 million parcels. This will then be 
+#' plotted in Fig 4 (ffb_pred_all_parcels) in an effort to replicate Nolte 
+#' (2020)'s Fig 1 map to show that the results of our modeling approach roughly
+#' matches Nolte (2020)
 
 # =====================================================
 # Set up
