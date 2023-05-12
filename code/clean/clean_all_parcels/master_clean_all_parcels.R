@@ -4,7 +4,6 @@
 
 # Load packages
 library(tidyverse)
-library(googlesheets4)
 library(lubridate)
 library(magrittr)
 library(arrow)

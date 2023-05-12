@@ -13,7 +13,6 @@ library(ggplot2)
 library(magrittr)
 library(sf)
 library(ggtext)
-library(googlesheets4)
 library(lubridate)
 
 # Set directory paths
