@@ -1,5 +1,9 @@
 
-# source: https://www.realtor.com/research/data/
+# Basic data cleaning of Realtor.com MHV data. This function filters to the year
+# specified in the mhv_year argument, to provide a "base" for the later annual MHV 
+# imputation using annual county HPI values
+
+# Data source: https://www.realtor.com/research/data/
 
 clean_realtor <- function(mhv_year) {
   

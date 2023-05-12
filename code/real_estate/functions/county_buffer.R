@@ -1,4 +1,7 @@
 
+# Create county buffer geometries, determine which counties lie within the 
+# focal county's buffer, and calculate the distances between centroids 
+
 county_buffer <- function(buffer_km) {
   
   buffer_m <- buffer_km*1000
@@ -20,7 +23,7 @@ county_buffer <- function(buffer_km) {
   
   
   # Create county buffer features
-  county_buffer <- 
+  county_buffer_sf <- 
     st_buffer(county_clean,
               buffer_m)
   
@@ -28,11 +31,14 @@ county_buffer <- function(buffer_km) {
   # Find counties within each county's buffer
   intersect <- 
     st_intersects(
-      county_buffer, 
+      county_buffer_sf, 
       county_clean, 
       sparse = TRUE
       )
   
+  # Convert the list returned by st_intersects() into a dataframe where each
+  # row is a) focal county and b) a neighbor whose centroid intersects the focal
+  # county's buffer
   intersect %<>%
     data.frame() %>%
     rename(
@@ -60,18 +66,22 @@ county_buffer <- function(buffer_km) {
       neighbor = fips.y
     ) 
   
-  # Calculate Centroids
+  # Calculate centroids
   county_centroid <- 
     st_centroid(county_clean) %>%
     select(!c(name, state))
   
-  # Add centroid geometry to buffer table
+  # Add centroid geometry to buffer table...
   intersect_geom <-
     intersect %>%
+    
+    # ...once for the focal counties
     left_join(
       county_centroid,
       by = c("focal_county" = "fips")
     ) %>%
+    
+    # ...and once for the neighbor counties
     left_join(
       county_centroid,
       by = c("neighbor" = "fips")
@@ -90,6 +100,8 @@ county_buffer <- function(buffer_km) {
           by_element = TRUE
           )
     ) %>%
+    
+    # Return a data.frame with the distances between each county and its neighbors
     transmute(
       fips = focal_county,
       neighbor_fips = neighbor,

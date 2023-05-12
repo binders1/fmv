@@ -15,6 +15,8 @@ fred_hpi <- function() {
   HPI_2 <- fredr_release_series(171, 
                                 offset = nrow(HPI_1))
   
+  # We stop here, because HPI_3 returns less than 1000 rows, indicating the end 
+  # of the series
   HPI_3 <- fredr_release_series(171, 
                                 offset = nrow(HPI_1)+nrow(HPI_2))
   
@@ -23,21 +25,22 @@ fred_hpi <- function() {
     # collate metadata
     bind_rows(HPI_1, HPI_2, HPI_3) %>% 
     
-    # filter to only county-equivalent entities
-    filter(str_detect(title, 
-                      regex("county|borough|parish", 
-                            ignore_case = T)),
-           !str_detect(title, "MSA")
+    # filter to only county-equivalent entities and remove MSAs
+    filter(
+      str_detect(title, regex("county|borough|parish", ignore_case = TRUE)),
+      !str_detect(title, "MSA")
     ) %>%
     
     # extract county fips and name
-    mutate(fips = str_extract(id, "(?<=ATNHPIUS).{5}"),
-           county_name = 
-             str_extract(title,
-                         "(?<=Index for[:blank:]).+[:blank:](County|Borough|Parish)"
-             ),
-           state = str_extract(title, "(?<=County,[:blank:]).{2}"),
-           realtime_start = as_date(realtime_start)) %>%
+    mutate(
+      fips = str_extract(id, "(?<=ATNHPIUS).{5}"),
+      county_name =
+        str_extract(
+          title, "(?<=Index for[:blank:]).+[:blank:](County|Borough|Parish)"
+          ),
+      state = str_extract(title, "(?<=County,[:blank:]).{2}"),
+      realtime_start = as_date(realtime_start)
+      ) %>%
     
     # remove duplicates
     filter(!duplicated(fips)) %>%
@@ -51,6 +54,8 @@ fred_hpi <- function() {
   base_HPI_years <- 
     tibble(year = seq(2000, 2020))
   
+  # Helper function that retrieves and formats the annual HPI data in a given 
+  # county
   get_county_hpi <- function(fred_county_id, fred_county_fips) {
     
     hpi <- 
@@ -78,6 +83,8 @@ fred_hpi <- function() {
     
   }
   
+  # Map over the rows of the county-id and fips dataframe, where in each row,
+  # the columns are the arguments passed to get_county_hpi()
   pmap_dfr(
     counties_with_hpi,
     get_county_hpi

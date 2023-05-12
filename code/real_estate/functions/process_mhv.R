@@ -1,4 +1,6 @@
 
+# 
+
 process_mhv <- function() {
   
   # ======================================================
@@ -7,6 +9,7 @@ process_mhv <- function() {
   
   HPI_county <- read_helper_data("HPI_county.csv")
   
+  # Create HPI panel by county and year
   HPI_county %<>% 
     # Create state fips indicator
     mutate(state = str_sub(fips, 1, 2)) %>%
@@ -17,6 +20,8 @@ process_mhv <- function() {
     # Normalize on 2017 values
     mutate(across(starts_with("HPI_"), 
                   ~ .x / HPI_2017)) %>%
+    
+    # Pivot so that years become rows
     pivot_longer(
       cols = !fips,
       names_to = "year",
@@ -50,9 +55,16 @@ process_mhv <- function() {
     
     select(!c(HPI, medlistprice_2017))
   
-  # ======================================================
-  #  Panel of all counties in fmv study in all years
-  # ======================================================
+  # ==================================================================
+  # Panel of all counties in fmv study in all years
+  # 
+  # This allows us to tell which counties are missing HPI (and thus 
+  # MHV) Those counties will get their MHV imputed based on a inverse 
+  # square distance-weighted average among all counties whose 
+  # centroids are within 150km of the county with the missing MHV 
+  # value
+  # ==================================================================
+  
   all_clean <- 
     list.files(clean.dir,
                full.names = TRUE,
@@ -69,7 +81,7 @@ process_mhv <- function() {
       year = seq(2000,2020)
     )
   
-  ## Join full panel with median home value ####
+  ## Join full county-year panel with median home value ####
   
   all_study_with_missing <-
     county_year_panel %>%
@@ -103,6 +115,7 @@ process_mhv <- function() {
   # ======================================================
   
   # Map imputation over all HPI-missing counties
+  # See functions/imputation_helpers.R for the definition of impute_pipeline()
   collect_imputed <-
     fips_missing_hpi %>%
     map_dfr(

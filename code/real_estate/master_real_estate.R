@@ -53,12 +53,14 @@ fred_hpi() %>%
 # 02). Process and save Realtor.com median home value data
 # =========================================================
 
-clean_realtor(2017) %>%
+# This is the version used in the main models, where the 2017 MHV is used as the
+# "base", from which all other years' MHV is estimated using annual county HPI 
+clean_realtor(mhv_year = 2017) %>%
   write_parquet(
     file.path(mhv.dir, "medhomeval.pqt")
     )
 
-# Also make version of realtor MHV data for the pred_all_parcels, which is the 
+# Below, we make version of realtor MHV data for the pred_all_parcels, which is the 
 # mean of the median listing price by county. Since pred_all_parcels does not 
 # have years attached to observations, we do not need to perform the HPI-assisted
 # year-by-year calculation of MHV, allowing us to preserve many more counties.
@@ -68,7 +70,7 @@ clean_realtor(2017) %>%
 # See issue #59 on Github for more discussion
 
 # 2020 values will be used for pred_all_parcels
-clean_realtor(2020) %>%
+clean_realtor(mhv_year = 2020) %>%
   write_parquet(
     file.path(helper_dir, "medhomeval_2020.pqt")
   )
