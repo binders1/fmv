@@ -26,7 +26,7 @@ loadResults <-
     # Specify directory containing desired results type
     model_dir <-
       if (archive) {
-        "~/fmv/data/model/archive"
+        "~/fmv/data/model/.archive"
       } else {
         "~/fmv/data/model"
       }
