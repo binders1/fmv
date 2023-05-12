@@ -55,7 +55,7 @@ file.path(cleaning.dir, "00_clean_prep.R") %>% source()
 # Source cleaning functions 
 source_dir(cleaning_fdir)
 
-# Map processing function over all state files
+# Map processing function (process_state()) over all state datasets
 
 pcis_pqt <- list.files(pqt_dir)
 
