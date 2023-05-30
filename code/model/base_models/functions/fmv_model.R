@@ -1,7 +1,7 @@
 # ===================================================================
 # Model across geo levels, predictor sets, and county restrictions
 # 
-# Author: mag
+# Author: Miriam Gold
 # Date: 29 Jan 2023
 # ===================================================================
 
@@ -31,7 +31,7 @@ fmv_model <-
 # County modeling method ======================================================
 fmv_model.county <- 
   function(
-    pred.set,  # predictor set 
+    pred.set,  # predictor set
     HPI        # Include HPI in predictor set?
     ) {
     
@@ -61,6 +61,7 @@ fmv_model.frr <-
     
     n_iters <- length(frr_key$frr_name)
     
+    # Specify models by FRR in parallel
     foreach::foreach(
         frr = frr_key$frr_name,
         pred.set = rep(pred.set, n_iters),
