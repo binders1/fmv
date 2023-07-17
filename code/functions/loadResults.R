@@ -22,13 +22,13 @@ loadResults <-
     if (res_type == "performance" & !archive) {
       stop("Cannot retrieve performance from non-archive directory. Use `metrics` instead.")
     }
-    
+    root_dir <- here::here()
     # Specify directory containing desired results type
     model_dir <-
       if (archive) {
-        "~/fmv/data/model/.archive"
+        file.path(root_dir, "data/model/.archive")
       } else {
-        "~/fmv/data/model"
+        file.path(root_dir, "data/model")
       }
     
     full_dir <- file.path(model_dir, "full")

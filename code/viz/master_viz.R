@@ -13,6 +13,10 @@ library(magrittr)
 library(sf)
 library(ggtext)
 library(lubridate)
+library(stringr)
+library(dplyr)
+library(purrr)
+library(renv)
 
 # Set directory paths
 root <- here::here()
@@ -110,7 +114,9 @@ exhibit_tbl_plos_one <-
   "S3"     , frr_performance_size    , "tiff" , 8     , 4      , "lzw"
   ) 
 
-#exhibit_tbl_plos_one %<>% slice(2)
+# Use code below to create just one of the figures
+# set num equal to the list position of the desired figure
+#exhibit_tbl_plos_one %<>% slice(num)
   
 purrr::pwalk(
   .l = exhibit_tbl_plos_one,
