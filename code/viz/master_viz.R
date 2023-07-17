@@ -111,7 +111,8 @@ exhibit_tbl_plos_one <-
   "Fig11"  , cost_effective_30by30   , "tiff" , 8     , 4      , "lzw",
   "S1"     , fcb_importance_all      , "tiff" , 7     , 4      , "lzw",
   "S2"     , ffb_importance_all      , "tiff" , 7     , 4      , "lzw",
-  "S3"     , frr_performance_size    , "tiff" , 8     , 4      , "lzw"
+  "S3"     , frr_performance_size    , "tiff" , 8     , 4      , "lzw",
+  "S4"     , avgprice_compare_2020   , "tiff" , 8     , 4      , "lzw"
   ) 
 
 # Use code below to create just one of the figures
